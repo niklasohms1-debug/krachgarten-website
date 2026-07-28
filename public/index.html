@@ -9,59 +9,100 @@
         .main { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; max-width: 1000px; margin: 20px auto; }
         .card { background: #202024; padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #29292e; }
 
-        /* KOMBINIERTES WEBPLAYER OVERLAY */
-        .player-overlay {
-            background: linear-gradient(135deg, #1e1e24 0%, #2a2a32 100%);
-            border: 1px solid #ff4757;
-            border-radius: 12px;
-            padding: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            max-width: 380px;
+        /* GELBES CONFIRM-REQUEST PLAYER OVERLAY (EXAKT WIE BILD 2) */
+        .yellow-player-card {
+            width: 380px;
+            background: linear-gradient(180deg, #d4db1d 0%, #c4cc15 100%);
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            font-family: 'Segoe UI', sans-serif;
+            color: #222;
+            padding-bottom: 12px;
+            overflow: hidden;
         }
 
-        .player-top {
+        .yellow-player-header {
+            font-weight: bold;
+            font-size: 1.1rem;
+            padding: 12px 18px;
+            color: #2b2e34;
+            opacity: 0.9;
+        }
+
+        .yellow-player-body {
             display: flex;
             align-items: center;
+            padding: 0 18px 10px 18px;
             gap: 15px;
         }
 
-        .cover-box {
-            width: 75px;
-            height: 75px;
-            background: #121214;
-            border-radius: 8px;
+        .yellow-cover-box {
+            width: 90px;
+            height: 90px;
+            background-color: #222;
+            border-radius: 4px;
             overflow: hidden;
             flex-shrink: 0;
-            border: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .cover-box img {
+        .yellow-cover-box img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        .track-info h4 {
+        .yellow-song-details h3 {
             margin: 0 0 4px 0;
-            font-size: 1.05rem;
-            color: #fff;
-            line-height: 1.2;
+            font-size: 1.15rem;
+            color: #1a1a1a;
+            font-weight: 700;
         }
 
-        .track-info p {
+        .yellow-song-details p {
             margin: 0;
-            font-size: 0.88rem;
-            color: #04d361;
-            font-weight: 600;
+            font-size: 0.95rem;
+            color: #444;
         }
 
-        .audio-controls audio {
+        .yellow-player-controls {
+            padding: 0 18px 8px 18px;
+        }
+
+        .yellow-player-controls audio {
             width: 100%;
-            height: 40px;
-            border-radius: 20px;
+            height: 36px;
+            border-radius: 18px;
+        }
+
+        .yellow-player-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 0 18px;
+        }
+
+        .btn-action {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            width: 36px;
+            height: 36px;
+            color: #2b2e34;
+            transition: transform 0.1s ease, color 0.2s ease;
+        }
+
+        .btn-action:hover {
+            transform: scale(1.1);
+            color: #000;
+        }
+
+        .btn-action svg {
+            width: 100%;
+            height: 100%;
         }
     </style>
 </head>
@@ -76,27 +117,41 @@
         </div>
     </div>
 
-    <!-- HEADER MIT INTEGRATED WEBPLAYER OVERLAY -->
+    <!-- HEADER MIT DEM GELBEN PLAYER OVERLAY (BILD 2 DESIGN) -->
     <header class="header">
         <div>
             <h1 id="stream-name">Lade Radio...</h1>
             <p style="color: #a8a8b3;">Live On Air</p>
         </div>
 
-        <!-- ZUSAMMENGEFÜHRTES WEBPLAYER OVERLAY -->
-        <div class="player-overlay">
-            <div class="player-top">
-                <div class="cover-box">
-                    <img id="player-cover" src="https://via.placeholder.com/75/121214/ffffff?text=Radio" alt="Cover">
+        <!-- DER GELBE WEBPLAYER EXAKT WIE IN BILD 2 -->
+        <div class="yellow-player-card">
+            <div class="yellow-player-header">
+                Confirm Request
+            </div>
+            <div class="yellow-player-body">
+                <div class="yellow-cover-box">
+                    <img id="player-cover" src="https://via.placeholder.com/90/222222/ffffff?text=Cover" onerror="this.src='https://via.placeholder.com/90/222222/ffffff?text=No+Cover';" alt="Album Cover">
                 </div>
-                <div class="track-info">
-                    <small style="color: #ff4757; text-transform: uppercase; font-size: 0.7rem; font-weight: bold;">Jetzt Läuft</small>
-                    <h4 id="current-title">Lade Songtitel...</h4>
-                    <p id="current-artist">Radio Live Stream</p>
+                <div class="yellow-song-details">
+                    <h3 id="song-title">Calm After The Storm</h3>
+                    <p id="song-artist">The Common Linnetts</p>
                 </div>
             </div>
-            <div class="audio-controls">
+
+            <!-- AUDIO PLAYER BEREICH -->
+            <div class="yellow-player-controls">
                 <audio id="audio-player" controls autoplay src="https://s5.radio.co/s5d31fcd9d/listen"></audio>
+            </div>
+
+            <!-- BESTÄTIGEN / ABLEHNEN BUTTONS -->
+            <div class="yellow-player-actions">
+                <button class="btn-action" onclick="alert('Abgelehnt')" title="Ablehnen">
+                    <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>
+                </button>
+                <button class="btn-action" onclick="alert('Angenommen')" title="Annehmen">
+                    <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                </button>
             </div>
         </div>
     </header>
@@ -110,14 +165,8 @@
             <div id="news-container"></div>
         </section>
 
-        <!-- RECHTS: SENDEPLAN, RADIO.CO & WUNSCHBOX -->
+        <!-- RECHTS: SENDEPLAN & GRUß-/WUNSCHBOX -->
         <aside>
-
-            <!-- RADIO.CO REQUEST WIDGET -->
-            <div style="margin-bottom: 15px; border-radius: 12px; overflow: hidden;">
-                <script src="https://embed.radio.co/request/w3f14e25.js"></script>
-            </div>
-
             <!-- Sendeplan Card -->
             <div class="card">
                 <h3>📅 Sendeplan</h3>
@@ -155,10 +204,10 @@
                 const data = await res.json();
 
                 document.getElementById('stream-name').innerText = "📻 " + (data.streamName || "Radio");
-                document.getElementById('current-title').innerText = data.currentTitle || "Live Stream";
+                document.getElementById('song-title').innerText = data.currentTitle || "Calm After The Storm";
                 
                 if (data.currentArtist) {
-                    document.getElementById('current-artist').innerText = data.currentArtist;
+                    document.getElementById('song-artist').innerText = data.currentArtist;
                 }
                 
                 if (data.coverUrl) {

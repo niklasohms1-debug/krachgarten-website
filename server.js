@@ -175,6 +175,9 @@ app.listen(PORT, () => {
 const ADMIN_USER = "admin";
 const ADMIN_PASS = "katzi123"; // <--- DEIN PASSWORT
 
+const DJ_USER = "dj";
+const DJ_PASS = "djpass123";
+    
 // 2. API-Endpunkt für den Admin-Login
 app.post('/api/admin/login', (req, res) => {
     const { username, password } = req.body;
@@ -185,6 +188,13 @@ app.post('/api/admin/login', (req, res) => {
     } else {
         return res.status(401).json({ success: false, message: "Zugangsdaten falsch!" });
     }
+    app.post('/api/dj/login', (req, res) => {
+    const { username, password } = req.body;
+
+    if (username === DJ_USER && password === DJ_PASS) {
+        return res.json({ success: true, message: "DJ Login erfolgreich!" });
+    }
+    return res.status(401).json({ success: false, message: "Zugangsdaten falsch!" });
 });
     
 });

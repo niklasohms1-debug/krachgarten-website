@@ -10,6 +10,7 @@
             color: #e1e1e6; 
             padding: 20px; 
             margin: 0;
+            scroll-behavior: smooth;
         }
 
         /* LOGIN CONTAINER */
@@ -100,6 +101,12 @@
             margin-bottom: 20px;
         }
 
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
         .team-member-item, .wish-item {
             background: #121214;
             padding: 12px 15px;
@@ -132,12 +139,13 @@
     <!-- 2. ADMIN DASHBOARD CONTENT -->
     <div id="admin-content">
         
-        <!-- NAVIGATION -->
+        <!-- NAVIGATION LEISTE MIT TEAM VERWALTEN BUTTON OBEN -->
         <div class="nav-header">
             <h2 style="margin:0; color:#ff4757;">👑 Admin Dashboard</h2>
-            <div>
-                <a href="/" style="color:#a8a8b3; text-decoration:none; margin-right:15px;">Hauptseite</a>
-                <button onclick="logout()" style="background:none; border:1px solid #ff4757; color:#ff4757; padding:6px 12px; border-radius:4px; cursor:pointer;">Abmelden</button>
+            <div class="nav-links">
+                <a href="/" style="color:#a8a8b3; text-decoration:none; font-weight: bold;">Hauptseite</a>
+                <a href="#team-section" style="color:#ff4757; text-decoration:none; font-weight: bold;">👥 Team verwalten</a>
+                <button onclick="logout()" style="background:none; border:1px solid #ff4757; color:#ff4757; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">Abmelden</button>
             </div>
         </div>
 
@@ -155,7 +163,7 @@
         </div>
 
         <!-- 2. TEAM MANAGEMENT -->
-        <div class="card">
+        <div class="card" id="team-section">
             <h3>👥 Team verwalten</h3>
             
             <!-- TEAM MITGLIED HINZUFÜGEN -->
@@ -185,7 +193,6 @@
 
     <!-- JAVASCRIPT LOGIK -->
     <script>
-        // Beim Laden prüfen, ob Admin eingeloggt ist
         window.onload = function() {
             if (localStorage.getItem('adminLoggedIn') === 'true') {
                 showAdminContent();
@@ -224,7 +231,7 @@
             document.getElementById('login-section').style.display = 'none';
             document.getElementById('admin-content').style.display = 'block';
             loadAdminData();
-            setInterval(loadAdminData, 5000); // Daten alle 5 Sekunden aktualisieren
+            setInterval(loadAdminData, 5000);
         }
 
         function logout() {
@@ -232,16 +239,15 @@
             location.reload();
         }
 
-        // Lädt bestehende Daten vom Backend
         async function loadAdminData() {
             try {
                 const res = await fetch('/api/data');
                 const data = await res.json();
 
-                if (data.streamName && !document.activeElement.id.includes('new-stream-name')) {
+                if (data.streamName && document.activeElement.id !== 'new-stream-name') {
                     document.getElementById('new-stream-name').value = data.streamName;
                 }
-                if (data.currentTitle && !document.activeElement.id.includes('new-title')) {
+                if (data.currentTitle && document.activeElement.id !== 'new-title') {
                     document.getElementById('new-title').value = data.currentTitle;
                 }
 
@@ -252,7 +258,6 @@
             }
         }
 
-        // 1. STREAM- & SONGTITEL SENDEN
         async function updateRadioInfo() {
             const streamName = document.getElementById('new-stream-name').value;
             const currentTitle = document.getElementById('new-title').value;
@@ -270,7 +275,6 @@
             }
         }
 
-        // 2. TEAM-MITGLIED HINZUFÜGEN
         async function addTeamMember() {
             const name = document.getElementById('team-name').value;
             const role = document.getElementById('team-role').value;
@@ -295,7 +299,6 @@
             }
         }
 
-        // TEAM-MITGLIED LÖSCHEN
         async function deleteTeamMember(id) {
             if (!confirm("Mitglied wirklich löschen?")) return;
 
@@ -310,7 +313,6 @@
             }
         }
 
-        // Zeigt das Team in einer Liste an
         function renderTeamList(team) {
             const listUI = document.getElementById('team-list');
             if (!team || team.length === 0) {
@@ -329,7 +331,6 @@
             `).join('');
         }
 
-        // Zeigt Wünsche und Grüße an
         function renderWishesList(wishes) {
             const wishesUI = document.getElementById('wishes-list');
             if (!wishes || wishes.length === 0) {

@@ -1,15 +1,6 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-<!-- MENÜLEISTE OBEN -->
-<div style="display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: 0 auto 20px auto; background: #202024; padding: 15px 25px; border-radius: 8px; border: 1px solid #29292e;">
-    <h2 style="margin:0; color:#ff4757;">📻 Radio Dashboard</h2>
-    <div>
-        <a href="/" style="color:#ff4757; text-decoration:none; margin-left:20px; font-weight:bold;">Startseite</a>
-        <a href="/team.html" style="color:#a8a8b3; text-decoration:none; margin-left:20px; font-weight:bold;">Unser Team</a>
-    </div>
-</div>
-
     <meta charset="UTF-8">
     <title>Radio Dashboard</title>
     <style>
@@ -19,9 +10,25 @@
         .main { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; max-width: 1000px; margin: 20px auto; }
         .card { background: #202024; padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #29292e; }
         .time { color: #ff4757; font-weight: bold; }
+
+        /* CONTAINER FÜR DAS RADIO.CO OVERLAY */
+        .request-card-container {
+            margin-bottom: 15px;
+            overflow: hidden;
+            border-radius: 16px;
+        }
     </style>
 </head>
 <body>
+
+    <!-- MENÜLEISTE OBEN -->
+    <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: 0 auto 20px auto; background: #202024; padding: 15px 25px; border-radius: 8px; border: 1px solid #29292e;">
+        <h2 style="margin:0; color:#ff4757;">📻 Radio Dashboard</h2>
+        <div>
+            <a href="/" style="color:#ff4757; text-decoration:none; margin-left:20px; font-weight:bold;">Startseite</a>
+            <a href="/team.html" style="color:#a8a8b3; text-decoration:none; margin-left:20px; font-weight:bold;">Unser Team</a>
+        </div>
+    </div>
 
     <header class="header">
         <div>
@@ -42,8 +49,14 @@
             <div id="news-container"></div>
         </section>
 
-        <!-- RECHTS: SENDEPLAN & GRUß-/WUNSCHBOX -->
+        <!-- RECHTS: OVERLAY, SENDEPLAN & GRUß-/WUNSCHBOX -->
         <aside>
+
+            <!-- RADIO.CO EMBEDDED OVERLAY -->
+            <div class="request-card-container">
+                <script src="https://embed.radio.co/request/w3f14e25.js"></script>
+            </div>
+
             <!-- Sendeplan Card -->
             <div class="card">
                 <h3>📅 Sendeplan</h3>

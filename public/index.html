@@ -9,100 +9,12 @@
         .main { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; max-width: 1000px; margin: 20px auto; }
         .card { background: #202024; padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #29292e; }
 
-        /* GELBES CONFIRM-REQUEST PLAYER OVERLAY (EXAKT WIE BILD 2) */
-        .yellow-player-card {
-            width: 380px;
-            background: linear-gradient(180deg, #d4db1d 0%, #c4cc15 100%);
-            border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            font-family: 'Segoe UI', sans-serif;
-            color: #222;
-            padding-bottom: 12px;
+        /* CONTAINER FÜR DEN ORIGINAL RADIO.CO PLAYER */
+        .radio-co-player-wrapper {
+            border-radius: 12px;
             overflow: hidden;
-        }
-
-        .yellow-player-header {
-            font-weight: bold;
-            font-size: 1.1rem;
-            padding: 12px 18px;
-            color: #2b2e34;
-            opacity: 0.9;
-        }
-
-        .yellow-player-body {
-            display: flex;
-            align-items: center;
-            padding: 0 18px 10px 18px;
-            gap: 15px;
-        }
-
-        .yellow-cover-box {
-            width: 90px;
-            height: 90px;
-            background-color: #222;
-            border-radius: 4px;
-            overflow: hidden;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .yellow-cover-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .yellow-song-details h3 {
-            margin: 0 0 4px 0;
-            font-size: 1.15rem;
-            color: #1a1a1a;
-            font-weight: 700;
-        }
-
-        .yellow-song-details p {
-            margin: 0;
-            font-size: 0.95rem;
-            color: #444;
-        }
-
-        .yellow-player-controls {
-            padding: 0 18px 8px 18px;
-        }
-
-        .yellow-player-controls audio {
-            width: 100%;
-            height: 36px;
-            border-radius: 18px;
-        }
-
-        .yellow-player-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-            padding: 0 18px;
-        }
-
-        .btn-action {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0;
-            width: 36px;
-            height: 36px;
-            color: #2b2e34;
-            transition: transform 0.1s ease, color 0.2s ease;
-        }
-
-        .btn-action:hover {
-            transform: scale(1.1);
-            color: #000;
-        }
-
-        .btn-action svg {
-            width: 100%;
-            height: 100%;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            max-width: 400px;
         }
     </style>
 </head>
@@ -117,42 +29,18 @@
         </div>
     </div>
 
-    <!-- HEADER MIT DEM GELBEN PLAYER OVERLAY (BILD 2 DESIGN) -->
+    <!-- HEADER MIT DEM DESIGNTEN RADIO.CO PLAYER -->
     <header class="header">
         <div>
             <h1 id="stream-name">Lade Radio...</h1>
             <p style="color: #a8a8b3;">Live On Air</p>
         </div>
 
-        <!-- DER GELBE WEBPLAYER EXAKT WIE IN BILD 2 -->
-        <div class="yellow-player-card">
-            <div class="yellow-player-header">
-                Confirm Request
-            </div>
-            <div class="yellow-player-body">
-                <div class="yellow-cover-box">
-                    <img id="player-cover" src="https://via.placeholder.com/90/222222/ffffff?text=Cover" onerror="this.src='https://via.placeholder.com/90/222222/ffffff?text=No+Cover';" alt="Album Cover">
-                </div>
-                <div class="yellow-song-details">
-                    <h3 id="song-title">Calm After The Storm</h3>
-                    <p id="song-artist">The Common Linnetts</p>
-                </div>
-            </div>
-
-            <!-- AUDIO PLAYER BEREICH -->
-            <div class="yellow-player-controls">
-                <audio id="audio-player" controls autoplay src="https://s5.radio.co/s5d31fcd9d/listen"></audio>
-            </div>
-
-            <!-- BESTÄTIGEN / ABLEHNEN BUTTONS -->
-            <div class="yellow-player-actions">
-                <button class="btn-action" onclick="alert('Abgelehnt')" title="Ablehnen">
-                    <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/></svg>
-                </button>
-                <button class="btn-action" onclick="alert('Angenommen')" title="Annehmen">
-                    <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
-                </button>
-            </div>
+        <!-- HIER SITZT DEIN RADIO.CO EMBED PLAYER -->
+        <div class="radio-co-player-wrapper">
+            
+            <!-- FÜGE HIER DEINEN KOPIERTEN CODE EIN (Copy embed code) -->
+           <script src="https://embed.radio.co/player/1ec17ac.js"></script>
         </div>
     </header>
 
@@ -204,15 +92,6 @@
                 const data = await res.json();
 
                 document.getElementById('stream-name').innerText = "📻 " + (data.streamName || "Radio");
-                document.getElementById('song-title').innerText = data.currentTitle || "Calm After The Storm";
-                
-                if (data.currentArtist) {
-                    document.getElementById('song-artist').innerText = data.currentArtist;
-                }
-                
-                if (data.coverUrl) {
-                    document.getElementById('player-cover').src = data.coverUrl;
-                }
 
                 const scheduleUI = document.getElementById('schedule-container');
                 if (data.schedule) {

@@ -15,11 +15,24 @@
 </head>
 <body>
 
-    <!-- LOGIN MASK -->
-    <div id="login-section" class="login-overlay">
-        <h2>🎧 DJ Studio Login</h2>
-        <input type="password" id="dj-password" placeholder="DJ Passwort eingeben">
-        <button onclick="loginDJ()">Einloggen</button>
+   <!-- 1. LOGIN FENSTER FÜR DJS -->
+    <div id="login-section" class="login-wrapper">
+        <div class="login-card">
+            <h2>🎧 DJ Studio Login</h2>
+            <p style="color: #a8a8b3; font-size: 0.9rem; margin-bottom: 20px;">Melde dich an, um Musikwünsche zu verwalten.</p>
+            
+            <form onsubmit="handleLogin(event)">
+                <!-- BENUTZERNAME -->
+                <input type="text" id="dj-user" class="input-field" placeholder="DJ Name / Benutzername" required>
+                
+                <!-- PASSWORT -->
+                <input type="password" id="dj-pass" class="input-field" placeholder="Passwort" required>
+                
+                <button type="submit" class="btn-login">In Studio Einloggen 🎧</button>
+            </form>
+            <p id="login-error" style="color: #ff4757; margin-top: 15px; display: none; font-size: 0.9rem;">Benutzername oder Passwort falsch!</p>
+        </div>
+    </div>ck="loginDJ()">Einloggen</button>
     </div>
 
     <!-- DJ DASHBOARD (VERSTECKT BIS LOGIN) -->

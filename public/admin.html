@@ -64,6 +64,16 @@
             background: #e03e4d;
         }
 
+        .btn-delete {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
         /* DASHBOARD (ANFANGS VERSTECKT) */
         #admin-content {
             display: none;
@@ -90,9 +100,9 @@
             margin-bottom: 20px;
         }
 
-        .team-member-item {
+        .team-member-item, .wish-item {
             background: #121214;
-            padding: 10px 15px;
+            padding: 12px 15px;
             border-radius: 6px;
             border: 1px solid #29292e;
             margin-bottom: 8px;
@@ -152,6 +162,7 @@
             <div style="margin-bottom: 20px;">
                 <input type="text" id="team-name" class="input-field" placeholder="Name des Team-Mitglieds">
                 <input type="text" id="team-role" class="input-field" placeholder="Rolle (z. B. Moderator, Inhaber, DJ)">
+                <input type="text" id="team-dept" class="input-field" placeholder="Bereich/Abteilung (optional)">
                 <button onclick="addTeamMember()" class="btn-action">Mitglied Hinzufügen ➕</button>
             </div>
 
@@ -159,6 +170,14 @@
             <h4 style="color:#a8a8b3; margin-bottom:10px;">Aktuelles Team:</h4>
             <div id="team-list">
                 <p style="color:#666;">Lade Teammitglieder...</p>
+            </div>
+        </div>
+
+        <!-- 3. MUSIKWÜNSCHE & GRÜßE -->
+        <div class="card">
+            <h3>💌 Eingegangene Wünsche & Grüße</h3>
+            <div id="wishes-list">
+                <p style="color:#666;">Lade Musikwünsche...</p>
             </div>
         </div>
 
@@ -192,8 +211,7 @@
                     document.getElementById('login-error').style.display = 'block';
                 }
             } catch (err) {
-                // Fallback für Tests ohne laufende Login-Route im Backend
-                if (username === "admin" && password === "admin123") {
+                if (username === "admin" && password === "katzi123") {
                     localStorage.setItem('adminLoggedIn', 'true');
                     showAdminContent();
                 } else {
@@ -205,7 +223,8 @@
         function showAdminContent() {
             document.getElementById('login-section').style.display = 'none';
             document.getElementById('admin-content').style.display = 'block';
-            loadAdminData(); // Daten abrufen
+            loadAdminData();
+            setInterval(loadAdminData, 5000); // Daten alle 5 Sekunden aktualisieren
         }
 
         function logout() {
@@ -219,10 +238,15 @@
                 const res = await fetch('/api/data');
                 const data = await res.json();
 
-                if (data.streamName) document.getElementById('new-stream-name').value = data.streamName;
-                if (data.currentTitle) document.getElementById('new-title').value = data.currentTitle;
+                if (data.streamName && !document.activeElement.id.includes('new-stream-name')) {
+                    document.getElementById('new-stream-name').value = data.streamName;
+                }
+                if (data.currentTitle && !document.activeElement.id.includes('new-title')) {
+                    document.getElementById('new-title').value = data.currentTitle;
+                }
 
                 renderTeamList(data.team || []);
+                renderWishesList(data.wishes || []);
             } catch (err) {
                 console.error("Fehler beim Laden:", err);
             }
@@ -231,12 +255,12 @@
         // 1. STREAM- & SONGTITEL SENDEN
         async function updateRadioInfo() {
             const streamName = document.getElementById('new-stream-name').value;
-            const title = document.getElementById('new-title').value;
+            const currentTitle = document.getElementById('new-title').value;
 
-            const res = await fetch('/api/update-title', {
+            const res = await fetch('/api/settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ streamName, title })
+                body: JSON.stringify({ streamName, currentTitle })
             });
 
             if (res.ok) {
@@ -250,22 +274,39 @@
         async function addTeamMember() {
             const name = document.getElementById('team-name').value;
             const role = document.getElementById('team-role').value;
+            const department = document.getElementById('team-dept').value;
 
             if (!name || !role) return alert("Bitte Name und Rolle ausfüllen!");
 
             const res = await fetch('/api/admin/team', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, role })
+                body: JSON.stringify({ name, role, department })
             });
 
             if (res.ok) {
                 alert("Mitglied hinzugefügt!");
                 document.getElementById('team-name').value = '';
                 document.getElementById('team-role').value = '';
-                loadAdminData(); // Liste neu laden
+                document.getElementById('team-dept').value = '';
+                loadAdminData();
             } else {
                 alert("Fehler beim Hinzufügen des Mitglieds.");
+            }
+        }
+
+        // TEAM-MITGLIED LÖSCHEN
+        async function deleteTeamMember(id) {
+            if (!confirm("Mitglied wirklich löschen?")) return;
+
+            const res = await fetch(`/api/admin/team/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                loadAdminData();
+            } else {
+                alert("Fehler beim Löschen.");
             }
         }
 
@@ -277,11 +318,33 @@
                 return;
             }
 
-            listUI.innerHTML = team.map((member, index) => `
+            listUI.innerHTML = team.map(member => `
                 <div class="team-member-item">
                     <div>
-                        <strong>${member.name}</strong> <span style="color:#a8a8b3; font-size:0.85rem;">(${member.role})</span>
+                        <strong>${member.name}</strong> 
+                        <span style="color:#a8a8b3; font-size:0.85rem;">(${member.role}${member.department ? ' - ' + member.department : ''})</span>
                     </div>
+                    <button class="btn-delete" onclick="deleteTeamMember(${member.id})">🗑️ Löschen</button>
+                </div>
+            `).join('');
+        }
+
+        // Zeigt Wünsche und Grüße an
+        function renderWishesList(wishes) {
+            const wishesUI = document.getElementById('wishes-list');
+            if (!wishes || wishes.length === 0) {
+                wishesUI.innerHTML = '<p style="color:#a8a8b3;">Keine neuen Wünsche oder Grüße vorhanden.</p>';
+                return;
+            }
+
+            wishesUI.innerHTML = wishes.map(w => `
+                <div class="wish-item" style="flex-direction: column; align-items: flex-start; gap: 5px;">
+                    <div style="display: flex; justify-content: space-between; width: 100%;">
+                        <strong style="color: #ff4757;">${w.type} von ${w.name}</strong>
+                        <small style="color: #a8a8b3;">${w.time || ''}</small>
+                    </div>
+                    ${w.song && w.song !== '-' ? `<div>🎵 <strong>Song:</strong> ${w.song}</div>` : ''}
+                    ${w.message ? `<div style="color: #ccc;">💬 "${w.message}"</div>` : ''}
                 </div>
             `).join('');
         }

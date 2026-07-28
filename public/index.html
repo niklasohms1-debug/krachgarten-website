@@ -34,10 +34,10 @@
         <div>
             <h1 id="stream-name" style="margin:0;">📻 KRACHGARTEN</h1>
             <p style="margin: 5px 0 0 0; color: #a8a8b3;">🔴 Live On Air</p>
-            <!-- SONGTITEL ANZEIGE WIEDER HINZUGEFÜGT -->
+            <!-- SONGTITEL ANZEIGE -->
             <p style="margin: 8px 0 0 0; font-size: 1.05rem;">
-              <p>🎵 Aktuell: <strong id="current-title" style="color: #04d361;">...</strong></p>
-
+                🎵 Aktuell: <strong id="current-title" style="color: #04d361;">Lade Titel...</strong>
+            </p>
         </div>
 
         <!-- HIER SITZT DEIN RADIO.CO EMBED PLAYER -->
@@ -96,6 +96,12 @@
                 const data = await res.json();
 
                 document.getElementById('stream-name').innerText = "📻 " + (data.streamName || "Radio");
+
+                // TITEL LIVE AKTUALISIEREN (Liest Werte aus Admin & DJ Panel)
+                const currentTitleUI = document.getElementById('current-title');
+                if (currentTitleUI) {
+                    currentTitleUI.innerText = data.currentTitle || "Kein Sendungstitel angegeben";
+                }
 
                 const scheduleUI = document.getElementById('schedule-container');
                 if (data.schedule) {

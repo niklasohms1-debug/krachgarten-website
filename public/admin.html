@@ -101,7 +101,11 @@
             <p style="color: #a8a8b3; font-size: 0.9rem; margin-bottom: 20px;">Melde dich an, um das Radio zu verwalten.</p>
             
             <form onsubmit="handleLogin(event)">
+                <!-- BENUTZERNAME EINGABEFELD -->
+                <input type="text" id="admin-user" class="input-field" placeholder="Benutzername" required>
+                
                 <input type="password" id="admin-pass" class="input-field" placeholder="Admin Passwort" required>
+                
                 <button type="submit" class="btn-login">Anmelden 🔓</button>
             </form>
             <p id="login-error" style="color: #ff4757; margin-top: 15px; display: none; font-size: 0.9rem;">Falsches Passwort!</p>

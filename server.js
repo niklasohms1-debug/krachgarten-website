@@ -170,4 +170,21 @@ app.listen(PORT, () => {
     console.log(`Radio-Website: http://localhost:${PORT}`);
     console.log(`DJ-Panel:      http://localhost:${PORT}/dj.html`);
     console.log(`Admin-Panel:   http://localhost:${PORT}/admin.html`);
+
+// 1. Hier legst du Benutzername und Passwort fest:
+const ADMIN_USER = "admin";
+const ADMIN_PASS = "katzi123"; // <--- DEIN PASSWORT
+
+// 2. API-Endpunkt für den Admin-Login
+app.post('/api/admin/login', (req, res) => {
+    const { username, password } = req.body;
+
+    // Prüfen, ob Benutzername UND Passwort übereinstimmen
+    if (username === ADMIN_USER && password === ADMIN_PASS) {
+        return res.json({ success: true, message: "Login erfolgreich!" });
+    } else {
+        return res.status(401).json({ success: false, message: "Zugangsdaten falsch!" });
+    }
+});
+    
 });

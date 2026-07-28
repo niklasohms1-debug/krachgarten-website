@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Radio Admin Panel</title>
+    <style>
+        body { font-family: sans-serif; background: #18181b; color: #fff; padding: 20px; max-width: 900px; margin: auto; }
+        
+        /* Admin Navigation */
+        .admin-nav { display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #27272a; padding-bottom: 10px; }
+        .admin-nav button { width: auto; padding: 10px 20px; background: #27272a; color: #fff; border: none; cursor: pointer; border-radius: 5px; font-weight: bold; }
+        .admin-nav button.active { background: #ff4757; }
+
+        .box { background: #27272a; padding: 20px; border-radius: 8px; margin-bottom: 25px; }
+        input, select, textarea, button { width: 100%; padding: 10px; margin-top: 8px; margin-bottom: 15px; border-radius: 5px; border: none; background: #09090b; color: white; box-sizing: border-box; }
+        .btn-red { background: #ff4757; font-weight: bold; cursor: pointer; }
+        .btn-red:hover { background: #ff6b81; }
+        
+        .member-row { display: flex; justify-content: space-between; align-items: center; background: #18181b; padding: 10px; border-radius: 5px; margin-bottom: 8px; }
+    </style>
+</head>
+<body>
+
+    <h1>🎛️ Radio Admin Panel</h1>
+
+    <!-- TABS / SEITEN-NAVIGATION -->
+    <div class="admin-nav">
+        <button id="tab-btn-main" class="active" onclick="switchTab('main')">⚙️ Allgemein & News</button>
+        <button id="tab-btn-team" onclick="switchTab('team')">👥 Team verwalten</button>
+    </div>
+
+    <!-- TAB 1: ALLGEMEIN & NEWS -->
+    <div id="tab-main">
+        <div class="box">
+            <h2>Stream & Sende-Titel ändern</h2>
+            <label>Radio Server Name</label>
+            <input type="text" id="admin-stream-name">
+            <label>Aktueller Titel / DJ Show</label>
+            <input type="text" id="admin-current-title">
+            <button class="btn-red" onclick="saveSettings()">Einstellungen Speichern</button>
+        </div>
+
+        <div class="box">
+            <h2>News-Artikel schreiben</h2>
+            <input type="text" id="news-title" placeholder="Titel des Artikels">
+            <textarea id="news-text" rows="3" placeholder="Inhalt..."></textarea>
+            <button class="btn-red" onclick="publishNews()">Artikel Veröffentlichen 🚀</button>
+        </div>
+    </div>
+
+    <!-- TAB 2: TEAM VERWALTUNG -->
+    <div id="tab-team" style="display: none;">
+        <div class="box">
+            <h2>Neues Teammitglied hinzufügen</h2>
+            <label>Name</label>
+            <input type="text" id="team-name" placeholder="z. B. Niklas Ohms">
+            
+            <label>Aufgabe / Funktion (wird im Button gezeigt)</label>
+            <input type="text" id="team-role" placeholder="z. B. Gründer">
+            
+            <label>Abteilung</label>
+            <select id="team-dept">
+                <option value="Admins">Admins</option>
+                <option value="DJs">DJs</option>
+                <option value="Redakteure">Redakteure</option>
+            </select>
+
+            <button class="btn-red" onclick="addTeamMember()">Mitglied Hinzufügen ➕</button>
+        </div>
+
+        <div class="box">
+            <h2>Aktuelle Teammitglieder</h2>
+            <div id="team-list"></div>
+        </div>
+    </div>
+
+    <script>
+        const adminPass = "admin123"; // Dein Admin-Passwort
+
+        function switchTab(tab) {
+            document.getElementById('tab-main').style.display = tab === 'main' ? 'block' : 'none';
+            document.getElementById('tab-team').style.display = tab === 'team' ? 'block' : 'none';
+            document.getElementById('tab-btn-main').classList.toggle('active', tab === 'main');
+            document.getElementById('tab-btn-team').classList.toggle('active', tab === 'team');
+        }
+
+        async function loadAdminData() {
+            const res = await fetch('/api/data');
+            const data = await res.json();
+            document.getElementById('admin-stream-name').value = data.streamName;
+            document.getElementById('admin-current-title').value = data.currentTitle;
+
+            // Teamliste rendern
+            const teamList = document.getElementById('team-list');
+            const team = data.team || [];
+            
+            teamList.innerHTML = team.map(m => `
+                <div class="member-row">
+                    <div>
+                        <strong>${m.name}</strong> (${m.role}) - <em style="color:#ff4757;">${m.department}</em>
+                    </div>
+                    <button onclick="deleteMember(${m.id})" style="width:auto; margin:0; background:#dc2626;" class="btn-red">Löschen</button>
+                </div>
+            `).join('');
+        }
+
+        async function addTeamMember() {
+            const name = document.getElementById('team-name').value;
+            const role = document.getElementById('team-role').value;
+            const department = document.getElementById('team-dept').value;
+
+            if(!name || !role) return alert("Bitte Name und Aufgabe ausfüllen!");
+
+            await fetch('/api/admin/team', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: adminPass, name, role, department })
+            });
+
+            document.getElementById('team-name').value = '';
+            document.getElementById('team-role').value = '';
+            loadAdminData();
+            alert("Mitglied hinzugefügt!");
+        }
+
+        async function deleteMember(id) {
+            if(!confirm("Mitglied wirklich löschen?")) return;
+            await fetch(`/api/admin/team/${id}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: adminPass })
+            });
+            loadAdminData();
+        }
+
+        async function saveSettings() {
+            const streamName = document.getElementById('admin-stream-name').value;
+            const currentTitle = document.getElementById('admin-current-title').value;
+            await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ streamName, currentTitle })
+            });
+            alert('Einstellungen gespeichert!');
+        }
+
+        async function publishNews() {
+            const title = document.getElementById('news-title').value;
+            const text = document.getElementById('news-text').value;
+            await fetch('/api/news', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, text })
+            });
+            alert('Artikel veröffentlicht!');
+        }
+
+        loadAdminData();
+    </script>
+</body>
+</html>

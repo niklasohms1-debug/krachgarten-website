@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Radio DJ Panel</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #121214; color: #fff; padding: 20px; max-width: 900px; margin: auto; }
+        .box { background: #202024; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #29292e; }
+        input, button { width: 100%; padding: 10px; margin-top: 8px; margin-bottom: 12px; border-radius: 5px; border: none; background: #121214; color: white; box-sizing: border-box; }
+        button { background: #04d361; font-weight: bold; cursor: pointer; color: #000; }
+        button:hover { background: #00e66b; }
+        .login-overlay { background: #202024; padding: 30px; border-radius: 8px; max-width: 400px; margin: 100px auto; text-align: center; border: 1px solid #29292e; }
+        .wish-card { background: #121214; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #04d361; }
+    </style>
+</head>
+<body>
+
+    <!-- LOGIN MASK -->
+    <div id="login-section" class="login-overlay">
+        <h2>🎧 DJ Studio Login</h2>
+        <input type="password" id="dj-password" placeholder="DJ Passwort eingeben">
+        <button onclick="loginDJ()">Einloggen</button>
+    </div>
+
+    <!-- DJ DASHBOARD (VERSTECKT BIS LOGIN) -->
+    <div id="dj-dashboard" style="display: none;">
+        <h1>🎧 DJ Studio Panel</h1>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            
+            <!-- Sendung benennen -->
+            <div class="box">
+                <h3>🎙️ Aktuelle Sendung benennen</h3>
+                <label>Sendungstitel / Motto</label>
+                <input type="text" id="show-title" placeholder="z. B. DJ Alex - Friday Night Mix">
+                <button onclick="updateShowTitle()">Titel Aktualisieren</button>
+            </div>
+
+            <!-- Sendeplan Eintragen -->
+            <div class="box">
+                <h3>📅 In Sendeplan eintragen</h3>
+                <label>Uhrzeit</label>
+                <input type="text" id="sched-time" placeholder="z. B. 20:00 - 22:00">
+                <label>Sendungsname</label>
+                <input type="text" id="sched-show" placeholder="z. B. Electro Beats">
+                <label>Dein DJ Name</label>
+                <input type="text" id="sched-dj" placeholder="z. B. DJ Max">
+                <button onclick="addSchedule()">Sendeplatz Buchen</button>
+            </div>
+
+        </div>
+
+        <!-- Live Grüße & Wünsche -->
+        <div class="box">
+            <h3>💌 Live Grüße & Songwünsche (Auto-Refresh)</h3>
+            <div id="wishes-list" style="max-height: 400px; overflow-y: auto; margin-top: 15px;"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentPassword = '';
+
+        async function loginDJ() {
+            const pass = document.getElementById('dj-password').value;
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: pass, role: 'dj' })
+            });
+
+            if (res.ok) {
+                currentPassword = pass;
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('dj-dashboard').style.display = 'block';
+                loadWishes();
+                setInterval(loadWishes, 5000); // Wünsche alle 5 Sek. neu laden
+            } else {
+                alert("Falsches DJ-Passwort!");
+            }
+        }
+
+        async function updateShowTitle() {
+            const currentTitle = document.getElementById('show-title').value;
+            await fetch('/api/dj/title', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: currentPassword, currentTitle })
+            });
+            alert("Sendungstitel geändert!");
+        }
+
+        async function addSchedule() {
+            const time = document.getElementById('sched-time').value;
+            const show = document.getElementById('sched-show').value;
+            const djName = document.getElementById('sched-dj').value;
+
+            await fetch('/api/dj/schedule', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ password: currentPassword, time, show, djName })
+            });
+            alert("Sendeplatz eingetragen!");
+            document.getElementById('sched-time').value = '';
+            document.getElementById('sched-show').value = '';
+        }
+
+   async function loadWishes() {
+    const res = await fetch('/api/data');
+    const data = await res.json();
+    const container = document.getElementById('wishes-list');
+
+    if (!data.wishes || data.wishes.length === 0) {
+        container.innerHTML = '<p style="color: #a8a8b3;">Noch keine Wünsche oder Grüße eingegangen.</p>';
+        return;
+    }
+
+    container.innerHTML = data.wishes.map(w => {
+        // Farbiges Label je nach Typ
+        let badgeColor = "#04d361"; // Grün für Musikwunsch
+        if (w.type === "Gruß") badgeColor = "#ffa500"; // Orange für reine Grüße
+        if (w.type === "Gruß & Wunsch") badgeColor = "#ff4757"; // Rot für beides
+
+        return `
+            <div class="wish-card" style="border-left: 4px solid ${badgeColor}; background: #121214; padding: 12px; margin-bottom: 10px; border-radius: 6px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <small style="color: ${badgeColor}; font-weight: bold; text-transform: uppercase;">[${w.time}] ${w.type || 'Musikwunsch'}</small>
+                    <small style="color: #a8a8b3;">Von: <strong>${w.name}</strong></small>
+                </div>
+                ${w.song && w.song !== "-" ? `<div style="font-weight: bold; margin-bottom: 4px;">🎵 Song: ${w.song}</div>` : ''}
+                ${w.message && w.message !== "Keine Nachricht" ? `<div style="color: #c4c4cc; font-style: italic;">💬 "${w.message}"</div>` : ''}
+            </div>
+        `;
+    }).join('');
+}
+
+    </script>
+</body>
+</html>

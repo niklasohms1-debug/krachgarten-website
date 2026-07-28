@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<!-- MENÜLEISTE OBEN -->
+<div style="display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: 0 auto 20px auto; background: #202024; padding: 15px 25px; border-radius: 8px; border: 1px solid #29292e;">
+    <h2 style="margin:0; color:#ff4757;">📻 Radio Dashboard</h2>
+    <div>
+        <a href="/" style="color:#ff4757; text-decoration:none; margin-left:20px; font-weight:bold;">Startseite</a>
+        <a href="/team.html" style="color:#a8a8b3; text-decoration:none; margin-left:20px; font-weight:bold;">Unser Team</a>
+    </div>
+</div>
+
+    <meta charset="UTF-8">
+    <title>Radio Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #121214; color: #e1e1e6; padding: 20px; }
+        .header { display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: auto; border-bottom: 1px solid #29292e; padding-bottom: 20px; }
+        .mini-player { background: #202024; padding: 15px; border-radius: 8px; text-align: right; }
+        .main { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; max-width: 1000px; margin: 20px auto; }
+        .card { background: #202024; padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #29292e; }
+        .time { color: #ff4757; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div>
+            <h1 id="stream-name">Lade Radio...</h1>
+            <p>🎵 Aktuell: <strong id="current-title" style="color: #04d361;">...</strong></p>
+        </div>
+        <div class="mini-player">
+            <audio controls autoplay src="https://s5.radio.co/s5d31fcd9d/listen"></audio>
+        </div>
+    </header>
+
+    <!-- HAUPTBEREICH -->
+    <main class="main">
+        
+        <!-- LINKS: NEWS FEED -->
+        <section>
+            <h2>News & Updates</h2>
+            <div id="news-container"></div>
+        </section>
+
+        <!-- RECHTS: SENDEPLAN & GRUß-/WUNSCHBOX -->
+        <aside>
+            <!-- Sendeplan Card -->
+            <div class="card">
+                <h3>📅 Sendeplan</h3>
+                <ul id="schedule-container" style="list-style: none; padding: 0; margin-top: 10px;"></ul>
+            </div>
+
+            <!-- GRUß- & WUNSCHBOX -->
+            <div class="card">
+                <h3>💌 Gruß- & Wunschbox</h3>
+                <p style="font-size: 0.85em; color: #a8a8b3; margin-bottom: 12px;">Sende dem DJ eine Nachricht!</p>
+                
+                <div id="wish-form">
+                    <!-- DROPDOWN -->
+                    <select id="w-type" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box; background: #121214; border: 1px solid #29292e; color: #fff; border-radius: 4px;">
+                        <option value="Musikwunsch">🎵 Musikwunsch</option>
+                        <option value="Gruß">💌 Gruß</option>
+                        <option value="Gruß & Wunsch">🎉 Gruß & Musikwunsch</option>
+                    </select>
+
+                    <input type="text" id="w-name" placeholder="Dein Name" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box; background: #121214; border: 1px solid #29292e; color: #fff; border-radius: 4px;">
+                    
+                    <input type="text" id="w-song" placeholder="Songwunsch (optional bei reiner Grußbotschaft)" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box; background: #121214; border: 1px solid #29292e; color: #fff; border-radius: 4px;">
+                    
+                    <textarea id="w-msg" placeholder="Deine Grußnachricht..." rows="3" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box; background: #121214; border: 1px solid #29292e; color: #fff; border-radius: 4px; resize: vertical;"></textarea>
+                    
+                    <button onclick="sendWish()" style="width: 100%; padding: 10px; background: #ff4757; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">Absenden 🚀</button>
+                </div>
+            </div>
+        </aside>
+
+    </main>
+
+    <!-- JAVASCRIPT GANZ UNTEN -->
+    <script>
+        async function loadHomepageData() {
+            const res = await fetch('/api/data');
+            const data = await res.json();
+
+            document.getElementById('stream-name').innerText = "📻 " + data.streamName;
+            document.getElementById('current-title').innerText = data.currentTitle;
+
+            const scheduleUI = document.getElementById('schedule-container');
+            scheduleUI.innerHTML = data.schedule.map(item => `
+                <li style="margin-bottom: 8px;">
+                    <span style="color:#ff4757; font-weight:bold;">${item.time}</span><br>${item.show}
+                </li>
+            `).join('');
+
+            const newsUI = document.getElementById('news-container');
+            newsUI.innerHTML = data.news.map(art => `
+                <div class="card">
+                    <small style="color: #ff4757;">${art.date}</small>
+                    <h3 style="margin: 5px 0;">${art.title}</h3>
+                    <p style="color: #a8a8b3;">${art.text}</p>
+                </div>
+            `).join('');
+        }
+
+        async function sendWish() {
+            const type = document.getElementById('w-type').value;
+            const name = document.getElementById('w-name').value;
+            const song = document.getElementById('w-song').value;
+            const message = document.getElementById('w-msg').value;
+
+            // 1. Name muss immer da sein
+            if (!name) {
+                return alert("Bitte gib deinen Namen an!");
+            }
+
+            // 2. Song ist NUR Pflicht, wenn "Musikwunsch" oder "Gruß & Wunsch" gewählt ist
+            if (type !== "Gruß" && !song) {
+                return alert("Bitte trage deinen Songwunsch ein!");
+            }
+
+            const res = await fetch('/api/wish', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, name, song, message })
+            });
+
+            if (res.ok) {
+                alert("Danke! Deine Nachricht wurde direkt ins DJ-Studio gesendet! 🎧");
+                document.getElementById('w-name').value = '';
+                document.getElementById('w-song').value = '';
+                document.getElementById('w-msg').value = '';
+            }
+        }
+
+        loadHomepageData();
+        setInterval(loadHomepageData, 3000);
+    </script>
+</body>
+</html>

@@ -6,16 +6,62 @@
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #121214; color: #e1e1e6; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: auto; border-bottom: 1px solid #29292e; padding-bottom: 20px; }
-        .mini-player { background: #202024; padding: 15px; border-radius: 8px; text-align: right; }
         .main { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; max-width: 1000px; margin: 20px auto; }
         .card { background: #202024; padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #29292e; }
-        .time { color: #ff4757; font-weight: bold; }
 
-        /* CONTAINER FÜR DAS RADIO.CO OVERLAY */
-        .request-card-container {
-            margin-bottom: 15px;
+        /* KOMBINIERTES WEBPLAYER OVERLAY */
+        .player-overlay {
+            background: linear-gradient(135deg, #1e1e24 0%, #2a2a32 100%);
+            border: 1px solid #ff4757;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 380px;
+        }
+
+        .player-top {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .cover-box {
+            width: 75px;
+            height: 75px;
+            background: #121214;
+            border-radius: 8px;
             overflow: hidden;
-            border-radius: 16px;
+            flex-shrink: 0;
+            border: 1px solid #333;
+        }
+
+        .cover-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .track-info h4 {
+            margin: 0 0 4px 0;
+            font-size: 1.05rem;
+            color: #fff;
+            line-height: 1.2;
+        }
+
+        .track-info p {
+            margin: 0;
+            font-size: 0.88rem;
+            color: #04d361;
+            font-weight: 600;
+        }
+
+        .audio-controls audio {
+            width: 100%;
+            height: 40px;
+            border-radius: 20px;
         }
     </style>
 </head>
@@ -30,13 +76,28 @@
         </div>
     </div>
 
+    <!-- HEADER MIT INTEGRATED WEBPLAYER OVERLAY -->
     <header class="header">
         <div>
             <h1 id="stream-name">Lade Radio...</h1>
-            <p>🎵 Aktuell: <strong id="current-title" style="color: #04d361;">...</strong></p>
+            <p style="color: #a8a8b3;">Live On Air</p>
         </div>
-        <div class="mini-player">
-            <audio controls autoplay src="https://s5.radio.co/s5d31fcd9d/listen"></audio>
+
+        <!-- ZUSAMMENGEFÜHRTES WEBPLAYER OVERLAY -->
+        <div class="player-overlay">
+            <div class="player-top">
+                <div class="cover-box">
+                    <img id="player-cover" src="https://via.placeholder.com/75/121214/ffffff?text=Radio" alt="Cover">
+                </div>
+                <div class="track-info">
+                    <small style="color: #ff4757; text-transform: uppercase; font-size: 0.7rem; font-weight: bold;">Jetzt Läuft</small>
+                    <h4 id="current-title">Lade Songtitel...</h4>
+                    <p id="current-artist">Radio Live Stream</p>
+                </div>
+            </div>
+            <div class="audio-controls">
+                <audio id="audio-player" controls autoplay src="https://s5.radio.co/s5d31fcd9d/listen"></audio>
+            </div>
         </div>
     </header>
 
@@ -49,11 +110,11 @@
             <div id="news-container"></div>
         </section>
 
-        <!-- RECHTS: OVERLAY, SENDEPLAN & GRUß-/WUNSCHBOX -->
+        <!-- RECHTS: SENDEPLAN, RADIO.CO & WUNSCHBOX -->
         <aside>
 
-            <!-- RADIO.CO EMBEDDED OVERLAY -->
-            <div class="request-card-container">
+            <!-- RADIO.CO REQUEST WIDGET -->
+            <div style="margin-bottom: 15px; border-radius: 12px; overflow: hidden;">
                 <script src="https://embed.radio.co/request/w3f14e25.js"></script>
             </div>
 
@@ -69,7 +130,6 @@
                 <p style="font-size: 0.85em; color: #a8a8b3; margin-bottom: 12px;">Sende dem DJ eine Nachricht!</p>
                 
                 <div id="wish-form">
-                    <!-- DROPDOWN -->
                     <select id="w-type" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box; background: #121214; border: 1px solid #29292e; color: #fff; border-radius: 4px;">
                         <option value="Musikwunsch">🎵 Musikwunsch</option>
                         <option value="Gruß">💌 Gruß</option>
@@ -77,9 +137,7 @@
                     </select>
 
                     <input type="text" id="w-name" placeholder="Dein Name" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box; background: #121214; border: 1px solid #29292e; color: #fff; border-radius: 4px;">
-                    
                     <input type="text" id="w-song" placeholder="Songwunsch (optional bei reiner Grußbotschaft)" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box; background: #121214; border: 1px solid #29292e; color: #fff; border-radius: 4px;">
-                    
                     <textarea id="w-msg" placeholder="Deine Grußnachricht..." rows="3" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box; background: #121214; border: 1px solid #29292e; color: #fff; border-radius: 4px; resize: vertical;"></textarea>
                     
                     <button onclick="sendWish()" style="width: 100%; padding: 10px; background: #ff4757; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">Absenden 🚀</button>
@@ -92,27 +150,43 @@
     <!-- JAVASCRIPT GANZ UNTEN -->
     <script>
         async function loadHomepageData() {
-            const res = await fetch('/api/data');
-            const data = await res.json();
+            try {
+                const res = await fetch('/api/data');
+                const data = await res.json();
 
-            document.getElementById('stream-name').innerText = "📻 " + data.streamName;
-            document.getElementById('current-title').innerText = data.currentTitle;
+                document.getElementById('stream-name').innerText = "📻 " + (data.streamName || "Radio");
+                document.getElementById('current-title').innerText = data.currentTitle || "Live Stream";
+                
+                if (data.currentArtist) {
+                    document.getElementById('current-artist').innerText = data.currentArtist;
+                }
+                
+                if (data.coverUrl) {
+                    document.getElementById('player-cover').src = data.coverUrl;
+                }
 
-            const scheduleUI = document.getElementById('schedule-container');
-            scheduleUI.innerHTML = data.schedule.map(item => `
-                <li style="margin-bottom: 8px;">
-                    <span style="color:#ff4757; font-weight:bold;">${item.time}</span><br>${item.show}
-                </li>
-            `).join('');
+                const scheduleUI = document.getElementById('schedule-container');
+                if (data.schedule) {
+                    scheduleUI.innerHTML = data.schedule.map(item => `
+                        <li style="margin-bottom: 8px;">
+                            <span style="color:#ff4757; font-weight:bold;">${item.time}</span><br>${item.show}
+                        </li>
+                    `).join('');
+                }
 
-            const newsUI = document.getElementById('news-container');
-            newsUI.innerHTML = data.news.map(art => `
-                <div class="card">
-                    <small style="color: #ff4757;">${art.date}</small>
-                    <h3 style="margin: 5px 0;">${art.title}</h3>
-                    <p style="color: #a8a8b3;">${art.text}</p>
-                </div>
-            `).join('');
+                const newsUI = document.getElementById('news-container');
+                if (data.news) {
+                    newsUI.innerHTML = data.news.map(art => `
+                        <div class="card">
+                            <small style="color: #ff4757;">${art.date}</small>
+                            <h3 style="margin: 5px 0;">${art.title}</h3>
+                            <p style="color: #a8a8b3;">${art.text}</p>
+                        </div>
+                    `).join('');
+                }
+            } catch (err) {
+                console.error("Fehler beim Laden der Daten:", err);
+            }
         }
 
         async function sendWish() {
@@ -121,15 +195,8 @@
             const song = document.getElementById('w-song').value;
             const message = document.getElementById('w-msg').value;
 
-            // 1. Name muss immer da sein
-            if (!name) {
-                return alert("Bitte gib deinen Namen an!");
-            }
-
-            // 2. Song ist NUR Pflicht, wenn "Musikwunsch" oder "Gruß & Wunsch" gewählt ist
-            if (type !== "Gruß" && !song) {
-                return alert("Bitte trage deinen Songwunsch ein!");
-            }
+            if (!name) return alert("Bitte gib deinen Namen an!");
+            if (type !== "Gruß" && !song) return alert("Bitte trage deinen Songwunsch ein!");
 
             const res = await fetch('/api/wish', {
                 method: 'POST',

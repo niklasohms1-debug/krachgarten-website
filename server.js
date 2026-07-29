@@ -25,7 +25,7 @@ const radioSchema = new mongoose.Schema({
     currentTitle: { type: String, default: "DJ AIR - 24/7 NON STOP" },
     passwords: {
         type: Object,
-        default: { admin: "admin123", dj: "dj123" }
+        default: { admin: "admin123", dj: "dj123", editor: "news123" }
     },
     schedule: { type: Array, default: [] },
     wishes: { type: Array, default: [] },
@@ -42,7 +42,7 @@ async function getOrInitData() {
         data = await RadioData.create({
             streamName: "KrachGarten",
             currentTitle: "DJ AIR - 24/7 NON STOP",
-            passwords: { admin: "admin123", dj: "dj123" },
+            passwords: { admin: "admin123", dj: "dj123", editor: "news123" },
             schedule: [],
             wishes: [],
             news: [],
@@ -64,6 +64,43 @@ function getGermanDateTime() {
 }
 
 // ==========================================
+// LOGIN ROUTEN (ADMIN, DJ, REDAKTEUR)
+// ==========================================
+
+app.post('/api/admin/login', async (req, res) => {
+    const { username, password } = req.body;
+    const data = await getOrInitData();
+    const pass = data.passwords?.admin || "admin123";
+    
+    if (username === "admin" && password === pass) {
+        return res.json({ success: true });
+    }
+    res.status(401).json({ error: "Zugangsdaten falsch" });
+});
+
+app.post('/api/dj/login', async (req, res) => {
+    const { username, password } = req.body;
+    const data = await getOrInitData();
+    const pass = data.passwords?.dj || "dj123";
+    
+    if ((username === "dj" || username === "djstudio") && password === pass) {
+        return res.json({ success: true });
+    }
+    res.status(401).json({ error: "Zugangsdaten falsch" });
+});
+
+app.post('/api/editor/login', async (req, res) => {
+    const { username, password } = req.body;
+    const data = await getOrInitData();
+    const pass = data.passwords?.editor || "news123";
+    
+    if ((username === "redakteur" || username === "editor") && password === pass) {
+        return res.json({ success: true });
+    }
+    res.status(401).json({ error: "Zugangsdaten falsch" });
+});
+
+// ==========================================
 // ALLGEMEINE ROUTEN & ADMIN-ROUTEN
 // ==========================================
 
@@ -77,8 +114,8 @@ app.get(['/api/data', '/api/admin/data'], async (req, res) => {
     }
 });
 
-// Daten komplett speichern
-app.post(['/api/data', '/api/admin/data'], async (req, res) => {
+// Daten komplett speichern / Radio-Settings ändern
+app.post(['/api/data', '/api/admin/data', '/api/settings', '/api/dj/title'], async (req, res) => {
     try {
         let data = await getOrInitData();
         Object.assign(data, req.body);
@@ -121,6 +158,18 @@ app.post(['/api/team', '/api/admin/team'], async (req, res) => {
         res.json({ success: true, team: data.team });
     } catch (err) {
         res.status(500).json({ error: "Fehler beim Speichern des Teams" });
+    }
+});
+
+app.delete('/api/admin/team/:id', async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        data.team = data.team.filter(m => String(m.id) !== String(req.params.id));
+        data.markModified('team');
+        await data.save();
+        res.json({ success: true, team: data.team });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Löschen des Teammitglieds" });
     }
 });
 
@@ -204,35 +253,28 @@ function isShowExpired(entry) {
         const daysOfWeek = ['sonntag', 'montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag', 'samstag'];
         const currentDayIdx = now.getDay();
 
-        // Falls ein zukünftiger Wochentag oder "morgen" eingetragen ist -> NICHT LÖSCHEN!
         if (dayInput === 'morgen') {
             return false;
         }
         
         if (daysOfWeek.includes(dayInput)) {
             const entryDayIdx = daysOfWeek.indexOf(dayInput);
-            // Wenn der Tag in der Zukunft liegt (z. B. heute Mittwoch (3), Sendung Freitag (5))
-            if (entryDayIdx > currentDayIdx) {
-                return false;
-            }
-            // Wenn der Tag diese Woche schon vorbei ist (z. B. heute Mittwoch (3), Sendung Montag (1))
-            if (entryDayIdx < currentDayIdx) {
-                return true; 
-            }
+            if (entryDayIdx > currentDayIdx) return false;
+            if (entryDayIdx < currentDayIdx) return true; 
         }
 
         // 2. Konkretes Datum prüfen (z. B. "30.07." oder "30.07.2026")
         const dateMatch = dayInput.match(/(\d{1,2})\.(\d{1,2})\.?(\d{2,4})?/);
         if (dateMatch) {
             const day = parseInt(dateMatch[1], 10);
-            const month = parseInt(dateMatch[2], 10) - 1; // Monate 0-11 in JS
+            const month = parseInt(dateMatch[2], 10) - 1;
             const year = dateMatch[3] ? (dateMatch[3].length === 2 ? 2000 + parseInt(dateMatch[3], 10) : parseInt(dateMatch[3], 10)) : now.getFullYear();
 
             const entryDate = new Date(year, month, day);
             const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-            if (entryDate > todayDate) return false; // Liegt in der Zukunft -> behalten
-            if (entryDate < todayDate) return true;  // Liegt in der Vergangenheit -> löschen
+            if (entryDate > todayDate) return false;
+            if (entryDate < todayDate) return true; 
         }
 
         // 3. Nur wenn die Sendung HEUTE ist: Enduhrzeit prüfen
@@ -245,7 +287,6 @@ function isShowExpired(entry) {
         const showEndTime = new Date(now);
         showEndTime.setHours(hours, minutes, 0, 0);
 
-        // Sendung ist abgelaufen, wenn die aktuelle Zeit NACH der Endzeit liegt
         return now > showEndTime;
 
     } catch (e) {
@@ -272,7 +313,7 @@ async function cleanupExpiredSchedule() {
     }
 }
 
-// Prüft alle 60 Sekunden
+// Startet den Auto-Cleaner alle 60 Sekunden im Hintergrund
 setInterval(cleanupExpiredSchedule, 60 * 1000);
 
 // Sendeplan abrufen (führt vorher Cleanup aus)
@@ -313,111 +354,7 @@ app.post(schedulePaths, async (req, res) => {
     }
 });
 
-// Sendeplan-Eintrag löschen
-app.delete(schedulePaths.map(p => `${p}/:id`), async (req, res) => {
-    try {
-        const data = await getOrInitData();
-        const entryId = req.params.id;
-        
-        if (Array.isArray(data.schedule)) {
-            data.schedule = data.schedule.filter(s => String(s.id) !== String(entryId));
-            data.markModified('schedule');
-            await data.save();
-        }
-        
-        res.json({ success: true, schedule: data.schedule });
-    } catch (err) {
-        res.status(500).json({ error: "Fehler beim Löschen aus dem Sendeplan" });
-    }
-});
-
-// Hilfsfunktion: Prüft, ob eine Sendung abgelaufen ist
-function isShowExpired(entry) {
-    if (!entry.endTime && !entry.time) return false;
-
-    try {
-        const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Berlin" }));
-        
-        // Holt die Enduhrzeit (z.B. aus "19:00" oder "18:00 - 19:00")
-        let endTimeStr = entry.endTime || entry.time.split('-')[1] || entry.time;
-        endTimeStr = endTimeStr.trim();
-
-        const [hours, minutes] = endTimeStr.split(':').map(Number);
-        
-        if (isNaN(hours) || isNaN(minutes)) return false;
-
-        const showEndTime = new Date(now);
-        showEndTime.setHours(hours, minutes, 0, 0);
-
-        // Falls die Endzeit kleiner ist als die aktuelle Zeit -> abgelaufen!
-        return now > showEndTime;
-    } catch (e) {
-        return false;
-    }
-}
-
-// Hilfsfunktion: Säubert abgelaufene Sendungen aus der Datenbank
-async function cleanupExpiredSchedule() {
-    try {
-        const data = await getOrInitData();
-        if (Array.isArray(data.schedule) && data.schedule.length > 0) {
-            const initialLength = data.schedule.length;
-            data.schedule = data.schedule.filter(entry => !isShowExpired(entry));
-            
-            // Nur speichern, wenn wirklich etwas gelöscht wurde
-            if (data.schedule.length !== initialLength) {
-                data.markModified('schedule');
-                await data.save();
-                console.log("🧹 Abgelaufene Sendungen automatisch aus dem Sendeplan entfernt.");
-            }
-        }
-    } catch (err) {
-        console.error("Fehler bei Sendeplan-Bereinigung:", err);
-    }
-}
-
-// Startet den Auto-Cleaner alle 60 Sekunden im Hintergrund
-setInterval(cleanupExpiredSchedule, 60 * 1000);
-
-// Sendeplan abrufen (führt vorher den Auto-Cleanup aus)
-app.get(schedulePaths, async (req, res) => {
-    try {
-        await cleanupExpiredSchedule();
-        const data = await getOrInitData();
-        res.json(data.schedule || []);
-    } catch (err) {
-        res.status(500).json({ error: "Fehler beim Laden des Sendeplans" });
-    }
-});
-
-// Sendeplan speichern / hinzufügen
-app.post(schedulePaths, async (req, res) => {
-    try {
-        const data = await getOrInitData();
-        if (!Array.isArray(data.schedule)) data.schedule = [];
-
-        if (Array.isArray(req.body)) {
-            data.schedule = req.body;
-        } else if (req.body && typeof req.body === 'object') {
-            const djName = req.body.dj || req.body.name || req.body.artist || "DJ";
-            const newEntry = {
-                id: Date.now(),
-                ...req.body,
-                dj: djName,
-                name: djName
-            };
-            data.schedule.push(newEntry);
-        }
-
-        data.markModified('schedule');
-        await data.save();
-        res.json({ success: true, schedule: data.schedule });
-    } catch (err) {
-        res.status(500).json({ error: "Fehler beim Speichern des Sendeplans" });
-    }
-});
-
-// Einzelne Sendung manuell im Admin-Panel löschen
+// Einzelne Sendung löschen
 app.delete(schedulePaths.map(p => `${p}/:id`), async (req, res) => {
     try {
         const data = await getOrInitData();
@@ -432,107 +369,6 @@ app.delete(schedulePaths.map(p => `${p}/:id`), async (req, res) => {
         res.json({ success: true, schedule: data.schedule });
     } catch (err) {
         res.status(500).json({ error: "Fehler beim Löschen der Sendung" });
-    }
-});
-
-// Hilfsfunktion: Stellt sicher, dass das DJ-Feld immer gefüllt ist
-function formatScheduleEntry(entry) {
-    const djName = entry.dj || entry.name || entry.artist || entry.moderator || "Gast-DJ";
-    return {
-        id: entry.id || Date.now(),
-        ...entry,
-        dj: djName,
-        name: djName,
-        artist: djName
-    };
-}
-
-// Sendeplan abrufen
-app.get(schedulePaths, async (req, res) => {
-    try {
-        const data = await getOrInitData();
-        res.json(data.schedule || []);
-    } catch (err) {
-        res.status(500).json({ error: "Fehler beim Laden des Sendeplans" });
-    }
-});
-
-// Sendeplan speichern / hinzufügen
-app.post(schedulePaths, async (req, res) => {
-    try {
-        const data = await getOrInitData();
-        
-        if (!Array.isArray(data.schedule)) {
-            data.schedule = [];
-        }
-
-        if (Array.isArray(req.body)) {
-            // Falls das Frontend ein ganzes Array schickt
-            data.schedule = req.body.map(formatScheduleEntry);
-        } else if (req.body && typeof req.body === 'object') {
-            // Einzelnen Eintrag hinzufügen
-            const newEntry = formatScheduleEntry(req.body);
-            data.schedule.push(newEntry);
-        }
-
-        data.markModified('schedule');
-        await data.save();
-        
-        res.json({ success: true, schedule: data.schedule });
-    } catch (err) {
-        console.error("Sendeplan Fehler:", err);
-        res.status(500).json({ error: "Fehler beim Speichern des Sendeplans" });
-    }
-});
-
-// Sendeplan-Eintrag löschen
-app.delete(schedulePaths.map(p => `${p}/:id`), async (req, res) => {
-    try {
-        const data = await getOrInitData();
-        const entryId = req.params.id;
-        
-        if (Array.isArray(data.schedule)) {
-            data.schedule = data.schedule.filter(s => String(s.id) !== String(entryId));
-            data.markModified('schedule');
-            await data.save();
-        }
-        
-        res.json({ success: true, schedule: data.schedule });
-    } catch (err) {
-        res.status(500).json({ error: "Fehler beim Löschen aus dem Sendeplan" });
-    }
-});
-app.delete(schedulePaths.map(p => `${p}/:id`), async (req, res) => {
-    try {
-        const data = await getOrInitData();
-        const entryId = req.params.id;
-        
-        if (Array.isArray(data.schedule)) {
-            data.schedule = data.schedule.filter(s => String(s.id) !== String(entryId));
-            data.markModified('schedule');
-            await data.save();
-        }
-        
-        res.json({ success: true, schedule: data.schedule });
-    } catch (err) {
-        res.status(500).json({ error: "Fehler beim Löschen aus dem Sendeplan" });
-    }
-});
-
-app.delete(['/api/schedule/:id', '/api/admin/schedule/:id'], async (req, res) => {
-    try {
-        const data = await getOrInitData();
-        const entryId = req.params.id;
-        
-        if (Array.isArray(data.schedule)) {
-            data.schedule = data.schedule.filter(s => String(s.id) !== String(entryId));
-            data.markModified('schedule');
-            await data.save();
-        }
-        
-        res.json({ success: true, schedule: data.schedule });
-    } catch (err) {
-        res.status(500).json({ error: "Fehler beim Löschen aus dem Sendeplan" });
     }
 });
 

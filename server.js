@@ -112,7 +112,7 @@ app.post(['/api/team', '/api/admin/team'], async (req, res) => {
 });
 
 // ==========================================
-// NEWS ROUTEN (/api/news UND /api/admin/news)
+// NEWS ROUTEN (MIT AUTOMATISCHEM DATUM & UHRZEIT)
 // ==========================================
 
 app.get(['/api/news', '/api/admin/news'], async (req, res) => {
@@ -127,17 +127,58 @@ app.get(['/api/news', '/api/admin/news'], async (req, res) => {
 app.post(['/api/news', '/api/admin/news'], async (req, res) => {
     try {
         const data = await getOrInitData();
+        
         if (Array.isArray(req.body)) {
-            data.news = req.body;
+            // Falls die komplette News-Liste aktualisiert wird
+            data.news = req.body.map(item => {
+                const now = new Date();
+                const currentDate = now.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+                const currentTime = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                
+                return {
+                    ...item,
+                    date: item.date || `${currentDate} um ${currentTime} Uhr`
+                };
+            });
         } else {
-            const newEntry = { id: Date.now(), ...req.body };
+            // Einzelne neue News erstellen
+            const now = new Date();
+            const currentDate = now.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+            const currentTime = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
+            const newEntry = {
+                id: Date.now(),
+                ...req.body,
+                // Nutzt das mitgeschickte Datum oder generiert: "29. Juli 2026 um 14:45 Uhr"
+                date: req.body.date && req.body.date !== "undefined" 
+                    ? req.body.date 
+                    : `${currentDate} um ${currentTime} Uhr`
+            };
+            
             data.news.unshift(newEntry);
         }
+        
         data.markModified('news');
         await data.save();
         res.json({ success: true, news: data.news });
     } catch (err) {
         res.status(500).json({ error: "Fehler beim Speichern der News" });
+    }
+});
+
+// Optional: News löschen (falls das Admin-Panel DELETE nutzt)
+app.delete(['/api/news/:id', '/api/admin/news/:id'], async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        const newsId = req.params.id;
+        
+        data.news = data.news.filter(n => n.id != newsId);
+        data.markModified('news');
+        await data.save();
+        
+        res.json({ success: true, news: data.news });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Löschen der News" });
     }
 });
 

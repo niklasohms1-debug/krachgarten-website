@@ -5,7 +5,7 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// JSON-Parsing & Statische Dateien
+// Middleware
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -33,7 +33,7 @@ const radioSchema = new mongoose.Schema({
 
 const RadioData = mongoose.model('RadioData', radioSchema);
 
-// Hilfsfunktion: Daten holen oder Startdaten anlegen
+// HILFSFUNKTION
 async function getOrInitData() {
     let data = await RadioData.findOne();
     if (!data) {
@@ -80,6 +80,36 @@ app.post('/api/data', async (req, res) => {
 });
 
 // ==========================================
+// TEAM ROUTEN (GET & POST)
+// ==========================================
+
+app.get('/api/team', async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        res.json(data.team || []);
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Laden des Teams" });
+    }
+});
+
+app.post('/api/team', async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        if (Array.isArray(req.body)) {
+            data.team = req.body;
+        } else {
+            const newMember = { id: Date.now(), ...req.body };
+            data.team.push(newMember);
+        }
+        data.markModified('team');
+        await data.save();
+        res.json({ success: true, team: data.team });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Speichern des Teams" });
+    }
+});
+
+// ==========================================
 // NEWS ROUTEN (GET & POST)
 // ==========================================
 
@@ -106,6 +136,35 @@ app.post('/api/news', async (req, res) => {
         res.json({ success: true, news: data.news });
     } catch (err) {
         res.status(500).json({ error: "Fehler beim Speichern der News" });
+    }
+});
+
+// ==========================================
+// SENDEPLAN ROUTEN (SCHEDULE)
+// ==========================================
+
+app.get('/api/schedule', async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        res.json(data.schedule || []);
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Laden des Sendeplans" });
+    }
+});
+
+app.post('/api/schedule', async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        if (Array.isArray(req.body)) {
+            data.schedule = req.body;
+        } else {
+            data.schedule.push({ id: Date.now(), ...req.body });
+        }
+        data.markModified('schedule');
+        await data.save();
+        res.json({ success: true, schedule: data.schedule });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Speichern des Sendeplans" });
     }
 });
 

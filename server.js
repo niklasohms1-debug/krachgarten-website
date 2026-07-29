@@ -182,7 +182,7 @@ app.delete(['/api/news/:id', '/api/admin/news/:id'], async (req, res) => {
 });
 
 // ==========================================
-// SENDEPLAN ROUTEN (MIT DJ-NAMEN FIX)
+// SENDEPLAN ROUTEN (MIT AUTO-LÖSCHUNG ABGELAUFENER SHOWS)
 // ==========================================
 
 const schedulePaths = [
@@ -190,6 +190,110 @@ const schedulePaths = [
     '/api/sendeplan', '/api/admin/sendeplan', '/api/dj/sendeplan',
     '/api/plan', '/api/admin/plan', '/api/dj/plan'
 ];
+
+// Hilfsfunktion: Prüft, ob eine Sendung abgelaufen ist
+function isShowExpired(entry) {
+    if (!entry.endTime && !entry.time) return false;
+
+    try {
+        const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Berlin" }));
+        
+        // Holt die Enduhrzeit (z.B. aus "19:00" oder "18:00 - 19:00")
+        let endTimeStr = entry.endTime || entry.time.split('-')[1] || entry.time;
+        endTimeStr = endTimeStr.trim();
+
+        const [hours, minutes] = endTimeStr.split(':').map(Number);
+        
+        if (isNaN(hours) || isNaN(minutes)) return false;
+
+        const showEndTime = new Date(now);
+        showEndTime.setHours(hours, minutes, 0, 0);
+
+        // Falls die Endzeit kleiner ist als die aktuelle Zeit -> abgelaufen!
+        return now > showEndTime;
+    } catch (e) {
+        return false;
+    }
+}
+
+// Hilfsfunktion: Säubert abgelaufene Sendungen aus der Datenbank
+async function cleanupExpiredSchedule() {
+    try {
+        const data = await getOrInitData();
+        if (Array.isArray(data.schedule) && data.schedule.length > 0) {
+            const initialLength = data.schedule.length;
+            data.schedule = data.schedule.filter(entry => !isShowExpired(entry));
+            
+            // Nur speichern, wenn wirklich etwas gelöscht wurde
+            if (data.schedule.length !== initialLength) {
+                data.markModified('schedule');
+                await data.save();
+                console.log("🧹 Abgelaufene Sendungen automatisch aus dem Sendeplan entfernt.");
+            }
+        }
+    } catch (err) {
+        console.error("Fehler bei Sendeplan-Bereinigung:", err);
+    }
+}
+
+// Startet den Auto-Cleaner alle 60 Sekunden im Hintergrund
+setInterval(cleanupExpiredSchedule, 60 * 1000);
+
+// Sendeplan abrufen (führt vorher den Auto-Cleanup aus)
+app.get(schedulePaths, async (req, res) => {
+    try {
+        await cleanupExpiredSchedule();
+        const data = await getOrInitData();
+        res.json(data.schedule || []);
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Laden des Sendeplans" });
+    }
+});
+
+// Sendeplan speichern / hinzufügen
+app.post(schedulePaths, async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        if (!Array.isArray(data.schedule)) data.schedule = [];
+
+        if (Array.isArray(req.body)) {
+            data.schedule = req.body;
+        } else if (req.body && typeof req.body === 'object') {
+            const djName = req.body.dj || req.body.name || req.body.artist || "DJ";
+            const newEntry = {
+                id: Date.now(),
+                ...req.body,
+                dj: djName,
+                name: djName
+            };
+            data.schedule.push(newEntry);
+        }
+
+        data.markModified('schedule');
+        await data.save();
+        res.json({ success: true, schedule: data.schedule });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Speichern des Sendeplans" });
+    }
+});
+
+// Einzelne Sendung manuell im Admin-Panel löschen
+app.delete(schedulePaths.map(p => `${p}/:id`), async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        const entryId = req.params.id;
+        
+        if (Array.isArray(data.schedule)) {
+            data.schedule = data.schedule.filter(s => String(s.id) !== String(entryId));
+            data.markModified('schedule');
+            await data.save();
+        }
+        
+        res.json({ success: true, schedule: data.schedule });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Löschen der Sendung" });
+    }
+});
 
 // Hilfsfunktion: Stellt sicher, dass das DJ-Feld immer gefüllt ist
 function formatScheduleEntry(entry) {

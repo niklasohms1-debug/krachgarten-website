@@ -2,150 +2,292 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Radio DJ Panel</title>
+    <title>DJ Panel - Studio</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #121214; color: #fff; padding: 20px; max-width: 900px; margin: auto; }
-        .box { background: #202024; padding: 20px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #29292e; }
-        input, button { width: 100%; padding: 10px; margin-top: 8px; margin-bottom: 12px; border-radius: 5px; border: none; background: #121214; color: white; box-sizing: border-box; }
-        button { background: #04d361; font-weight: bold; cursor: pointer; color: #000; }
-        button:hover { background: #00e66b; }
-        .login-overlay { background: #202024; padding: 30px; border-radius: 8px; max-width: 400px; margin: 100px auto; text-align: center; border: 1px solid #29292e; }
-        .wish-card { background: #121214; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #04d361; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #121214; 
+            color: #e1e1e6; 
+            padding: 20px; 
+            margin: 0;
+        }
+
+        /* LOGIN CONTAINER */
+        .login-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 70vh;
+        }
+
+        .login-card {
+            background: #202024;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #29292e;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .login-card h2 {
+            margin-top: 0;
+            color: #04d361;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 12px;
+            box-sizing: border-box;
+            background: #121214;
+            border: 1px solid #29292e;
+            color: #fff;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .btn-action {
+            width: 100%;
+            padding: 12px;
+            background: #04d361;
+            color: #121214;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        .btn-action:hover {
+            background: #03b853;
+        }
+
+        /* DJ DASHBOARD (ANFANGS VERSTECKT) */
+        #dj-content {
+            display: none;
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        .card { 
+            background: #202024; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-bottom: 15px; 
+            border: 1px solid #29292e; 
+        }
+
+        .nav-header {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: #202024; 
+            padding: 15px 25px; 
+            border-radius: 8px; 
+            border: 1px solid #29292e;
+            margin-bottom: 20px;
+        }
+
+        .wish-item {
+            background: #121214;
+            padding: 12px 15px;
+            border-radius: 6px;
+            border: 1px solid #29292e;
+            margin-bottom: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 5px;
+        }
     </style>
 </head>
 <body>
 
-   <!-- 1. LOGIN FENSTER FÜR DJS -->
+    <!-- 1. DJ LOGIN FENSTER -->
     <div id="login-section" class="login-wrapper">
         <div class="login-card">
             <h2>🎧 DJ Studio Login</h2>
             <p style="color: #a8a8b3; font-size: 0.9rem; margin-bottom: 20px;">Melde dich an, um Musikwünsche zu verwalten.</p>
             
-            <form onsubmit="handleLogin(event)">
-                <!-- BENUTZERNAME -->
-                <input type="text" id="dj-user" class="input-field" placeholder="DJ Name / Benutzername" required>
-                
-                <!-- PASSWORT -->
+            <form onsubmit="handleDjLogin(event)">
+                <input type="text" id="dj-user" class="input-field" placeholder="Benutzername (z.B. dj)" required>
                 <input type="password" id="dj-pass" class="input-field" placeholder="Passwort" required>
-                
-                <button type="submit" class="btn-login">In Studio Einloggen 🎧</button>
+                <button type="submit" class="btn-action">Ins Studio einloggen 🎧</button>
             </form>
-            <p id="login-error" style="color: #ff4757; margin-top: 15px; display: none; font-size: 0.9rem;">Benutzername oder Passwort falsch!</p>
+            <p id="login-error" style="color: #ff4757; margin-top: 15px; display: none; font-size: 0.9rem;">Zugangsdaten falsch!</p>
         </div>
-    </div>ck="loginDJ()">Einloggen</button>
     </div>
 
-    <!-- DJ DASHBOARD (VERSTECKT BIS LOGIN) -->
-    <div id="dj-dashboard" style="display: none;">
-        <h1>🎧 DJ Studio Panel</h1>
+    <!-- 2. DJ DASHBOARD CONTENT -->
+    <div id="dj-content">
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-            
-            <!-- Sendung benennen -->
-            <div class="box">
-                <h3>🎙️ Aktuelle Sendung benennen</h3>
-                <label>Sendungstitel / Motto</label>
-                <input type="text" id="show-title" placeholder="z. B. DJ Alex - Friday Night Mix">
-                <button onclick="updateShowTitle()">Titel Aktualisieren</button>
+        <!-- NAVIGATION -->
+        <div class="nav-header">
+            <h2 style="margin:0; color:#04d361;">🎧 DJ Studio Panel</h2>
+            <div>
+                <a href="/" style="color:#a8a8b3; text-decoration:none; margin-right:15px; font-weight:bold;">Hauptseite</a>
+                <button onclick="logoutDj()" style="background:none; border:1px solid #04d361; color:#04d361; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">Abmelden</button>
             </div>
-
-            <!-- Sendeplan Eintragen -->
-            <div class="box">
-                <h3>📅 In Sendeplan eintragen</h3>
-                <label>Uhrzeit</label>
-                <input type="text" id="sched-time" placeholder="z. B. 20:00 - 22:00">
-                <label>Sendungsname</label>
-                <input type="text" id="sched-show" placeholder="z. B. Electro Beats">
-                <label>Dein DJ Name</label>
-                <input type="text" id="sched-dj" placeholder="z. B. DJ Max">
-                <button onclick="addSchedule()">Sendeplatz Buchen</button>
-            </div>
-
         </div>
 
-        <!-- Live Grüße & Wünsche -->
-        <div class="box">
-            <h3>💌 Live Grüße & Songwünsche (Auto-Refresh)</h3>
-            <div id="wishes-list" style="max-height: 400px; overflow-y: auto; margin-top: 15px;"></div>
+        <!-- LIVE TITEL ÄNDERN -->
+        <div class="card">
+            <h3>🎵 Live-Status / On-Air Titel</h3>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="new-title" class="input-field" style="margin:0;" placeholder="Aktueller Song / Live DJ Show">
+                <button onclick="updateSongTitle()" class="btn-action" style="width: auto; padding: 0 20px;">Senden 🚀</button>
+            </div>
         </div>
+
+        <!-- SENDEPLAN EINTRAG HINZUFÜGEN -->
+        <div class="card">
+            <h3>📅 Sendung im Sendeplan eintragen</h3>
+            <input type="text" id="show-time" class="input-field" placeholder="Uhrzeit (z.B. 18:00 - 20:00 Uhr)">
+            <input type="text" id="show-title" class="input-field" placeholder="Name der Sendung">
+            <input type="text" id="dj-name" class="input-field" placeholder="Dein DJ-Name">
+            <button onclick="addScheduleShow()" class="btn-action" style="width: auto;">In Sendeplan eintragen 📅</button>
+        </div>
+
+        <!-- EINGEGANGENE WÜNSCHE & GRÜßE -->
+        <div class="card">
+            <h3>💌 Eingegangene Wünsche & Grüße</h3>
+            <div id="wishes-list">
+                <p style="color:#a8a8b3;">Lade Wünsche...</p>
+            </div>
+        </div>
+
     </div>
 
+    <!-- JAVASCRIPT LOGIK -->
     <script>
-        let currentPassword = '';
+        window.onload = function() {
+            if (localStorage.getItem('djLoggedIn') === 'true') {
+                showDjContent();
+            }
+        };
 
-        async function loginDJ() {
-            const pass = document.getElementById('dj-password').value;
-            const res = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password: pass, role: 'dj' })
-            });
+        // LOGIN FUNKTION
+        async function handleDjLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('dj-user').value;
+            const password = document.getElementById('dj-pass').value;
 
-            if (res.ok) {
-                currentPassword = pass;
-                document.getElementById('login-section').style.display = 'none';
-                document.getElementById('dj-dashboard').style.display = 'block';
-                loadWishes();
-                setInterval(loadWishes, 5000); // Wünsche alle 5 Sek. neu laden
-            } else {
-                alert("Falsches DJ-Passwort!");
+            try {
+                const res = await fetch('/api/dj/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (res.ok) {
+                    localStorage.setItem('djLoggedIn', 'true');
+                    showDjContent();
+                } else {
+                    document.getElementById('login-error').style.display = 'block';
+                }
+            } catch (err) {
+                // Offline Fallback für Tests (falls Server kurz nicht antwortet)
+                if (username === "dj" && password === "djpass123") {
+                    localStorage.setItem('djLoggedIn', 'true');
+                    showDjContent();
+                } else {
+                    document.getElementById('login-error').style.display = 'block';
+                }
             }
         }
 
-        async function updateShowTitle() {
-            const currentTitle = document.getElementById('show-title').value;
-            await fetch('/api/dj/title', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password: currentPassword, currentTitle })
-            });
-            alert("Sendungstitel geändert!");
+        function showDjContent() {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('dj-content').style.display = 'block';
+            loadDjData();
+            setInterval(loadDjData, 4000); // Wünsche alle 4 Sekunden aktualisieren
         }
 
-        async function addSchedule() {
-            const time = document.getElementById('sched-time').value;
-            const show = document.getElementById('sched-show').value;
-            const djName = document.getElementById('sched-dj').value;
-
-            await fetch('/api/dj/schedule', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ password: currentPassword, time, show, djName })
-            });
-            alert("Sendeplatz eingetragen!");
-            document.getElementById('sched-time').value = '';
-            document.getElementById('sched-show').value = '';
+        function logoutDj() {
+            localStorage.removeItem('djLoggedIn');
+            location.reload();
         }
 
-   async function loadWishes() {
-    const res = await fetch('/api/data');
-    const data = await res.json();
-    const container = document.getElementById('wishes-list');
+        // DATEN LADE-FUNKTION (WÜNSCHE & SONGTITEL)
+        async function loadDjData() {
+            try {
+                const res = await fetch('/api/data');
+                const data = await res.json();
 
-    if (!data.wishes || data.wishes.length === 0) {
-        container.innerHTML = '<p style="color: #a8a8b3;">Noch keine Wünsche oder Grüße eingegangen.</p>';
-        return;
-    }
+                if (data.currentTitle && document.activeElement.id !== 'new-title') {
+                    document.getElementById('new-title').value = data.currentTitle;
+                }
 
-    container.innerHTML = data.wishes.map(w => {
-        // Farbiges Label je nach Typ
-        let badgeColor = "#04d361"; // Grün für Musikwunsch
-        if (w.type === "Gruß") badgeColor = "#ffa500"; // Orange für reine Grüße
-        if (w.type === "Gruß & Wunsch") badgeColor = "#ff4757"; // Rot für beides
+                renderWishes(data.wishes || []);
+            } catch (err) {
+                console.error("Fehler beim Laden der DJ-Daten:", err);
+            }
+        }
 
-        return `
-            <div class="wish-card" style="border-left: 4px solid ${badgeColor}; background: #121214; padding: 12px; margin-bottom: 10px; border-radius: 6px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                    <small style="color: ${badgeColor}; font-weight: bold; text-transform: uppercase;">[${w.time}] ${w.type || 'Musikwunsch'}</small>
-                    <small style="color: #a8a8b3;">Von: <strong>${w.name}</strong></small>
+        // SONGTITEL AKTUALISIEREN
+        async function updateSongTitle() {
+            const currentTitle = document.getElementById('new-title').value;
+            if (!currentTitle) return alert("Bitte einen Songtitel eingeben!");
+
+            const res = await fetch('/api/dj/title', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ currentTitle })
+            });
+
+            if (res.ok) {
+                alert("Songtitel erfolgreich aktualisiert! 📻");
+            } else {
+                alert("Fehler beim Aktualisieren.");
+            }
+        }
+
+        // SENDEPLAN EINTRAG SPEICHERN
+        async function addScheduleShow() {
+            const time = document.getElementById('show-time').value;
+            const show = document.getElementById('show-title').value;
+            const djName = document.getElementById('dj-name').value;
+
+            if (!time || !show || !djName) return alert("Bitte alle Felder für den Sendeplan ausfüllen!");
+
+            const res = await fetch('/api/dj/schedule', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ time, show, djName })
+            });
+
+            if (res.ok) {
+                alert("Sendung im Sendeplan eingetragen! 📅");
+                document.getElementById('show-time').value = '';
+                document.getElementById('show-title').value = '';
+                document.getElementById('dj-name').value = '';
+            } else {
+                alert("Fehler beim Speichern des Sendeplans.");
+            }
+        }
+
+        // WÜNSCHE RENDERN
+        function renderWishes(wishes) {
+            const wishesUI = document.getElementById('wishes-list');
+            if (!wishes || wishes.length === 0) {
+                wishesUI.innerHTML = '<p style="color:#a8a8b3;">Keine neuen Wünsche oder Grüße vorhanden.</p>';
+                return;
+            }
+
+            wishesUI.innerHTML = wishes.map(w => `
+                <div class="wish-item">
+                    <div style="display: flex; justify-content: space-between; width: 100%;">
+                        <strong style="color: #04d361;">${w.type} von ${w.name}</strong>
+                        <small style="color: #a8a8b3;">${w.time || ''}</small>
+                    </div>
+                    ${w.song && w.song !== '-' ? `<div>🎵 <strong>Song:</strong> ${w.song}</div>` : ''}
+                    ${w.message ? `<div style="color: #ccc;">💬 "${w.message}"</div>` : ''}
                 </div>
-                ${w.song && w.song !== "-" ? `<div style="font-weight: bold; margin-bottom: 4px;">🎵 Song: ${w.song}</div>` : ''}
-                ${w.message && w.message !== "Keine Nachricht" ? `<div style="color: #c4c4cc; font-style: italic;">💬 "${w.message}"</div>` : ''}
-            </div>
-        `;
-    }).join('');
-}
-
+            `).join('');
+        }
     </script>
 </body>
 </html>

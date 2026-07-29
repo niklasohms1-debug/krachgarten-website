@@ -4,18 +4,19 @@
     <meta charset="UTF-8">
     <title>Radio Dashboard</title>
     <style>
-        /* Fixierter Header oben */
-.sticky-header-wrapper {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    background: #121214;
-    padding-top: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #29292e;
-}
-        body { font-family: 'Segoe UI', sans-serif; background: #121214; color: #e1e1e6; padding: 20px; }
-        .header { display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: auto; border-bottom: 1px solid #29292e; padding-bottom: 20px; }
+        /* FIXIERTER HEADER OBEN (STAY-ON-TOP) */
+        .sticky-header-wrapper {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: #121214;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #29292e;
+        }
+
+        body { font-family: 'Segoe UI', sans-serif; background: #121214; color: #e1e1e6; padding: 0 20px 20px 20px; margin: 0; }
+        .header { display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: auto; padding-bottom: 10px; }
         .main { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; max-width: 1000px; margin: 20px auto; }
         .card { background: #202024; padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #29292e; }
 
@@ -26,40 +27,68 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             max-width: 400px;
         }
+
+        /* NAVIGATIONSTASTEN OHNE SEITENNEULADEN */
+        .nav-btn {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 20px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .nav-btn.active {
+            color: #ff4757;
+            background: #29292e;
+        }
+        .nav-btn.inactive {
+            color: #a8a8b3;
+        }
+
+        .page-section {
+            display: none;
+        }
+        .page-section.active {
+            display: grid;
+        }
     </style>
 </head>
 <body>
 
-    <!-- MENÜLEISTE OBEN -->
-    <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: 0 auto 20px auto; background: #202024; padding: 15px 25px; border-radius: 8px; border: 1px solid #29292e;">
-        <h2 style="margin:0; color:#ff4757;">📻 Radio Dashboard</h2>
-        <div>
-            <a href="/" style="color:#ff4757; text-decoration:none; margin-left:20px; font-weight:bold;">Startseite</a>
-            <a href="/team.html" style="color:#a8a8b3; text-decoration:none; margin-left:20px; font-weight:bold;">Unser Team</a>
+    <!-- FIXIERTER HEADER-CONTAINER (UMSCHLIESST MENÜ & PLAYER, DAMIT DIE MUSIK BEIM NAVIGIEREN WEITERLÄUFT) -->
+    <div class="sticky-header-wrapper">
+        <!-- MENÜLEISTE OBEN -->
+        <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: 0 auto 10px auto; background: #202024; padding: 12px 25px; border-radius: 8px; border: 1px solid #29292e;">
+            <h2 style="margin:0; color:#ff4757;">📻 Radio Dashboard</h2>
+            <div>
+                <button onclick="showPage('home')" id="btn-home" class="nav-btn active">Startseite</button>
+                <button onclick="showPage('team')" id="btn-team" class="nav-btn inactive">Unser Team</button>
+            </div>
         </div>
+
+        <!-- HEADER MIT STREAM-TITEL, CURRENT SONG & EMBED PLAYER -->
+        <header class="header">
+            <div>
+                <h1 id="stream-name" style="margin:0;">📻 KRACHGARTEN</h1>
+                <p style="margin: 5px 0 0 0; color: #a8a8b3;">🔴 Live On Air</p>
+                <!-- SONGTITEL ANZEIGE -->
+                <p style="margin: 8px 0 0 0; font-size: 1.05rem;">
+                    🎵 Aktuell: <strong id="current-title" style="color: #04d361;">Lade Titel...</strong>
+                </p>
+            </div>
+
+            <!-- HIER SITZT DEIN RADIO.CO EMBED PLAYER -->
+            <div class="radio-co-player-wrapper">
+                <script src="https://embed.radio.co/player/1ec17ac.js"></script>
+            </div>
+        </header>
     </div>
 
-   <!-- HEADER MIT STREAM-TITEL, CURRENT SONG & EMBED PLAYER -->
-    <header class="header">
-        <div>
-            <h1 id="stream-name" style="margin:0;">📻 KRACHGARTEN</h1>
-            <p style="margin: 5px 0 0 0; color: #a8a8b3;">🔴 Live On Air</p>
-            <!-- SONGTITEL ANZEIGE -->
-            <p style="margin: 8px 0 0 0; font-size: 1.05rem;">
-                🎵 Aktuell: <strong id="current-title" style="color: #04d361;">Lade Titel...</strong>
-            </p>
-        </div>
-
-        <!-- HIER SITZT DEIN RADIO.CO EMBED PLAYER -->
-        <div class="radio-co-player-wrapper">
-            
-            <!-- FÜGE HIER DEINEN KOPIERTEN CODE EIN (Copy embed code) -->
-           <script src="https://embed.radio.co/player/1ec17ac.js"></script>
-        </div>
-    </header>
-
-    <!-- HAUPTBEREICH -->
-    <main class="main">
+    <!-- HAUPTBEREICH / STARTSEITE -->
+    <main id="content-home" class="main page-section active">
         
         <!-- LINKS: NEWS FEED -->
         <section>
@@ -98,8 +127,40 @@
 
     </main>
 
+    <!-- UNSER TEAM BEREICH (LÄDT DYNAMISCH, OHNE DASS DIE MUSIK AUSGEHT) -->
+    <div id="content-team" class="page-section" style="max-width: 1000px; margin: 20px auto;">
+        <div class="card" style="width: 100%;">
+            <h2 style="color: #ff4757; margin-top: 0;">👥 Unser Team</h2>
+            <div id="team-page-list">
+                <p style="color:#a8a8b3;">Lade Teammitglieder...</p>
+            </div>
+        </div>
+    </div>
+
     <!-- JAVASCRIPT GANZ UNTEN -->
     <script>
+        // SEITENWECHSEL-LOGIK (LÄSST DEN WEBRADIO-PLAYER UNUNTERBROCHEN WEITERLAUFEN)
+        function showPage(page) {
+            const homeSection = document.getElementById('content-home');
+            const teamSection = document.getElementById('content-team');
+            const btnHome = document.getElementById('btn-home');
+            const btnTeam = document.getElementById('btn-team');
+
+            if (page === 'home') {
+                homeSection.style.display = 'grid';
+                teamSection.style.display = 'none';
+
+                btnHome.className = 'nav-btn active';
+                btnTeam.className = 'nav-btn inactive';
+            } else if (page === 'team') {
+                homeSection.style.display = 'none';
+                teamSection.style.display = 'block';
+
+                btnHome.className = 'nav-btn inactive';
+                btnTeam.className = 'nav-btn active';
+            }
+        }
+
         async function loadHomepageData() {
             try {
                 const res = await fetch('/api/data');
@@ -132,6 +193,23 @@
                         </div>
                     `).join('');
                 }
+
+                // TEAM LISTE FÜR DIE TEAM-ANSICHT BEFÜLLEN
+                const teamUI = document.getElementById('team-page-list');
+                if (data.team && data.team.length > 0) {
+                    teamUI.innerHTML = data.team.map(m => `
+                        <div style="padding: 12px; border-bottom: 1px solid #29292e; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong style="font-size: 1.1rem; color: #ff4757;">${m.name}</strong>
+                                ${m.department ? `<span style="color: #a8a8b3; font-size: 0.9rem;"> (${m.department})</span>` : ''}
+                            </div>
+                            <span style="background: #29292e; padding: 4px 10px; border-radius: 4px; font-size: 0.85rem; color: #04d361;">${m.role}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    teamUI.innerHTML = '<p style="color:#a8a8b3;">Noch keine Teammitglieder eingetragen.</p>';
+                }
+
             } catch (err) {
                 console.error("Fehler beim Laden der Daten:", err);
             }

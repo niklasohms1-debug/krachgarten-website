@@ -182,10 +182,16 @@ app.delete(['/api/news/:id', '/api/admin/news/:id'], async (req, res) => {
 });
 
 // ==========================================
-// SENDEPLAN ROUTEN (FEHLERFREI & FLEXIBEL)
+// SENDEPLAN ROUTEN (DECKT ALLE DRUCKWEISEN AB)
 // ==========================================
 
-app.get(['/api/schedule', '/api/admin/schedule'], async (req, res) => {
+const schedulePaths = [
+    '/api/schedule', '/api/admin/schedule',
+    '/api/sendeplan', '/api/admin/sendeplan',
+    '/api/plan', '/api/admin/plan'
+];
+
+app.get(schedulePaths, async (req, res) => {
     try {
         const data = await getOrInitData();
         res.json(data.schedule || []);
@@ -194,20 +200,17 @@ app.get(['/api/schedule', '/api/admin/schedule'], async (req, res) => {
     }
 });
 
-app.post(['/api/schedule', '/api/admin/schedule'], async (req, res) => {
+app.post(schedulePaths, async (req, res) => {
     try {
         const data = await getOrInitData();
         
-        // Stellt sicher, dass data.schedule ein Array ist
         if (!Array.isArray(data.schedule)) {
             data.schedule = [];
         }
 
         if (Array.isArray(req.body)) {
-            // Komplette Liste aktualisieren
             data.schedule = req.body;
         } else if (req.body && typeof req.body === 'object') {
-            // Einzelnen Eintrag hinzufügen
             const newEntry = { id: Date.now(), ...req.body };
             data.schedule.push(newEntry);
         }
@@ -217,8 +220,25 @@ app.post(['/api/schedule', '/api/admin/schedule'], async (req, res) => {
         
         res.json({ success: true, schedule: data.schedule });
     } catch (err) {
-        console.error("Sendeplan Fehler:", err); // Detaillierter Log im Render-Dashboard
+        console.error("Sendeplan Fehler:", err);
         res.status(500).json({ error: "Fehler beim Speichern des Sendeplans" });
+    }
+});
+
+app.delete(schedulePaths.map(p => `${p}/:id`), async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        const entryId = req.params.id;
+        
+        if (Array.isArray(data.schedule)) {
+            data.schedule = data.schedule.filter(s => String(s.id) !== String(entryId));
+            data.markModified('schedule');
+            await data.save();
+        }
+        
+        res.json({ success: true, schedule: data.schedule });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Löschen aus dem Sendeplan" });
     }
 });
 

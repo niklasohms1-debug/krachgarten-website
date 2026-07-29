@@ -17,7 +17,7 @@ mongoose.connect(MONGO_URI)
     .then(() => console.log("✅ Erfolgreich mit MongoDB verbunden!"))
     .catch(err => console.error("❌ MongoDB Verbindungsfehler:", err));
 
-// SCHEMA DEFINITION
+// SCHEMA DEFINIEREN
 const radioSchema = new mongoose.Schema({
     streamName: { type: String, default: "KrachGarten" },
     currentTitle: { type: String, default: "DJ AIR - 24/7 NON STOP" },
@@ -51,10 +51,11 @@ async function getOrInitData() {
 }
 
 // ==========================================
-// ALLGEMEINE DATA ROUTEN
+// ALLGEMEINE ROUTEN & ADMIN-ROUTEN
 // ==========================================
 
-app.get('/api/data', async (req, res) => {
+// Daten abrufen
+app.get(['/api/data', '/api/admin/data'], async (req, res) => {
     try {
         const data = await getOrInitData();
         res.json(data);
@@ -63,7 +64,8 @@ app.get('/api/data', async (req, res) => {
     }
 });
 
-app.post('/api/data', async (req, res) => {
+// Daten komplett speichern
+app.post(['/api/data', '/api/admin/data'], async (req, res) => {
     try {
         let data = await getOrInitData();
         Object.assign(data, req.body);
@@ -80,10 +82,10 @@ app.post('/api/data', async (req, res) => {
 });
 
 // ==========================================
-// TEAM ROUTEN (GET & POST)
+// TEAM ROUTEN (/api/team UND /api/admin/team)
 // ==========================================
 
-app.get('/api/team', async (req, res) => {
+app.get(['/api/team', '/api/admin/team'], async (req, res) => {
     try {
         const data = await getOrInitData();
         res.json(data.team || []);
@@ -92,7 +94,7 @@ app.get('/api/team', async (req, res) => {
     }
 });
 
-app.post('/api/team', async (req, res) => {
+app.post(['/api/team', '/api/admin/team'], async (req, res) => {
     try {
         const data = await getOrInitData();
         if (Array.isArray(req.body)) {
@@ -110,10 +112,10 @@ app.post('/api/team', async (req, res) => {
 });
 
 // ==========================================
-// NEWS ROUTEN (GET & POST)
+// NEWS ROUTEN (/api/news UND /api/admin/news)
 // ==========================================
 
-app.get('/api/news', async (req, res) => {
+app.get(['/api/news', '/api/admin/news'], async (req, res) => {
     try {
         const data = await getOrInitData();
         res.json(data.news || []);
@@ -122,7 +124,7 @@ app.get('/api/news', async (req, res) => {
     }
 });
 
-app.post('/api/news', async (req, res) => {
+app.post(['/api/news', '/api/admin/news'], async (req, res) => {
     try {
         const data = await getOrInitData();
         if (Array.isArray(req.body)) {
@@ -140,10 +142,10 @@ app.post('/api/news', async (req, res) => {
 });
 
 // ==========================================
-// SENDEPLAN ROUTEN (SCHEDULE)
+// SENDEPLAN ROUTEN
 // ==========================================
 
-app.get('/api/schedule', async (req, res) => {
+app.get(['/api/schedule', '/api/admin/schedule'], async (req, res) => {
     try {
         const data = await getOrInitData();
         res.json(data.schedule || []);
@@ -152,7 +154,7 @@ app.get('/api/schedule', async (req, res) => {
     }
 });
 
-app.post('/api/schedule', async (req, res) => {
+app.post(['/api/schedule', '/api/admin/schedule'], async (req, res) => {
     try {
         const data = await getOrInitData();
         if (Array.isArray(req.body)) {
@@ -172,7 +174,7 @@ app.post('/api/schedule', async (req, res) => {
 // WÜNSCHE ROUTEN
 // ==========================================
 
-app.get('/api/wishes', async (req, res) => {
+app.get(['/api/wishes', '/api/admin/wishes'], async (req, res) => {
     try {
         const data = await getOrInitData();
         res.json(data.wishes || []);
@@ -181,7 +183,7 @@ app.get('/api/wishes', async (req, res) => {
     }
 });
 
-app.post('/api/wishes', async (req, res) => {
+app.post(['/api/wishes', '/api/admin/wishes'], async (req, res) => {
     try {
         const data = await getOrInitData();
         if (Array.isArray(req.body)) {

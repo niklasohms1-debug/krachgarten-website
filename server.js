@@ -182,7 +182,7 @@ app.delete(['/api/news/:id', '/api/admin/news/:id'], async (req, res) => {
 });
 
 // ==========================================
-// SENDEPLAN ROUTEN (MIT AUTO-LÖSCHUNG ABGELAUFENER SHOWS)
+// SENDEPLAN ROUTEN (INTELLIGENTE DATUMS- & UHRZEIT-LÖSCHUNG)
 // ==========================================
 
 const schedulePaths = [
@@ -190,6 +190,146 @@ const schedulePaths = [
     '/api/sendeplan', '/api/admin/sendeplan', '/api/dj/sendeplan',
     '/api/plan', '/api/admin/plan', '/api/dj/plan'
 ];
+
+// Hilfsfunktion: Prüft präzise, ob eine Sendung nach Datum/Wochentag + Uhrzeit abgelaufen ist
+function isShowExpired(entry) {
+    if (!entry.endTime && !entry.time) return false;
+
+    try {
+        const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Berlin" }));
+        
+        // 1. Wochentage & relative Tage auswerten
+        const dayInput = (entry.day || '').trim().toLowerCase();
+        
+        const daysOfWeek = ['sonntag', 'montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag', 'samstag'];
+        const currentDayIdx = now.getDay();
+
+        // Falls ein zukünftiger Wochentag oder "morgen" eingetragen ist -> NICHT LÖSCHEN!
+        if (dayInput === 'morgen') {
+            return false;
+        }
+        
+        if (daysOfWeek.includes(dayInput)) {
+            const entryDayIdx = daysOfWeek.indexOf(dayInput);
+            // Wenn der Tag in der Zukunft liegt (z. B. heute Mittwoch (3), Sendung Freitag (5))
+            if (entryDayIdx > currentDayIdx) {
+                return false;
+            }
+            // Wenn der Tag diese Woche schon vorbei ist (z. B. heute Mittwoch (3), Sendung Montag (1))
+            if (entryDayIdx < currentDayIdx) {
+                return true; 
+            }
+        }
+
+        // 2. Konkretes Datum prüfen (z. B. "30.07." oder "30.07.2026")
+        const dateMatch = dayInput.match(/(\d{1,2})\.(\d{1,2})\.?(\d{2,4})?/);
+        if (dateMatch) {
+            const day = parseInt(dateMatch[1], 10);
+            const month = parseInt(dateMatch[2], 10) - 1; // Monate 0-11 in JS
+            const year = dateMatch[3] ? (dateMatch[3].length === 2 ? 2000 + parseInt(dateMatch[3], 10) : parseInt(dateMatch[3], 10)) : now.getFullYear();
+
+            const entryDate = new Date(year, month, day);
+            const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+            if (entryDate > todayDate) return false; // Liegt in der Zukunft -> behalten
+            if (entryDate < todayDate) return true;  // Liegt in der Vergangenheit -> löschen
+        }
+
+        // 3. Nur wenn die Sendung HEUTE ist: Enduhrzeit prüfen
+        let endTimeStr = entry.endTime || entry.time.split('-')[1] || entry.time;
+        endTimeStr = endTimeStr.trim();
+
+        const [hours, minutes] = endTimeStr.split(':').map(Number);
+        if (isNaN(hours) || isNaN(minutes)) return false;
+
+        const showEndTime = new Date(now);
+        showEndTime.setHours(hours, minutes, 0, 0);
+
+        // Sendung ist abgelaufen, wenn die aktuelle Zeit NACH der Endzeit liegt
+        return now > showEndTime;
+
+    } catch (e) {
+        return false;
+    }
+}
+
+// Hilfsfunktion: Säubert abgelaufene Sendungen
+async function cleanupExpiredSchedule() {
+    try {
+        const data = await getOrInitData();
+        if (Array.isArray(data.schedule) && data.schedule.length > 0) {
+            const initialLength = data.schedule.length;
+            data.schedule = data.schedule.filter(entry => !isShowExpired(entry));
+            
+            if (data.schedule.length !== initialLength) {
+                data.markModified('schedule');
+                await data.save();
+                console.log("🧹 Abgelaufene Sendung(en) automatisch entfernt.");
+            }
+        }
+    } catch (err) {
+        console.error("Fehler bei Sendeplan-Bereinigung:", err);
+    }
+}
+
+// Prüft alle 60 Sekunden
+setInterval(cleanupExpiredSchedule, 60 * 1000);
+
+// Sendeplan abrufen (führt vorher Cleanup aus)
+app.get(schedulePaths, async (req, res) => {
+    try {
+        await cleanupExpiredSchedule();
+        const data = await getOrInitData();
+        res.json(data.schedule || []);
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Laden des Sendeplans" });
+    }
+});
+
+// Sendeplan speichern / hinzufügen
+app.post(schedulePaths, async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        if (!Array.isArray(data.schedule)) data.schedule = [];
+
+        if (Array.isArray(req.body)) {
+            data.schedule = req.body;
+        } else if (req.body && typeof req.body === 'object') {
+            const djName = req.body.dj || req.body.name || req.body.artist || "DJ";
+            const newEntry = {
+                id: Date.now(),
+                ...req.body,
+                dj: djName,
+                name: djName
+            };
+            data.schedule.push(newEntry);
+        }
+
+        data.markModified('schedule');
+        await data.save();
+        res.json({ success: true, schedule: data.schedule });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Speichern des Sendeplans" });
+    }
+});
+
+// Sendeplan-Eintrag löschen
+app.delete(schedulePaths.map(p => `${p}/:id`), async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        const entryId = req.params.id;
+        
+        if (Array.isArray(data.schedule)) {
+            data.schedule = data.schedule.filter(s => String(s.id) !== String(entryId));
+            data.markModified('schedule');
+            await data.save();
+        }
+        
+        res.json({ success: true, schedule: data.schedule });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Löschen aus dem Sendeplan" });
+    }
+});
 
 // Hilfsfunktion: Prüft, ob eine Sendung abgelaufen ist
 function isShowExpired(entry) {

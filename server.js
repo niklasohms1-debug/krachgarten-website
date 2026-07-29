@@ -112,9 +112,22 @@ app.post(['/api/team', '/api/admin/team'], async (req, res) => {
 });
 
 // ==========================================
-// NEWS ROUTEN (MIT AUTOMATISCHEM DATUM & UHRZEIT)
+// NEWS ROUTEN (MIT DEUTSCHER UHRZEIT & LÖSCH-FUNKTION)
 // ==========================================
 
+// Hilfsfunktion für deutsche Uhrzeit & Datum (Europe/Berlin)
+function getGermanDateTime() {
+    const optionsDate = { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'Europe/Berlin' };
+    const optionsTime = { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' };
+    const now = new Date();
+    
+    const currentDate = now.toLocaleDateString('de-DE', optionsDate);
+    const currentTime = now.toLocaleTimeString('de-DE', optionsTime);
+    
+    return `${currentDate} um ${currentTime} Uhr`;
+}
+
+// 1. News abrufen
 app.get(['/api/news', '/api/admin/news'], async (req, res) => {
     try {
         const data = await getOrInitData();
@@ -124,22 +137,53 @@ app.get(['/api/news', '/api/admin/news'], async (req, res) => {
     }
 });
 
+// 2. News hinzufügen ODER komplette Liste speichern
 app.post(['/api/news', '/api/admin/news'], async (req, res) => {
     try {
         const data = await getOrInitData();
-        
+        const defaultDateTime = getGermanDateTime();
+
         if (Array.isArray(req.body)) {
-            // Falls die komplette News-Liste aktualisiert wird
-            data.news = req.body.map(item => {
-                const now = new Date();
-                const currentDate = now.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
-                const currentTime = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                
-                return {
-                    ...item,
-                    date: item.date || `${currentDate} um ${currentTime} Uhr`
-                };
-            });
+            // Falls das Admin-Panel die komplette verbleibende Liste schickt
+            data.news = req.body.map(item => ({
+                ...item,
+                date: (item.date && item.date !== "undefined") ? item.date : defaultDateTime
+            }));
+        } else {
+            // Einzelne neue News erstellen
+            const newEntry = {
+                id: Date.now(),
+                ...req.body,
+                date: (req.body.date && req.body.date !== "undefined") 
+                    ? req.body.date 
+                    : defaultDateTime
+            };
+            data.news.unshift(newEntry);
+        }
+        
+        data.markModified('news');
+        await data.save();
+        res.json({ success: true, news: data.news });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Speichern der News" });
+    }
+});
+
+// 3. Einzelne News löschen
+app.delete(['/api/news/:id', '/api/admin/news/:id'], async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        const newsId = req.params.id;
+        
+        data.news = data.news.filter(n => String(n.id) !== String(newsId));
+        data.markModified('news');
+        await data.save();
+        
+        res.json({ success: true, news: data.news });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Löschen der News" });
+    }
+});
         } else {
             // Einzelne neue News erstellen
             const now = new Date();

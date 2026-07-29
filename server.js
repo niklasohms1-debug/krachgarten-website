@@ -1,3 +1,5 @@
+process.env.TZ = 'Europe/Berlin';
+
 const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
@@ -33,7 +35,7 @@ const radioSchema = new mongoose.Schema({
 
 const RadioData = mongoose.model('RadioData', radioSchema);
 
-// HILFSFUNKTION
+// HILFSFUNKTION: DATEN HOLEN ODER ERSTELLEN
 async function getOrInitData() {
     let data = await RadioData.findOne();
     if (!data) {
@@ -48,6 +50,17 @@ async function getOrInitData() {
         });
     }
     return data;
+}
+
+// HILFSFUNKTION: DEUTSCHE UHRZEIT & DATUM ERSTELLEN (EXAKTE ZEITZONE)
+function getGermanDateTime() {
+    const now = new Date();
+    const germanTime = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Berlin" }));
+    
+    const currentDate = germanTime.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
+    const currentTime = germanTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+    
+    return `${currentDate} um ${currentTime} Uhr`;
 }
 
 // ==========================================
@@ -112,22 +125,9 @@ app.post(['/api/team', '/api/admin/team'], async (req, res) => {
 });
 
 // ==========================================
-// NEWS ROUTEN (MIT DEUTSCHER UHRZEIT & LÖSCH-FUNKTION)
+// NEWS ROUTEN (MIT KORREKTER DEUTSCHER UHRZEIT)
 // ==========================================
 
-// Hilfsfunktion für deutsche Uhrzeit & Datum (Europe/Berlin)
-function getGermanDateTime() {
-    const optionsDate = { day: '2-digit', month: 'long', year: 'numeric', timeZone: 'Europe/Berlin' };
-    const optionsTime = { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Berlin' };
-    const now = new Date();
-    
-    const currentDate = now.toLocaleDateString('de-DE', optionsDate);
-    const currentTime = now.toLocaleTimeString('de-DE', optionsTime);
-    
-    return `${currentDate} um ${currentTime} Uhr`;
-}
-
-// 1. News abrufen
 app.get(['/api/news', '/api/admin/news'], async (req, res) => {
     try {
         const data = await getOrInitData();
@@ -137,20 +137,17 @@ app.get(['/api/news', '/api/admin/news'], async (req, res) => {
     }
 });
 
-// 2. News hinzufügen ODER komplette Liste speichern
 app.post(['/api/news', '/api/admin/news'], async (req, res) => {
     try {
         const data = await getOrInitData();
         const defaultDateTime = getGermanDateTime();
 
         if (Array.isArray(req.body)) {
-            // Falls das Admin-Panel die komplette verbleibende Liste schickt
             data.news = req.body.map(item => ({
                 ...item,
                 date: (item.date && item.date !== "undefined") ? item.date : defaultDateTime
             }));
         } else {
-            // Einzelne neue News erstellen
             const newEntry = {
                 id: Date.now(),
                 ...req.body,
@@ -169,54 +166,12 @@ app.post(['/api/news', '/api/admin/news'], async (req, res) => {
     }
 });
 
-// 3. Einzelne News löschen
 app.delete(['/api/news/:id', '/api/admin/news/:id'], async (req, res) => {
     try {
         const data = await getOrInitData();
         const newsId = req.params.id;
         
         data.news = data.news.filter(n => String(n.id) !== String(newsId));
-        data.markModified('news');
-        await data.save();
-        
-        res.json({ success: true, news: data.news });
-    } catch (err) {
-        res.status(500).json({ error: "Fehler beim Löschen der News" });
-    }
-});
-        } else {
-            // Einzelne neue News erstellen
-            const now = new Date();
-            const currentDate = now.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
-            const currentTime = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-
-            const newEntry = {
-                id: Date.now(),
-                ...req.body,
-                // Nutzt das mitgeschickte Datum oder generiert: "29. Juli 2026 um 14:45 Uhr"
-                date: req.body.date && req.body.date !== "undefined" 
-                    ? req.body.date 
-                    : `${currentDate} um ${currentTime} Uhr`
-            };
-            
-            data.news.unshift(newEntry);
-        }
-        
-        data.markModified('news');
-        await data.save();
-        res.json({ success: true, news: data.news });
-    } catch (err) {
-        res.status(500).json({ error: "Fehler beim Speichern der News" });
-    }
-});
-
-// Optional: News löschen (falls das Admin-Panel DELETE nutzt)
-app.delete(['/api/news/:id', '/api/admin/news/:id'], async (req, res) => {
-    try {
-        const data = await getOrInitData();
-        const newsId = req.params.id;
-        
-        data.news = data.news.filter(n => n.id != newsId);
         data.markModified('news');
         await data.save();
         
@@ -256,10 +211,9 @@ app.post(['/api/schedule', '/api/admin/schedule'], async (req, res) => {
 });
 
 // ==========================================
-// WÜNSCHE ROUTEN (VOLLSTÄNDIG - INKL. /api/wish)
+// WÜNSCHE ROUTEN (INCL. /api/wish UNTERSTÜTZUNG)
 // ==========================================
 
-// Wünsche abrufen
 app.get(['/api/wishes', '/api/admin/wishes', '/api/wish', '/api/admin/wish'], async (req, res) => {
     try {
         const data = await getOrInitData();
@@ -269,19 +223,20 @@ app.get(['/api/wishes', '/api/admin/wishes', '/api/wish', '/api/admin/wish'], as
     }
 });
 
-// Wunsch hinzufügen ODER komplette Liste aktualisieren
 app.post(['/api/wishes', '/api/admin/wishes', '/api/wish', '/api/admin/wish'], async (req, res) => {
     try {
         const data = await getOrInitData();
         
         if (Array.isArray(req.body)) {
-            // Falls das Panel die komplette Liste schickt
             data.wishes = req.body;
         } else {
-            // Einzelnen Wunsch von der Wunschbox verarbeiten
+            const now = new Date();
+            const germanTime = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Berlin" }));
+            const currentTime = germanTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+
             const newWish = {
                 id: Date.now(),
-                time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
+                time: currentTime,
                 type: req.body.type || "Musikwunsch",
                 name: req.body.name || "Anonym",
                 song: req.body.song || "",
@@ -299,82 +254,18 @@ app.post(['/api/wishes', '/api/admin/wishes', '/api/wish', '/api/admin/wish'], a
     }
 });
 
-// Wunsch löschen
 app.delete(['/api/wishes/:id', '/api/admin/wishes/:id', '/api/wish/:id', '/api/admin/wish/:id'], async (req, res) => {
     try {
         const data = await getOrInitData();
         const wishId = req.params.id;
         
-        data.wishes = data.wishes.filter(w => w.id != wishId);
+        data.wishes = data.wishes.filter(w => String(w.id) !== String(wishId));
         data.markModified('wishes');
         await data.save();
         
         res.json({ success: true, wishes: data.wishes });
     } catch (err) {
         res.status(500).json({ error: "Fehler beim Löschen des Wunsches" });
-    }
-});
-
-// Wunsch hinzufügen ODER komplette Liste aktualisieren
-app.post(['/api/wishes', '/api/admin/wishes'], async (req, res) => {
-    try {
-        const data = await getOrInitData();
-        
-        if (Array.isArray(req.body)) {
-            // Falls das Frontend die komplette Liste schickt
-            data.wishes = req.body;
-        } else {
-            // Einzelnen Wunsch hinzufügen
-            const newWish = {
-                id: Date.now(),
-                time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
-                type: req.body.type || "Musikwunsch",
-                name: req.body.name || "Anonym",
-                song: req.body.song || "",
-                message: req.body.message || req.body.text || "",
-                ...req.body
-            };
-            data.wishes.unshift(newWish);
-        }
-        
-        data.markModified('wishes');
-        await data.save();
-        res.json({ success: true, wishes: data.wishes });
-    } catch (err) {
-        res.status(500).json({ error: "Fehler beim Speichern des Wunsches" });
-    }
-});
-
-// Wunsch löschen (falls das Admin-Panel/DJ-Panel DELETE verwendet)
-app.delete(['/api/wishes/:id', '/api/admin/wishes/:id'], async (req, res) => {
-    try {
-        const data = await getOrInitData();
-        const wishId = req.params.id;
-        
-        data.wishes = data.wishes.filter(w => w.id != wishId);
-        data.markModified('wishes');
-        await data.save();
-        
-        res.json({ success: true, wishes: data.wishes });
-    } catch (err) {
-        res.status(500).json({ error: "Fehler beim Löschen des Wunsches" });
-    }
-});
-
-app.post(['/api/wishes', '/api/admin/wishes'], async (req, res) => {
-    try {
-        const data = await getOrInitData();
-        if (Array.isArray(req.body)) {
-            data.wishes = req.body;
-        } else {
-            const newWish = { id: Date.now(), ...req.body };
-            data.wishes.unshift(newWish);
-        }
-        data.markModified('wishes');
-        await data.save();
-        res.json({ success: true, wishes: data.wishes });
-    } catch (err) {
-        res.status(500).json({ error: "Fehler beim Speichern der Wünsche" });
     }
 });
 

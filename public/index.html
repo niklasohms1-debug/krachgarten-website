@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <title>Radio Dashboard</title>
     <style>
+        /* Fixierter Header oben */
+.sticky-header-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: #121214;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #29292e;
+}
         body { font-family: 'Segoe UI', sans-serif; background: #121214; color: #e1e1e6; padding: 20px; }
         .header { display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: auto; border-bottom: 1px solid #29292e; padding-bottom: 20px; }
         .main { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; max-width: 1000px; margin: 20px auto; }

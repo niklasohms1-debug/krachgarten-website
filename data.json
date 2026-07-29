@@ -5,9 +5,7 @@
     "admin": "admin123",
     "dj": "dj123"
   },
- "schedule": [],
- 
-   
+  "schedule": [],
   "wishes": [
     {
       "id": 1,
@@ -19,6 +17,12 @@
     }
   ],
   "news": [
+    {
+      "id": 1785326050231,
+      "date": "29. Juli 2026",
+      "title": "test",
+      "text": "test news"
+    },
     {
       "id": 1,
       "date": "21. JULI 2026",
@@ -39,7 +43,6 @@
       "role": "Moderator",
       "department": "DJs"
     },
-   
     {
       "id": 1784645707693,
       "name": "Marina",

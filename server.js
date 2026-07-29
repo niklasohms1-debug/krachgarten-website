@@ -1,12 +1,31 @@
 const express = require('express');
-const fs = require('fs');
+const mongoose = require('mongoose');
 const path = require('path');
+const fs = require('fs'); //
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, 'data.json');
-const ICECAST_JSON_URL = 'http://localhost:8000/status-json.xsl';
 
+// HIER DEINEN ECHTEN LINK UND PASSWORT EINFÜGEN!
+const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://niklasohms1_db_user:radiokrach1605@cluster0.gesrdze.mongodb.net/?appName=Cluster0";
+
+// MIT MONGODB VERBINDEN
+mongoose.connect(MONGO_URI)
+    .then(() => console.log("✅ Erfolgreich mit MongoDB verbunden!"))
+    .catch(err => console.error("❌ MongoDB Verbindungsfehler:", err));
+
+// MONGODB SCHEMA DEFINIEREN
+const radioSchema = new mongoose.Schema({
+    streamName: { type: String, default: "KRACHGARTEN" },
+    currentTitle: { type: String, default: "Live Stream" },
+    wishes: { type: Array, default: [] },
+    team: { type: Array, default: [] },
+    news: { type: Array, default: [] },
+    schedule: { type: Array, default: [] }
+});
+
+const RadioData = mongoose.model('RadioData', radioSchema);
 // ==========================================
 // ZUGANGSDATEN (FEST GELEGT)
 // ==========================================

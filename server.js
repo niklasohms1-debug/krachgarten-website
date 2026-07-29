@@ -171,15 +171,62 @@ app.post(['/api/schedule', '/api/admin/schedule'], async (req, res) => {
 });
 
 // ==========================================
-// WÜNSCHE ROUTEN
+// WÜNSCHE ROUTEN (VOLLSTÄNDIG & FLEXIBEL)
 // ==========================================
 
+// Wünsche abrufen
 app.get(['/api/wishes', '/api/admin/wishes'], async (req, res) => {
     try {
         const data = await getOrInitData();
         res.json(data.wishes || []);
     } catch (err) {
         res.status(500).json({ error: "Fehler beim Laden der Wünsche" });
+    }
+});
+
+// Wunsch hinzufügen ODER komplette Liste aktualisieren
+app.post(['/api/wishes', '/api/admin/wishes'], async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        
+        if (Array.isArray(req.body)) {
+            // Falls das Frontend die komplette Liste schickt
+            data.wishes = req.body;
+        } else {
+            // Einzelnen Wunsch hinzufügen
+            const newWish = {
+                id: Date.now(),
+                time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
+                type: req.body.type || "Musikwunsch",
+                name: req.body.name || "Anonym",
+                song: req.body.song || "",
+                message: req.body.message || req.body.text || "",
+                ...req.body
+            };
+            data.wishes.unshift(newWish);
+        }
+        
+        data.markModified('wishes');
+        await data.save();
+        res.json({ success: true, wishes: data.wishes });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Speichern des Wunsches" });
+    }
+});
+
+// Wunsch löschen (falls das Admin-Panel/DJ-Panel DELETE verwendet)
+app.delete(['/api/wishes/:id', '/api/admin/wishes/:id'], async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        const wishId = req.params.id;
+        
+        data.wishes = data.wishes.filter(w => w.id != wishId);
+        data.markModified('wishes');
+        await data.save();
+        
+        res.json({ success: true, wishes: data.wishes });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Löschen des Wunsches" });
     }
 });
 

@@ -1,53 +1,53 @@
 {
-  "streamName": "KrachGarten",
-  "currentTitle": "DJ AIR - 24/7 NON STOP",
-  "passwords": {
-    "admin": "admin123",
-    "dj": "dj123"
-  },
-  "schedule": [],
-  "wishes": [
-    {
-      "id": 1,
-      "time": "16:05",
-      "type": "Musikwunsch",
-      "name": "Sarah",
-      "song": "Queen - Radio Ga Ga",
-      "message": "Liebe Grüße an alle Hörer!"
-    }
-  ],
-  "news": [
-    {
-      "id": 1785326050231,
-      "date": "29. Juli 2026",
-      "title": "test",
-      "text": "test news"
-    },
-    {
-      "id": 1,
-      "date": "21. JULI 2026",
-      "title": "Willkommen im Radio-System!",
-      "text": "Das System läuft wieder einwandfrei."
-    }
-  ],
-  "team": [
-    {
-      "id": 1,
-      "name": "Niklas Ohms",
-      "role": "Gründer",
-      "department": "Admins"
-    },
-    {
-      "id": 1784645651088,
-      "name": "Niklas Ohms",
-      "role": "Moderator",
-      "department": "DJs"
-    },
-    {
-      "id": 1784645707693,
-      "name": "Marina",
-      "role": "Chef Redakteurin",
-      "department": "Redakteure"
-    }
-  ]
+  "streamName": "KrachGarten",
+  "currentTitle": "DJ AIR - 24/7 NON STOP",
+  "passwords": {
+    "admin": "admin123",
+    "dj": "dj123"
+  },
+  "schedule": [],
+  "wishes": [
+    {
+      "id": 1,
+      "time": "16:05",
+      "type": "Musikwunsch",
+      "name": "Sarah",
+      "song": "Queen - Radio Ga Ga",
+      "message": "Liebe Grüße an alle Hörer!"
+    }
+  ],
+  "news": [
+    {
+      "id": 1785326050231,
+      "date": "29. Juli 2026",
+      "title": "test",
+      "text": "test news"
+    },
+    {
+      "id": 1,
+      "date": "21. JULI 2026",
+      "title": "Willkommen im Radio-System!",
+      "text": "Das System läuft wieder einwandfrei."
+    }
+  ],
+  "team": [
+    {
+      "id": 1,
+      "name": "Niklas Ohms",
+      "role": "Gründer",
+      "department": "Admins"
+    },
+    {
+      "id": 1784645651088,
+      "name": "Niklas Ohms",
+      "role": "Moderator",
+      "department": "DJs"
+    },
+    {
+      "id": 1784645707693,
+      "name": "Marina",
+      "role": "Chef Redakteurin",
+      "department": "Redakteure"
+    }
+  ]
 }

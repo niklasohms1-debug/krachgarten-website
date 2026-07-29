@@ -182,15 +182,16 @@ app.delete(['/api/news/:id', '/api/admin/news/:id'], async (req, res) => {
 });
 
 // ==========================================
-// SENDEPLAN ROUTEN (DECKT ALLE DRUCKWEISEN AB)
+// SENDEPLAN ROUTEN (INKLUSIVE /api/dj/schedule)
 // ==========================================
 
 const schedulePaths = [
-    '/api/schedule', '/api/admin/schedule',
-    '/api/sendeplan', '/api/admin/sendeplan',
-    '/api/plan', '/api/admin/plan'
+    '/api/schedule', '/api/admin/schedule', '/api/dj/schedule',
+    '/api/sendeplan', '/api/admin/sendeplan', '/api/dj/sendeplan',
+    '/api/plan', '/api/admin/plan', '/api/dj/plan'
 ];
 
+// Sendeplan abrufen
 app.get(schedulePaths, async (req, res) => {
     try {
         const data = await getOrInitData();
@@ -200,6 +201,7 @@ app.get(schedulePaths, async (req, res) => {
     }
 });
 
+// Sendeplan speichern / hinzufügen
 app.post(schedulePaths, async (req, res) => {
     try {
         const data = await getOrInitData();
@@ -222,6 +224,24 @@ app.post(schedulePaths, async (req, res) => {
     } catch (err) {
         console.error("Sendeplan Fehler:", err);
         res.status(500).json({ error: "Fehler beim Speichern des Sendeplans" });
+    }
+});
+
+// Sendeplan-Eintrag löschen
+app.delete(schedulePaths.map(p => `${p}/:id`), async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        const entryId = req.params.id;
+        
+        if (Array.isArray(data.schedule)) {
+            data.schedule = data.schedule.filter(s => String(s.id) !== String(entryId));
+            data.markModified('schedule');
+            await data.save();
+        }
+        
+        res.json({ success: true, schedule: data.schedule });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Löschen aus dem Sendeplan" });
     }
 });
 

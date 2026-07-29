@@ -103,7 +103,7 @@
         .nav-links {
             display: flex;
             align-items: center;
-            gap: 15px;
+            gap: 10px;
         }
 
         .nav-btn {
@@ -168,6 +168,7 @@
             <h2 style="margin:0; color:#ff4757;">👑 Admin Dashboard</h2>
             <div class="nav-links">
                 <button onclick="switchTab('dashboard')" id="btn-tab-dashboard" class="nav-btn active">📊 Übersicht</button>
+                <button onclick="switchTab('news')" id="btn-tab-news" class="nav-btn">📰 Artikel schreiben</button>
                 <button onclick="switchTab('team')" id="btn-tab-team" class="nav-btn">👥 Team verwalten</button>
                 <a href="/" style="color:#a8a8b3; text-decoration:none; font-weight: bold; font-size: 0.95rem; margin-left: 10px;">Zur Hauptseite</a>
                 <button onclick="logout()" style="background:none; border:1px solid #ff4757; color:#ff4757; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold; margin-left: 10px;">Abmelden</button>
@@ -198,7 +199,23 @@
             </div>
         </div>
 
-        <!-- SEITE 2: TEAM VERWALTEN (NUR BEI KLICK AUF DEN BUTTON SICHTBAR) -->
+        <!-- SEITE 2: ARTIKEL SCHREIBEN (NEWS MANAGEMENT) -->
+        <div id="tab-news" class="tab-page">
+            <div class="card">
+                <h3>📰 News-Artikel verfassen</h3>
+                <p style="color: #a8a8b3; font-size: 0.9rem; margin-bottom: 15px;">Veröffentliche Ankündigungen und News direkt auf der Hauptseite.</p>
+                
+                <label style="font-size:0.85rem; color:#a8a8b3;">Titel des Artikels:</label>
+                <input type="text" id="news-title" class="input-field" placeholder="z. B. Neues Studio-Equipement ist da!">
+                
+                <label style="font-size:0.85rem; color:#a8a8b3;">Inhalt / Text:</label>
+                <textarea id="news-text" class="input-field" rows="5" placeholder="Schreibe hier deinen Newsbeitrag..." style="resize: vertical;"></textarea>
+                
+                <button onclick="publishNews()" class="btn-action">Artikel veröffentlichen 📢</button>
+            </div>
+        </div>
+
+        <!-- SEITE 3: TEAM VERWALTEN -->
         <div id="tab-team" class="tab-page">
             <div class="card">
                 <h3>👥 Team verwalten</h3>
@@ -229,16 +246,17 @@
             }
         };
 
-        // TAB-WECHSEL LOGIK
+        // TAB-WECHSEL LOGIK (ÜBERSICHT / NEWS / TEAM)
         function switchTab(tabName) {
-            // Alle Tabs ausblenden
             document.querySelectorAll('.tab-page').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
 
-            // Gewählten Tab einblenden
             if (tabName === 'dashboard') {
                 document.getElementById('tab-dashboard').classList.add('active');
                 document.getElementById('btn-tab-dashboard').classList.add('active');
+            } else if (tabName === 'news') {
+                document.getElementById('tab-news').classList.add('active');
+                document.getElementById('btn-tab-news').classList.add('active');
             } else if (tabName === 'team') {
                 document.getElementById('tab-team').classList.add('active');
                 document.getElementById('btn-tab-team').classList.add('active');
@@ -318,6 +336,29 @@
                 alert("Radio-Informationen erfolgreich aktualisiert! 📻");
             } else {
                 alert("Fehler beim Aktualisieren.");
+            }
+        }
+
+        // ARTIKEL VERÖFFENTLICHEN (NEWS)
+        async function publishNews() {
+            const title = document.getElementById('news-title').value;
+            const text = document.getElementById('news-text').value;
+
+            if (!title || !text) return alert("Bitte fülle Titel und Text aus!");
+
+            const res = await fetch('/api/news', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, text })
+            });
+
+            if (res.ok) {
+                alert("Artikel erfolgreich veröffentlicht! 📢");
+                document.getElementById('news-title').value = '';
+                document.getElementById('news-text').value = '';
+                switchTab('dashboard'); // Zurück zur Hauptseite wechseln
+            } else {
+                alert("Fehler beim Veröffentlichen des Artikels.");
             }
         }
 

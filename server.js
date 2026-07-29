@@ -182,7 +182,7 @@ app.delete(['/api/news/:id', '/api/admin/news/:id'], async (req, res) => {
 });
 
 // ==========================================
-// SENDEPLAN ROUTEN (INKLUSIVE /api/dj/schedule)
+// SENDEPLAN ROUTEN (MIT DJ-NAMEN FIX)
 // ==========================================
 
 const schedulePaths = [
@@ -190,6 +190,18 @@ const schedulePaths = [
     '/api/sendeplan', '/api/admin/sendeplan', '/api/dj/sendeplan',
     '/api/plan', '/api/admin/plan', '/api/dj/plan'
 ];
+
+// Hilfsfunktion: Stellt sicher, dass das DJ-Feld immer gefüllt ist
+function formatScheduleEntry(entry) {
+    const djName = entry.dj || entry.name || entry.artist || entry.moderator || "Gast-DJ";
+    return {
+        id: entry.id || Date.now(),
+        ...entry,
+        dj: djName,
+        name: djName,
+        artist: djName
+    };
+}
 
 // Sendeplan abrufen
 app.get(schedulePaths, async (req, res) => {
@@ -211,9 +223,11 @@ app.post(schedulePaths, async (req, res) => {
         }
 
         if (Array.isArray(req.body)) {
-            data.schedule = req.body;
+            // Falls das Frontend ein ganzes Array schickt
+            data.schedule = req.body.map(formatScheduleEntry);
         } else if (req.body && typeof req.body === 'object') {
-            const newEntry = { id: Date.now(), ...req.body };
+            // Einzelnen Eintrag hinzufügen
+            const newEntry = formatScheduleEntry(req.body);
             data.schedule.push(newEntry);
         }
 
@@ -244,7 +258,6 @@ app.delete(schedulePaths.map(p => `${p}/:id`), async (req, res) => {
         res.status(500).json({ error: "Fehler beim Löschen aus dem Sendeplan" });
     }
 });
-
 app.delete(schedulePaths.map(p => `${p}/:id`), async (req, res) => {
     try {
         const data = await getOrInitData();

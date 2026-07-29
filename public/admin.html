@@ -213,6 +213,14 @@
                 
                 <button onclick="publishNews()" class="btn-action">Artikel veröffentlichen 📢</button>
             </div>
+
+            <!-- LISTE DER BEREITS VERÖFFENTLICHTEN ARTIKEL -->
+            <div class="card">
+                <h4 style="color:#a8a8b3; margin-bottom:10px;">Veröffentlichte Artikel:</h4>
+                <div id="news-list">
+                    <p style="color:#666;">Lade Artikel...</p>
+                </div>
+            </div>
         </div>
 
         <!-- SEITE 3: TEAM VERWALTEN -->
@@ -317,6 +325,7 @@
 
                 renderTeamList(data.team || []);
                 renderWishesList(data.wishes || []);
+                renderNewsList(data.news || []);
             } catch (err) {
                 console.error("Fehler beim Laden:", err);
             }
@@ -356,10 +365,46 @@
                 alert("Artikel erfolgreich veröffentlicht! 📢");
                 document.getElementById('news-title').value = '';
                 document.getElementById('news-text').value = '';
-                switchTab('dashboard'); // Zurück zur Hauptseite wechseln
+                loadAdminData();
             } else {
                 alert("Fehler beim Veröffentlichen des Artikels.");
             }
+        }
+
+        // ARTIKEL LÖSCHEN (NEWS)
+        async function deleteNews(id) {
+            if (!confirm("Artikel wirklich löschen?")) return;
+
+            const res = await fetch(`/api/admin/news/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                loadAdminData();
+            } else {
+                alert("Fehler beim Löschen des Artikels.");
+            }
+        }
+
+        function renderNewsList(news) {
+            const newsUI = document.getElementById('news-list');
+            if (!newsUI) return;
+            
+            if (!news || news.length === 0) {
+                newsUI.innerHTML = '<p style="color:#a8a8b3;">Noch keine Artikel verfasst.</p>';
+                return;
+            }
+
+            newsUI.innerHTML = news.map(item => `
+                <div class="team-member-item" style="flex-direction: column; align-items: flex-start; gap: 5px;">
+                    <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                        <strong style="color: #ff4757;">${item.title}</strong>
+                        <button class="btn-delete" onclick="deleteNews(${item.id})">🗑️ Löschen</button>
+                    </div>
+                    <small style="color: #a8a8b3;">${item.date || ''}</small>
+                    <div style="color: #ccc; font-size: 0.9rem;">${item.text}</div>
+                </div>
+            `).join('');
         }
 
         async function addTeamMember() {

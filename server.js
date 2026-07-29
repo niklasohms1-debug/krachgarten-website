@@ -171,16 +171,62 @@ app.post(['/api/schedule', '/api/admin/schedule'], async (req, res) => {
 });
 
 // ==========================================
-// WÜNSCHE ROUTEN (VOLLSTÄNDIG & FLEXIBEL)
+// WÜNSCHE ROUTEN (VOLLSTÄNDIG - INKL. /api/wish)
 // ==========================================
 
 // Wünsche abrufen
-app.get(['/api/wishes', '/api/admin/wishes'], async (req, res) => {
+app.get(['/api/wishes', '/api/admin/wishes', '/api/wish', '/api/admin/wish'], async (req, res) => {
     try {
         const data = await getOrInitData();
         res.json(data.wishes || []);
     } catch (err) {
         res.status(500).json({ error: "Fehler beim Laden der Wünsche" });
+    }
+});
+
+// Wunsch hinzufügen ODER komplette Liste aktualisieren
+app.post(['/api/wishes', '/api/admin/wishes', '/api/wish', '/api/admin/wish'], async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        
+        if (Array.isArray(req.body)) {
+            // Falls das Panel die komplette Liste schickt
+            data.wishes = req.body;
+        } else {
+            // Einzelnen Wunsch von der Wunschbox verarbeiten
+            const newWish = {
+                id: Date.now(),
+                time: new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }),
+                type: req.body.type || "Musikwunsch",
+                name: req.body.name || "Anonym",
+                song: req.body.song || "",
+                message: req.body.message || req.body.text || "",
+                ...req.body
+            };
+            data.wishes.unshift(newWish);
+        }
+        
+        data.markModified('wishes');
+        await data.save();
+        res.json({ success: true, wishes: data.wishes, wish: data.wishes[0] });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Speichern des Wunsches" });
+    }
+});
+
+// Wunsch löschen
+app.delete(['/api/wishes/:id', '/api/admin/wishes/:id', '/api/wish/:id', '/api/admin/wish/:id'], async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        const wishId = req.params.id;
+        
+        data.wishes = data.wishes.filter(w => w.id != wishId);
+        data.markModified('wishes');
+        await data.save();
+        
+        res.json({ success: true, wishes: data.wishes });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Löschen des Wunsches" });
     }
 });
 

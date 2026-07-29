@@ -1,6 +1,6 @@
 {
-  "streamName": "Mein Coole-Hits Radio",
-  "currentTitle": "DJ Max - Best of 80s",
+  "streamName": "KrachGarten",
+  "currentTitle": "DJ AIR - 24/7 NON STOP",
   "passwords": {
     "admin": "admin123",
     "dj": "dj123"
@@ -42,12 +42,7 @@
       "role": "Moderator",
       "department": "DJs"
     },
-    {
-      "id": 1784645679127,
-      "name": "User",
-      "role": "Mitgründer",
-      "department": "Admins"
-    },
+   
     {
       "id": 1784645707693,
       "name": "Marina",

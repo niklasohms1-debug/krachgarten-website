@@ -5,12 +5,9 @@
     "admin": "admin123",
     "dj": "dj123"
   },
-  "schedule": [
-    {
-      "time": "18:00 - 20:00",
-      "show": "Evening Chill & Beats (mit DJ Alex)"
-    }
-  ],
+ "schedule": [],
+ 
+   
   "wishes": [
     {
       "id": 1,

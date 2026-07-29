@@ -65,6 +65,16 @@
             background: #03b853;
         }
 
+        .btn-delete {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
         /* DJ DASHBOARD (ANFANGS VERSTECKT) */
         #dj-content {
             display: none;
@@ -91,16 +101,15 @@
             margin-bottom: 20px;
         }
 
-        .wish-item {
+        .wish-item, .schedule-item {
             background: #121214;
             padding: 12px 15px;
             border-radius: 6px;
             border: 1px solid #29292e;
             margin-bottom: 8px;
             display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 5px;
+            justify-content: space-between;
+            align-items: center;
         }
     </style>
 </head>
@@ -142,13 +151,27 @@
             </div>
         </div>
 
-        <!-- SENDEPLAN EINTRAG HINZUFÜGEN -->
+        <!-- SENDEPLAN EINTRAG HINZUFÜGEN (WIE IM ADMIN PANEL) -->
         <div class="card">
             <h3>📅 Sendung im Sendeplan eintragen</h3>
-            <input type="text" id="show-time" class="input-field" placeholder="Uhrzeit (z.B. 18:00 - 20:00 Uhr)">
-            <input type="text" id="show-title" class="input-field" placeholder="Name der Sendung">
-            <input type="text" id="dj-name" class="input-field" placeholder="Dein DJ-Name">
-            <button onclick="addScheduleShow()" class="btn-action" style="width: auto;">In Sendeplan eintragen 📅</button>
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="sched-day" class="input-field" placeholder="Tag / Datum (z. B. Heute, Montag, 30.07.)">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="sched-time" class="input-field" placeholder="Startzeit (z. B. 18:00)">
+                    <input type="text" id="sched-endtime" class="input-field" placeholder="Endzeit (z. B. 19:00)">
+                </div>
+                <input type="text" id="sched-dj" class="input-field" placeholder="DJ / Moderator Name">
+                <input type="text" id="sched-title" class="input-field" placeholder="Sendungs-Titel / Show-Name">
+                <button onclick="addScheduleShow()" class="btn-action" style="width: auto;">In Sendeplan eintragen 📅</button>
+            </div>
+        </div>
+
+        <!-- BEREITS EINGETRAGENER SENDEPLAN (LISTE + LÖSCHEN) -->
+        <div class="card">
+            <h4 style="color:#a8a8b3; margin-bottom:10px;">Aktueller Sendeplan:</h4>
+            <div id="schedule-list">
+                <p style="color:#a8a8b3;">Lade Sendeplan...</p>
+            </div>
         </div>
 
         <!-- EINGEGANGENE WÜNSCHE & GRÜßE -->
@@ -189,7 +212,6 @@
                     document.getElementById('login-error').style.display = 'block';
                 }
             } catch (err) {
-                // Offline Fallback für Tests (falls Server kurz nicht antwortet)
                 if (username === "dj" && password === "djpass123") {
                     localStorage.setItem('djLoggedIn', 'true');
                     showDjContent();
@@ -203,7 +225,7 @@
             document.getElementById('login-section').style.display = 'none';
             document.getElementById('dj-content').style.display = 'block';
             loadDjData();
-            setInterval(loadDjData, 4000); // Wünsche alle 4 Sekunden aktualisieren
+            setInterval(loadDjData, 4000); // Daten alle 4 Sekunden aktualisieren
         }
 
         function logoutDj() {
@@ -211,7 +233,7 @@
             location.reload();
         }
 
-        // DATEN LADE-FUNKTION (WÜNSCHE & SONGTITEL)
+        // DATEN LADE-FUNKTION (WÜNSCHE, SENDEPLAN & SONGTITEL)
         async function loadDjData() {
             try {
                 const res = await fetch('/api/data');
@@ -222,6 +244,7 @@
                 }
 
                 renderWishes(data.wishes || []);
+                renderScheduleList(data.schedule || []);
             } catch (err) {
                 console.error("Fehler beim Laden der DJ-Daten:", err);
             }
@@ -247,29 +270,86 @@
 
         // SENDEPLAN EINTRAG SPEICHERN
         async function addScheduleShow() {
-            const time = document.getElementById('show-time').value;
-            const show = document.getElementById('show-title').value;
-            const djName = document.getElementById('dj-name').value;
+            const day = document.getElementById('sched-day').value;
+            const time = document.getElementById('sched-time').value;
+            const endTime = document.getElementById('sched-endtime').value;
+            const dj = document.getElementById('sched-dj').value;
+            const title = document.getElementById('sched-title').value;
 
-            if (!time || !show || !djName) return alert("Bitte alle Felder für den Sendeplan ausfüllen!");
+            if (!time || !dj) return alert("Bitte mindestens Startzeit und DJ eintragen!");
 
             const res = await fetch('/api/dj/schedule', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ time, show, djName })
+                body: JSON.stringify({ day, time, endTime, dj, name: dj, title, show: title })
             });
 
             if (res.ok) {
                 alert("Sendung im Sendeplan eingetragen! 📅");
-                document.getElementById('show-time').value = '';
-                document.getElementById('show-title').value = '';
-                document.getElementById('dj-name').value = '';
+                document.getElementById('sched-day').value = '';
+                document.getElementById('sched-time').value = '';
+                document.getElementById('sched-endtime').value = '';
+                document.getElementById('sched-dj').value = '';
+                document.getElementById('sched-title').value = '';
+                loadDjData();
             } else {
                 alert("Fehler beim Speichern des Sendeplans.");
             }
         }
 
-        // WÜNSCHE RENDERN
+        // SENDEPLAN EINTRAG LÖSCHEN
+        async function deleteScheduleShow(id) {
+            if (!confirm("Sendung wirklich aus dem Sendeplan löschen?")) return;
+
+            const res = await fetch(`/api/dj/schedule/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                loadDjData();
+            } else {
+                alert("Fehler beim Löschen der Sendung.");
+            }
+        }
+
+        // SENDEPLAN RENDERN
+        function renderScheduleList(schedule) {
+            const listUI = document.getElementById('schedule-list');
+            if (!listUI) return;
+
+            if (!schedule || schedule.length === 0) {
+                listUI.innerHTML = '<p style="color:#a8a8b3;">Der Sendeplan ist aktuell leer.</p>';
+                return;
+            }
+
+            listUI.innerHTML = schedule.map(entry => `
+                <div class="schedule-item">
+                    <div>
+                        <strong style="color: #04d361;">${entry.day ? entry.day + ' | ' : ''}${entry.time || ''}${entry.endTime ? ' bis ' + entry.endTime : ''} Uhr</strong><br>
+                        <span>🎙️ <strong>${entry.dj || entry.name || 'DJ'}</strong></span> 
+                        <span style="color: #a8a8b3;">- ${entry.title || entry.show || 'Show'}</span>
+                    </div>
+                    <button class="btn-delete" onclick="deleteScheduleShow(${entry.id})">🗑️ Löschen</button>
+                </div>
+            `).join('');
+        }
+
+        // WUNSCH LÖSCHEN
+        async function deleteWish(id) {
+            if (!confirm("Wunsch/Gruß wirklich löschen?")) return;
+
+            const res = await fetch(`/api/wish/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                loadDjData();
+            } else {
+                alert("Fehler beim Löschen des Wunsches.");
+            }
+        }
+
+        // WÜNSCHE RENDERN (MIT LÖSCHEN-BUTTON)
         function renderWishes(wishes) {
             const wishesUI = document.getElementById('wishes-list');
             if (!wishes || wishes.length === 0) {
@@ -279,12 +359,15 @@
 
             wishesUI.innerHTML = wishes.map(w => `
                 <div class="wish-item">
-                    <div style="display: flex; justify-content: space-between; width: 100%;">
-                        <strong style="color: #04d361;">${w.type} von ${w.name}</strong>
-                        <small style="color: #a8a8b3;">${w.time || ''}</small>
+                    <div style="flex-grow: 1;">
+                        <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 4px;">
+                            <strong style="color: #04d361;">${w.type} von ${w.name}</strong>
+                            <small style="color: #a8a8b3;">${w.time || ''}</small>
+                        </div>
+                        ${w.song && w.song !== '-' ? `<div>🎵 <strong>Song:</strong> ${w.song}</div>` : ''}
+                        ${w.message ? `<div style="color: #ccc;">💬 "${w.message}"</div>` : ''}
                     </div>
-                    ${w.song && w.song !== '-' ? `<div>🎵 <strong>Song:</strong> ${w.song}</div>` : ''}
-                    ${w.message ? `<div style="color: #ccc;">💬 "${w.message}"</div>` : ''}
+                    <button class="btn-delete" style="margin-left: 15px;" onclick="deleteWish(${w.id})">🗑️ Löschen</button>
                 </div>
             `).join('');
         }

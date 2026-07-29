@@ -556,6 +556,22 @@
             `).join('');
         }
 
+        // WUNSCH LÖSCHEN
+        async function deleteWish(id) {
+            if (!confirm("Wunsch/Gruß wirklich löschen?")) return;
+
+            const res = await fetch(`/api/wish/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                loadAdminData();
+            } else {
+                alert("Fehler beim Löschen des Wunsches.");
+            }
+        }
+
+        // WÜNSCHE RENDERN (MIT LÖSCHEN-BUTTON)
         function renderWishesList(wishes) {
             const wishesUI = document.getElementById('wishes-list');
             if (!wishes || wishes.length === 0) {
@@ -564,13 +580,16 @@
             }
 
             wishesUI.innerHTML = wishes.map(w => `
-                <div class="wish-item" style="flex-direction: column; align-items: flex-start; gap: 5px;">
-                    <div style="display: flex; justify-content: space-between; width: 100%;">
-                        <strong style="color: #ff4757;">${w.type} von ${w.name}</strong>
-                        <small style="color: #a8a8b3;">${w.time || ''}</small>
+                <div class="wish-item">
+                    <div style="flex-grow: 1;">
+                        <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 4px;">
+                            <strong style="color: #ff4757;">${w.type} von ${w.name}</strong>
+                            <small style="color: #a8a8b3;">${w.time || ''}</small>
+                        </div>
+                        ${w.song && w.song !== '-' ? `<div>🎵 <strong>Song:</strong> ${w.song}</div>` : ''}
+                        ${w.message ? `<div style="color: #ccc;">💬 "${w.message}"</div>` : ''}
                     </div>
-                    ${w.song && w.song !== '-' ? `<div>🎵 <strong>Song:</strong> ${w.song}</div>` : ''}
-                    ${w.message ? `<div style="color: #ccc;">💬 "${w.message}"</div>` : ''}
+                    <button class="btn-delete" style="margin-left: 15px;" onclick="deleteWish(${w.id})">🗑️ Löschen</button>
                 </div>
             `).join('');
         }

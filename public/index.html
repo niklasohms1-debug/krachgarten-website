@@ -221,13 +221,20 @@
                     currentTitleUI.innerText = data.currentTitle || "Kein Sendungstitel angegeben";
                 }
 
+                // SENDEPLAN RENDERN (INKLUSIVE DATUM, ENDZEIT & DJ)
                 const scheduleUI = document.getElementById('schedule-container');
-                if (data.schedule) {
+                if (data.schedule && data.schedule.length > 0) {
                     scheduleUI.innerHTML = data.schedule.map(item => `
-                        <li style="margin-bottom: 8px;">
-                            <span style="color:#ff4757; font-weight:bold;">${item.time}</span><br>${item.show}
+                        <li style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #29292e;">
+                            <span style="color:#ff4757; font-weight:bold;">
+                                ${item.day ? item.day + ' | ' : ''}${item.time || ''}${item.endTime ? ' bis ' + item.endTime : ''} Uhr
+                            </span><br>
+                            <span style="color:#fff; font-weight:600;">🎙️ ${item.dj || item.name || 'DJ'}</span> 
+                            <span style="color:#a8a8b3;">- ${item.title || item.show || 'Show'}</span>
                         </li>
                     `).join('');
+                } else {
+                    scheduleUI.innerHTML = '<li style="color:#a8a8b3;">Aktuell keine Sendungen eingetragen.</li>';
                 }
 
                 const newsUI = document.getElementById('news-container');
@@ -244,7 +251,6 @@
                 // TEAM NACH KATEGORIEN/ABTEILUNGEN GRUPPIEREN
                 const teamUI = document.getElementById('team-page-list');
                 if (data.team && data.team.length > 0) {
-                    // Gruppieren nach Abteilung
                     const groupedTeam = {};
                     data.team.forEach(m => {
                         const dept = m.department || 'Allgemein';
@@ -252,7 +258,6 @@
                         groupedTeam[dept].push(m);
                     });
 
-                    // Icon Zuordnung für bekannte Abteilungen
                     const icons = {
                         'Administration': '🛡️',
                         'DJs & Moderatoren': '🎧',

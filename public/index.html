@@ -301,10 +301,12 @@
             document.getElementById('modal-tracklist').style.display = 'none';
         }
 
-        // RADIO.CO STATS & TRACKLIST HOLEN (Hörerzahl + Song-Historie)
+        // RADIO.CO STATS & TRACKLIST HOLEN (Hörerzahl + Song-Historie über eigenen Proxy)
         async function fetchRadioCoData() {
             try {
-                const res = await fetch('https://public.radio.co/stations/1ec17ac/status');
+                const res = await fetch('/api/radioco/status');
+                if (!res.ok) return;
+
                 const radioData = await res.json();
 
                 // 1. Hörerzahl aktualisieren
@@ -328,7 +330,7 @@
                             return `
                                 <div class="track-item">
                                     <div>
-                                        <strong style="color: #ffffff;">${item.title}</strong>
+                                        <strong style="color: #ffffff;">${item.title || 'Unbekannter Song'}</strong>
                                     </div>
                                     <small style="color: #ff4757; font-weight: bold;">${formattedTime}</small>
                                 </div>

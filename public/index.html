@@ -55,7 +55,7 @@
             display: grid;
         }
 
-        /* TEAM KATEGORIEN & CARDS (EXAKT WIE IM SCREENSHOT) */
+        /* TEAM KATEGORIEN & CARDS */
         .team-category {
             margin-bottom: 25px;
         }
@@ -198,9 +198,9 @@
                 </p>
             </div>
 
-            <!-- RADIO.CO EMBED PLAYER -->
+            <!-- RADIO.CO EMBED PLAYER (ORIGINAL-SCRIPT WIEDERHERGESTELLT) -->
             <div class="radio-co-player-wrapper">
-                <script src="https://embed.radio.co/player/s5d31fcd9d.js"></script>
+                <script src="https://embed.radio.co/player/1ec17ac.js"></script>
             </div>
         </header>
     </div>
@@ -245,7 +245,7 @@
 
     </main>
 
-    <!-- UNSER TEAM BEREICH (EINS ZU EINS WIE AUF DEINEM FOTO) -->
+    <!-- UNSER TEAM BEREICH -->
     <div id="content-team" class="page-section" style="max-width: 1000px; margin: 20px auto;">
         <div style="width: 100%;">
             <h2 style="font-size: 1.8rem; margin-top: 0; margin-bottom: 20px;">👥 Unser Team</h2>
@@ -301,7 +301,7 @@
             document.getElementById('modal-tracklist').style.display = 'none';
         }
 
-        // RADIO.CO STATS & TRACKLIST HOLEN (Hörerzahl + Song-Historie über eigenen Proxy)
+        // RADIO.CO STATS & TRACKLIST HOLEN
         async function fetchRadioCoData() {
             try {
                 const res = await fetch('/api/radioco/status');
@@ -309,7 +309,7 @@
 
                 const radioData = await res.json();
 
-                // 1. Hörerzahl vollkommen flexibel aus allen möglichen Datenfeldern ermitteln
+                // Hörerzahl ermitteln
                 let count = 0;
                 if (typeof radioData.listeners === 'number') {
                     count = radioData.listeners;
@@ -328,7 +328,7 @@
                     countUI.innerText = count;
                 }
 
-                // 2. Tracklist (Historie) rendern
+                // Tracklist (Historie) rendern
                 const tracklistUI = document.getElementById('tracklist-container');
                 if (tracklistUI && radioData.history) {
                     if (radioData.history.length === 0) {
@@ -363,13 +363,11 @@
 
                 document.getElementById('stream-name').innerText = "📻 " + (data.streamName || "Radio");
 
-                // TITEL LIVE AKTUALISIEREN
                 const currentTitleUI = document.getElementById('current-title');
                 if (currentTitleUI) {
                     currentTitleUI.innerText = data.currentTitle || "Kein Sendungstitel angegeben";
                 }
 
-                // SENDEPLAN RENDERN (INKLUSIVE DATUM, ENDZEIT & DJ)
                 const scheduleUI = document.getElementById('schedule-container');
                 if (data.schedule && data.schedule.length > 0) {
                     scheduleUI.innerHTML = data.schedule.map(item => `
@@ -396,7 +394,6 @@
                     `).join('');
                 }
 
-                // TEAM NACH KATEGORIEN/ABTEILUNGEN GRUPPIEREN
                 const teamUI = document.getElementById('team-page-list');
                 if (data.team && data.team.length > 0) {
                     const groupedTeam = {};

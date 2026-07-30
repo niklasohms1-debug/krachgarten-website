@@ -91,6 +91,19 @@
             background-color: #70a1ff;
             border-radius: 50%;
         }
+        /* STATUS: OFFLINE (Auto-DJ aus & kein DJ live) */
+        .status-card.offline {
+            background: rgba(168, 168, 179, 0.15);
+            border-color: #a8a8b3;
+            color: #a8a8b3;
+        }
+        .status-card.offline .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #a8a8b3;
+            border-radius: 50%;
+        }
+
         .status-info {
             display: flex;
             flex-direction: column;
@@ -501,15 +514,31 @@
             }
         }
 
-        // EMOJI REAKTIONEN STEUERUNG
-        const reactionCounts = { '🔥': 0, '💖': 0, '🎸': 0, '🎉': 0, '🍺': 0 };
-
-        function sendReaction(emoji) {
-            if (reactionCounts[emoji] !== undefined) {
-                reactionCounts[emoji]++;
-                document.getElementById(`count-${emoji}`).innerText = reactionCounts[emoji];
-            }
+        // EMOJI REAKTIONEN STEUERUNG (PERSISTENT IN MONGODB)
+        async function sendReaction(emoji) {
             createFloatingEmoji(emoji);
+
+            try {
+                const res = await fetch('/api/reactions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ emoji })
+                });
+                if (res.ok) {
+                    const result = await res.json();
+                    updateReactionUI(result.reactions);
+                }
+            } catch (e) {
+                console.error("Fehler beim Senden der Reaktion:", e);
+            }
+        }
+
+        function updateReactionUI(reactions) {
+            if (!reactions) return;
+            for (const [emoji, count] of Object.entries(reactions)) {
+                const el = document.getElementById(`count-${emoji}`);
+                if (el) el.innerText = count;
+            }
         }
 
         function createFloatingEmoji(emoji) {
@@ -523,8 +552,8 @@
             setTimeout(() => { el.remove(); }, 2000);
         }
 
-        // STUDIO STATUSANZEIGE AKTUALISIEREN
-        function updateStudioStatus(isLive, djName) {
+        // STUDIO STATUSANZEIGE AKTUALISIEREN (LIVE, AUTO-DJ ODER OFFLINE)
+        function updateStudioStatus(isLive, isAutoDj, djName) {
             const card = document.getElementById('studio-status-card');
             const modeText = document.getElementById('status-mode');
             const detailText = document.getElementById('status-detail');
@@ -535,10 +564,14 @@
                 card.className = "status-card live";
                 modeText.innerText = "🔴 LIVE";
                 detailText.innerText = djName ? `🎙️ ${djName}` : "Studio Live";
-            } else {
+            } else if (isAutoDj) {
                 card.className = "status-card auto-dj";
                 modeText.innerText = "🤖 AUTO-DJ";
                 detailText.innerText = "Automation aktiv";
+            } else {
+                card.className = "status-card offline";
+                modeText.innerText = "⚪ OFFLINE";
+                detailText.innerText = "Sendepause";
             }
         }
 
@@ -637,11 +670,14 @@
                     currentTitleUI.innerText = data.currentTitle || "Kein Sendungstitel angegeben";
                 }
 
-                // STUDIO STATUS AUTOMATISCH PRÜFEN & UPDATE
-                if (data.isLive || (data.currentTitle && !data.currentTitle.toLowerCase().includes("non stop") && !data.currentTitle.toLowerCase().includes("autodj"))) {
-                    updateStudioStatus(true, data.djName || data.currentDJ || "");
-                } else {
-                    updateStudioStatus(false);
+                // STUDIO STATUS UPDATEN
+                const isLive = !!data.isLive;
+                const isAutoDj = data.isAutoDj !== false; // Standardmäßig true
+                updateStudioStatus(isLive, isAutoDj, data.djName || data.currentDJ || "");
+
+                // EMOJI REAKTIONEN ANZEIGEN
+                if (data.reactions) {
+                    updateReactionUI(data.reactions);
                 }
 
                 const scheduleUI = document.getElementById('schedule-container');

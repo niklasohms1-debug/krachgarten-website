@@ -431,6 +431,26 @@ app.delete(['/api/wishes/:id', '/api/admin/wishes/:id', '/api/wish/:id', '/api/a
     }
 });
 
+// ==========================================
+// RADIO.CO API PROXY (Hörerzahl & Tracklist)
+// ==========================================
+app.get('/api/radioco/status', async (req, res) => {
+    try {
+        const fetch = (await import('node-fetch')).default;
+        const response = await fetch('https://public.radio.co/stations/1ec17ac/status');
+        const data = await response.json();
+        res.json(data);
+    } catch (err) {
+        try {
+            const response = await fetch('https://public.radio.co/stations/1ec17ac/status');
+            const data = await response.json();
+            res.json(data);
+        } catch (error) {
+            res.status(500).json({ error: "Fehler beim Holen der Radio.co Daten" });
+        }
+    }
+});
+
 // SERVER START
 app.listen(PORT, () => {
     console.log(`Radio-Server läuft auf Port ${PORT}`);

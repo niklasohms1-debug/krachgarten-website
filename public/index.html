@@ -35,7 +35,7 @@
             font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
-            margin-left: 20px;
+            margin-left: 10px;
             padding: 6px 12px;
             border-radius: 4px;
             transition: all 0.2s;
@@ -102,6 +102,69 @@
             font-weight: bold;
             display: inline-block;
         }
+
+        /* LIVE HÖRER BADGE (OBEN FIXIERT) */
+        .listener-badge {
+            background: #1a1a1e;
+            border: 1px solid #ff4757;
+            color: #04d361;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* MODAL POPUP FÜR TRACKLIST */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-card {
+            background: #202024;
+            border: 1px solid #29292e;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #29292e;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: #ff4757;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .track-item {
+            background: #121214;
+            padding: 10px 14px;
+            border-radius: 6px;
+            border: 1px solid #29292e;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
@@ -110,9 +173,16 @@
     <div class="sticky-header-wrapper">
         <!-- MENÜLEISTE OBEN -->
         <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: 0 auto 10px auto; background: #202024; padding: 12px 25px; border-radius: 8px; border: 1px solid #29292e;">
-            <h2 style="margin:0; color:#ff4757;">📻 Radio Dashboard</h2>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <h2 style="margin:0; color:#ff4757;">📻 Radio Dashboard</h2>
+                <!-- FIXIERTE HÖRERANZEIGE -->
+                <div class="listener-badge" title="Aktuell Zuhörende">
+                    <span>🎧 Zuhörer:</span> <span id="listener-count" style="color:#fff;">0</span>
+                </div>
+            </div>
             <div>
                 <button onclick="showPage('home')" id="btn-home" class="nav-btn active">Startseite</button>
+                <button onclick="openTracklistModal()" id="btn-tracklist" class="nav-btn inactive">🎵 Tracklist</button>
                 <button onclick="showPage('team')" id="btn-team" class="nav-btn inactive">Unser Team</button>
             </div>
         </div>
@@ -185,6 +255,19 @@
         </div>
     </div>
 
+    <!-- TRACKLIST MODAL POPUP -->
+    <div id="modal-tracklist" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 style="margin: 0; color: #ff4757;">🎵 Zuletzt gespielte Songs</h3>
+                <button class="modal-close" onclick="closeTracklistModal()">&times;</button>
+            </div>
+            <div id="tracklist-container" style="overflow-y: auto; flex-grow: 1;">
+                <p style="color:#a8a8b3;">Lade Song-Historie...</p>
+            </div>
+        </div>
+    </div>
+
     <!-- JAVASCRIPT GANZ UNTEN -->
     <script>
         function showPage(page) {
@@ -205,6 +288,56 @@
 
                 btnHome.className = 'nav-btn inactive';
                 btnTeam.className = 'nav-btn active';
+            }
+        }
+
+        // TRACKLIST MODAL STEUERUNG
+        function openTracklistModal() {
+            document.getElementById('modal-tracklist').style.display = 'flex';
+            fetchRadioCoData();
+        }
+
+        function closeTracklistModal() {
+            document.getElementById('modal-tracklist').style.display = 'none';
+        }
+
+        // RADIO.CO STATS & TRACKLIST HOLEN (Hörerzahl + Song-Historie)
+        async function fetchRadioCoData() {
+            try {
+                const res = await fetch('https://public.radio.co/stations/1ec17ac/status');
+                const radioData = await res.json();
+
+                // 1. Hörerzahl aktualisieren
+                const countUI = document.getElementById('listener-count');
+                if (countUI && radioData.listeners !== undefined) {
+                    countUI.innerText = radioData.listeners;
+                }
+
+                // 2. Tracklist (Historie) rendern
+                const tracklistUI = document.getElementById('tracklist-container');
+                if (tracklistUI && radioData.history) {
+                    if (radioData.history.length === 0) {
+                        tracklistUI.innerHTML = '<p style="color:#a8a8b3;">Keine vorangegangenen Songs gefunden.</p>';
+                    } else {
+                        tracklistUI.innerHTML = radioData.history.map(item => {
+                            let formattedTime = '';
+                            if (item.start_time) {
+                                const d = new Date(item.start_time);
+                                formattedTime = d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                            }
+                            return `
+                                <div class="track-item">
+                                    <div>
+                                        <strong style="color: #ffffff;">${item.title}</strong>
+                                    </div>
+                                    <small style="color: #ff4757; font-weight: bold;">${formattedTime}</small>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                }
+            } catch (err) {
+                console.error("Fehler beim Abrufen der Radio.co Daten:", err);
             }
         }
 
@@ -315,7 +448,10 @@
         }
 
         loadHomepageData();
+        fetchRadioCoData();
+
         setInterval(loadHomepageData, 3000);
+        setInterval(fetchRadioCoData, 10000);
     </script>
 </body>
 </html>

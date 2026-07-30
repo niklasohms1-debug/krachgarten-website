@@ -178,15 +178,29 @@
 
         <!-- SEITE 1: ÜBERSICHT (DEFAULTSICHT) -->
         <div id="tab-dashboard" class="tab-page active">
-            <!-- STREAM-NAME UND SONGTITEL ÄNDERN -->
+            <!-- STREAM-NAME, STUDIO-STATUS & SONGTITEL ÄNDERN -->
             <div class="card">
-                <h3>📻 Stream Name & Songtitel ändern</h3>
+                <h3>📻 Radio Settings & Studio Live-Status</h3>
                 
                 <label style="font-size:0.85rem; color:#a8a8b3;">Radio Name (z. B. KRACHGARTEN):</label>
                 <input type="text" id="new-stream-name" class="input-field" placeholder="Neuer Radioname">
-                
-                <label style="font-size:0.85rem; color:#a8a8b3;">Aktueller Song / DJ Show:</label>
-                <input type="text" id="new-title" class="input-field" placeholder="Neuer Songtitel">
+
+                <div style="display: flex; flex-direction: column; gap: 10px; margin: 10px 0 15px 0;">
+                    <label style="cursor: pointer; display: inline-flex; align-items: center; font-weight: bold; color: #ff4757;">
+                        <input type="checkbox" id="admin-is-live" style="transform: scale(1.3); margin-right: 10px; cursor: pointer;"> 
+                        🔴 Studio ist JETZT Live On Air
+                    </label>
+
+                    <label style="cursor: pointer; display: inline-flex; align-items: center; font-weight: bold; color: #70a1ff;">
+                        <input type="checkbox" id="admin-is-autodj" checked style="transform: scale(1.3); margin-right: 10px; cursor: pointer;"> 
+                        🤖 Auto-DJ aktiv (Automatische Playlist)
+                    </label>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <input type="text" id="admin-dj-name" class="input-field" style="margin:0;" placeholder="DJ Name (z. B. DJ Niklas)">
+                    <input type="text" id="new-title" class="input-field" style="margin:0;" placeholder="Aktueller Song / Live DJ Show">
+                </div>
                 
                 <button onclick="updateRadioInfo()" class="btn-action">Speichern & Senden 🚀</button>
             </div>
@@ -350,6 +364,15 @@
                 if (data.currentTitle && document.activeElement.id !== 'new-title') {
                     document.getElementById('new-title').value = data.currentTitle;
                 }
+                if (document.activeElement.id !== 'admin-is-live') {
+                    document.getElementById('admin-is-live').checked = !!data.isLive;
+                }
+                if (document.activeElement.id !== 'admin-is-autodj') {
+                    document.getElementById('admin-is-autodj').checked = data.isAutoDj !== false;
+                }
+                if (data.djName && document.activeElement.id !== 'admin-dj-name') {
+                    document.getElementById('admin-dj-name').value = data.djName;
+                }
 
                 renderScheduleList(data.schedule || []);
                 renderTeamList(data.team || []);
@@ -363,15 +386,18 @@
         async function updateRadioInfo() {
             const streamName = document.getElementById('new-stream-name').value;
             const currentTitle = document.getElementById('new-title').value;
+            const isLive = document.getElementById('admin-is-live').checked;
+            const isAutoDj = document.getElementById('admin-is-autodj').checked;
+            const djName = document.getElementById('admin-dj-name').value;
 
             const res = await fetch('/api/settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ streamName, currentTitle })
+                body: JSON.stringify({ streamName, currentTitle, isLive, isAutoDj, djName })
             });
 
             if (res.ok) {
-                alert("Radio-Informationen erfolgreich aktualisiert! 📻");
+                alert("Radio-Informationen & Studio-Status erfolgreich aktualisiert! 📻");
             } else {
                 alert("Fehler beim Aktualisieren.");
             }

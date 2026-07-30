@@ -3,6 +3,7 @@ process.env.TZ = 'Europe/Berlin';
 const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
+const https = require('https');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -432,23 +433,24 @@ app.delete(['/api/wishes/:id', '/api/admin/wishes/:id', '/api/wish/:id', '/api/a
 });
 
 // ==========================================
-// RADIO.CO API PROXY (Hörerzahl & Tracklist)
+// RADIO.CO API PROXY (NATIV OHNE DEPENDENCIES)
 // ==========================================
-app.get('/api/radioco/status', async (req, res) => {
-    try {
-        const fetch = (await import('node-fetch')).default;
-        const response = await fetch('https://public.radio.co/stations/1ec17ac/status');
-        const data = await response.json();
-        res.json(data);
-    } catch (err) {
-        try {
-            const response = await fetch('https://public.radio.co/stations/1ec17ac/status');
-            const data = await response.json();
-            res.json(data);
-        } catch (error) {
-            res.status(500).json({ error: "Fehler beim Holen der Radio.co Daten" });
-        }
-    }
+app.get('/api/radioco/status', (req, res) => {
+    https.get('https://public.radio.co/stations/1ec17ac/status', (apiRes) => {
+        let body = '';
+        apiRes.on('data', chunk => body += chunk);
+        apiRes.on('end', () => {
+            try {
+                const data = JSON.parse(body);
+                res.json(data);
+            } catch (e) {
+                res.status(500).json({ error: "JSON Parse Fehler" });
+            }
+        });
+    }).on('error', (err) => {
+        console.error("Radio.co API Fehler:", err);
+        res.status(500).json({ error: "Fehler beim Laden von Radio.co" });
+    });
 });
 
 // SERVER START

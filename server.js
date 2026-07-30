@@ -241,22 +241,16 @@ const schedulePaths = [
     '/api/plan', '/api/admin/plan', '/api/dj/plan'
 ];
 
-// Hilfsfunktion: Prüft präzise, ob eine Sendung nach Datum/Wochentag + Uhrzeit abgelaufen ist
 function isShowExpired(entry) {
     if (!entry.endTime && !entry.time) return false;
 
     try {
         const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Berlin" }));
-        
-        // 1. Wochentage & relative Tage auswerten
         const dayInput = (entry.day || '').trim().toLowerCase();
-        
         const daysOfWeek = ['sonntag', 'montag', 'dienstag', 'mittwoch', 'donnerstag', 'freitag', 'samstag'];
         const currentDayIdx = now.getDay();
 
-        if (dayInput === 'morgen') {
-            return false;
-        }
+        if (dayInput === 'morgen') return false;
         
         if (daysOfWeek.includes(dayInput)) {
             const entryDayIdx = daysOfWeek.indexOf(dayInput);
@@ -264,7 +258,6 @@ function isShowExpired(entry) {
             if (entryDayIdx < currentDayIdx) return true; 
         }
 
-        // 2. Konkretes Datum prüfen (z. B. "30.07." oder "30.07.2026")
         const dateMatch = dayInput.match(/(\d{1,2})\.(\d{1,2})\.?(\d{2,4})?/);
         if (dateMatch) {
             const day = parseInt(dateMatch[1], 10);
@@ -278,7 +271,6 @@ function isShowExpired(entry) {
             if (entryDate < todayDate) return true; 
         }
 
-        // 3. Nur wenn die Sendung HEUTE ist: Enduhrzeit prüfen
         let endTimeStr = entry.endTime || entry.time.split('-')[1] || entry.time;
         endTimeStr = endTimeStr.trim();
 
@@ -295,7 +287,6 @@ function isShowExpired(entry) {
     }
 }
 
-// Hilfsfunktion: Säubert abgelaufene Sendungen
 async function cleanupExpiredSchedule() {
     try {
         const data = await getOrInitData();
@@ -314,10 +305,8 @@ async function cleanupExpiredSchedule() {
     }
 }
 
-// Startet den Auto-Cleaner alle 60 Sekunden im Hintergrund
 setInterval(cleanupExpiredSchedule, 60 * 1000);
 
-// Sendeplan abrufen (führt vorher Cleanup aus)
 app.get(schedulePaths, async (req, res) => {
     try {
         await cleanupExpiredSchedule();
@@ -328,7 +317,6 @@ app.get(schedulePaths, async (req, res) => {
     }
 });
 
-// Sendeplan speichern / hinzufügen
 app.post(schedulePaths, async (req, res) => {
     try {
         const data = await getOrInitData();
@@ -355,7 +343,6 @@ app.post(schedulePaths, async (req, res) => {
     }
 });
 
-// Einzelne Sendung löschen
 app.delete(schedulePaths.map(p => `${p}/:id`), async (req, res) => {
     try {
         const data = await getOrInitData();
@@ -374,7 +361,7 @@ app.delete(schedulePaths.map(p => `${p}/:id`), async (req, res) => {
 });
 
 // ==========================================
-// WÜNSCHE ROUTEN (INCL. /api/wish UNTERSTÜTZUNG)
+// WÜNSCHE ROUTEN
 // ==========================================
 
 app.get(['/api/wishes', '/api/admin/wishes', '/api/wish', '/api/admin/wish'], async (req, res) => {
@@ -433,24 +420,39 @@ app.delete(['/api/wishes/:id', '/api/admin/wishes/:id', '/api/wish/:id', '/api/a
 });
 
 // ==========================================
-// RADIO.CO API PROXY (NATIV OHNE DEPENDENCIES)
+// RADIO.CO API PROXY (KORREKTE STATION ID: s5d31fcd9d)
 // ==========================================
 app.get('/api/radioco/status', (req, res) => {
-    https.get('https://public.radio.co/stations/1ec17ac/status', (apiRes) => {
-        let body = '';
-        apiRes.on('data', chunk => body += chunk);
-        apiRes.on('end', () => {
-            try {
-                const data = JSON.parse(body);
-                res.json(data);
-            } catch (e) {
-                res.status(500).json({ error: "JSON Parse Fehler" });
+    const fetchUrl = (targetUrl) => {
+        const options = {
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json'
             }
+        };
+
+        https.get(targetUrl, options, (apiRes) => {
+            if (apiRes.statusCode >= 300 && apiRes.statusCode < 400 && apiRes.headers.location) {
+                return fetchUrl(apiRes.headers.location);
+            }
+
+            let body = '';
+            apiRes.on('data', chunk => body += chunk);
+            apiRes.on('end', () => {
+                try {
+                    const data = JSON.parse(body);
+                    res.json(data);
+                } catch (e) {
+                    res.status(500).json({ error: "JSON Parse Fehler", raw: body });
+                }
+            });
+        }).on('error', (err) => {
+            console.error("Radio.co API Fehler:", err);
+            res.status(500).json({ error: "Fehler beim Laden von Radio.co" });
         });
-    }).on('error', (err) => {
-        console.error("Radio.co API Fehler:", err);
-        res.status(500).json({ error: "Fehler beim Laden von Radio.co" });
-    });
+    };
+
+    fetchUrl('https://public.radio.co/stations/s5d31fcd9d/status');
 });
 
 // SERVER START

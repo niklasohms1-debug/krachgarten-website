@@ -420,10 +420,9 @@ app.delete(['/api/wishes/:id', '/api/admin/wishes/:id', '/api/wish/:id', '/api/a
 });
 
 // ==========================================
-// RADIO.CO ECHTZEIT-PROXY (OHNE API-KEY)
+// RADIO.CO ECHTZEIT-PROXY
 // ==========================================
 app.get('/api/radioco/status', (req, res) => {
-    // Wir fragen sowohl die Public Station API als auch den Server-Stats Endpoint ab
     const options = {
         hostname: 'public.radio.co',
         path: '/stations/s5d31fcd9d/status',
@@ -441,8 +440,6 @@ app.get('/api/radioco/status', (req, res) => {
             try {
                 const data = JSON.parse(body);
 
-                // Falls Radio.co die Hörer im Status nicht direkt als 'listeners' mitschickt,
-                // berechnen wir die Hörer aus den aktiven Relays/Connects oder setzen den Live-Status
                 let count = 0;
                 if (typeof data.listeners === 'number') {
                     count = data.listeners;
@@ -464,9 +461,6 @@ app.get('/api/radioco/status', (req, res) => {
         console.error("Radio.co Fehler:", err);
         res.status(500).json({ error: "Fehler beim Laden von Radio.co" });
     });
-});
-
-    fetchUrl('https://public.radio.co/stations/s5d31fcd9d/status');
 });
 
 // SERVER START

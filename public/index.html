@@ -35,7 +35,7 @@
             font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
-            margin-left: 10px;
+            margin-left: 8px;
             padding: 6px 12px;
             border-radius: 4px;
             transition: all 0.2s;
@@ -53,6 +53,137 @@
         }
         .page-section.active {
             display: grid;
+        }
+
+        /* STUDIO STATUSANZEIGE */
+        .status-card {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            border: 1px solid #29292e;
+            transition: all 0.3s ease;
+        }
+        .status-card.live {
+            background: rgba(255, 71, 87, 0.15);
+            border-color: #ff4757;
+            color: #ff4757;
+        }
+        .status-card.live .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #ff4757;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #ff4757;
+            animation: pulseGlow 1.5s infinite;
+        }
+        .status-card.auto-dj {
+            background: rgba(112, 161, 255, 0.15);
+            border-color: #70a1ff;
+            color: #70a1ff;
+        }
+        .status-card.auto-dj .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #70a1ff;
+            border-radius: 50%;
+        }
+        .status-info {
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+        .status-mode-text {
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            line-height: 1.1;
+        }
+        .status-detail-text {
+            color: #a8a8b3;
+            font-size: 0.7rem;
+            font-weight: normal;
+        }
+        @keyframes pulseGlow {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 10px #ff4757; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        /* EMOJI REAKTIONEN STYLES */
+        .reaction-grid {
+            display: flex;
+            justify-content: space-around;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .reaction-btn {
+            background: #121214;
+            border: 1px solid #29292e;
+            color: #fff;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .reaction-btn:hover {
+            background: #29292e;
+            transform: scale(1.08);
+        }
+        .reaction-btn:active {
+            transform: scale(0.95);
+        }
+        .floating-emoji {
+            position: fixed;
+            bottom: 20px;
+            font-size: 2.5rem;
+            pointer-events: none;
+            z-index: 3000;
+            animation: floatUp 2s ease-out forwards;
+        }
+        @keyframes floatUp {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            50% { transform: translateY(-150px) scale(1.3) rotate(15deg); opacity: 0.8; }
+            100% { transform: translateY(-300px) scale(1) rotate(-15deg); opacity: 0; }
+        }
+
+        /* TEILEN BUTTONS STYLES */
+        .share-btn {
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: opacity 0.2s;
+        }
+        .share-btn:hover {
+            opacity: 0.85;
+        }
+
+        /* PUSH NOTIFICATION BUTTON */
+        .push-btn {
+            background: #202024;
+            border: 1px solid #ff4757;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .push-btn:hover {
+            background: #ff4757;
         }
 
         /* TEAM KATEGORIEN & CARDS */
@@ -103,7 +234,7 @@
             display: inline-block;
         }
 
-        /* MODAL POPUP FÜR TRACKLIST */
+        /* MODAL POPUP */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -158,14 +289,26 @@
     <!-- FIXIERTER HEADER-CONTAINER -->
     <div class="sticky-header-wrapper">
         <!-- MENÜLEISTE OBEN -->
-        <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: 0 auto 10px auto; background: #202024; padding: 12px 25px; border-radius: 8px; border: 1px solid #29292e;">
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <h2 style="margin:0; color:#ff4757;">📻 Radio Dashboard</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: 0 auto 10px auto; background: #202024; padding: 12px 25px; border-radius: 8px; border: 1px solid #29292e; flex-wrap: wrap; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <h2 style="margin:0; color:#ff4757; font-size: 1.3rem;">📻 Radio Dashboard</h2>
+                
+                <!-- STUDIO STATUSANZEIGE -->
+                <div id="studio-status-card" class="status-card auto-dj">
+                    <span class="status-dot"></span>
+                    <div class="status-info">
+                        <span id="status-mode" class="status-mode-text">AUTO-DJ</span>
+                        <small id="status-detail" class="status-detail-text">Automation aktiv</small>
+                    </div>
+                </div>
             </div>
-            <div>
+
+            <div style="display: flex; align-items: center; flex-wrap: wrap;">
                 <button onclick="showPage('home')" id="btn-home" class="nav-btn active">Startseite</button>
                 <button onclick="openTracklistModal()" id="btn-tracklist" class="nav-btn inactive">🎵 Tracklist</button>
                 <button onclick="showPage('team')" id="btn-team" class="nav-btn inactive">Unser Team</button>
+                <button onclick="openShareModal()" id="btn-share" class="nav-btn inactive">📢 Teilen</button>
+                <button id="push-btn" onclick="togglePushNotifications()" class="push-btn" style="margin-left:8px;">🔔 Live-Alerts</button>
             </div>
         </div>
 
@@ -180,7 +323,7 @@
                 </p>
             </div>
 
-            <!-- RADIO.CO EMBED PLAYER (ORIGINAL-SCRIPT WIEDERHERGESTELLT) -->
+            <!-- RADIO.CO EMBED PLAYER -->
             <div class="radio-co-player-wrapper">
                 <script src="https://embed.radio.co/player/1ec17ac.js"></script>
             </div>
@@ -190,8 +333,21 @@
     <!-- HAUPTBEREICH / STARTSEITE -->
     <main id="content-home" class="main page-section active">
         
-        <!-- LINKS: NEWS FEED -->
+        <!-- LINKS: REAKTIONEN & NEWS FEED -->
         <section>
+            <!-- EMOJI REAKTIONEN CARD -->
+            <div class="card" style="text-align: center;">
+                <h3 style="margin:0 0 5px 0;">🎉 Feierst du die Mucke?</h3>
+                <p style="margin: 0 0 10px 0; font-size:0.85rem; color: #a8a8b3;">Schick dem DJ ein Signal ins Studio!</p>
+                <div class="reaction-grid">
+                    <button onclick="sendReaction('🔥')" class="reaction-btn">🔥 <span id="count-🔥">0</span></button>
+                    <button onclick="sendReaction('💖')" class="reaction-btn">💖 <span id="count-💖">0</span></button>
+                    <button onclick="sendReaction('🎸')" class="reaction-btn">🎸 <span id="count-🎸">0</span></button>
+                    <button onclick="sendReaction('🎉')" class="reaction-btn">🎉 <span id="count-🎉">0</span></button>
+                    <button onclick="sendReaction('🍺')" class="reaction-btn">🍺 <span id="count-🍺">0</span></button>
+                </div>
+            </div>
+
             <h2>News & Updates</h2>
             <div id="news-container"></div>
         </section>
@@ -250,6 +406,27 @@
         </div>
     </div>
 
+    <!-- TEILEN MODAL POPUP -->
+    <div id="modal-share" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 style="margin: 0; color: #ff4757;">📢 Sender teilen</h3>
+                <button class="modal-close" onclick="closeShareModal()">&times;</button>
+            </div>
+            
+            <p style="font-size: 0.9rem; color: #a8a8b3; margin-top:0;">Pass den Text bei Bedarf an und wähle deine Plattform:</p>
+            
+            <textarea id="share-text-input" rows="3" style="width: 100%; padding: 10px; box-sizing: border-box; background: #121214; border: 1px solid #29292e; color: #fff; border-radius: 6px; resize: vertical; margin-bottom: 15px;"></textarea>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <button onclick="shareTo('whatsapp')" class="share-btn" style="background: #25D366;">WhatsApp</button>
+                <button onclick="shareTo('x')" class="share-btn" style="background: #000000; border: 1px solid #333;">X (Twitter)</button>
+                <button onclick="shareTo('facebook')" class="share-btn" style="background: #1877F2;">Facebook</button>
+                <button onclick="shareTo('youtube')" class="share-btn" style="background: #FF0000;">YouTube Post</button>
+            </div>
+        </div>
+    </div>
+
     <!-- JAVASCRIPT GANZ UNTEN -->
     <script>
         function showPage(page) {
@@ -283,6 +460,135 @@
             document.getElementById('modal-tracklist').style.display = 'none';
         }
 
+        // TEILEN MODAL STEUERUNG
+        function openShareModal() {
+            const currentTrack = document.getElementById('current-title')?.innerText || 'geile Mucke';
+            const siteUrl = window.location.origin || window.location.href;
+            const defaultText = `Ich höre gerade "${currentTrack}" auf KrachGartenRadio! 🎧 Hört mal rein: ${siteUrl}`;
+            
+            document.getElementById('share-text-input').value = defaultText;
+            document.getElementById('modal-share').style.display = 'flex';
+        }
+
+        function closeShareModal() {
+            document.getElementById('modal-share').style.display = 'none';
+        }
+
+        function shareTo(platform) {
+            const text = encodeURIComponent(document.getElementById('share-text-input').value);
+            const url = encodeURIComponent(window.location.origin || window.location.href);
+            let shareUrl = '';
+
+            switch(platform) {
+                case 'whatsapp':
+                    shareUrl = `https://api.whatsapp.com/send?text=${text}`;
+                    break;
+                case 'x':
+                    shareUrl = `https://x.com/intent/tweet?text=${text}`;
+                    break;
+                case 'facebook':
+                    shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${text}`;
+                    break;
+                case 'youtube':
+                    shareUrl = `https://www.youtube.com/posts?create_post=1`;
+                    navigator.clipboard.writeText(decodeURIComponent(text));
+                    alert("Der Text wurde in deine Zwischenablage kopiert! Füge ihn einfach in deinen YouTube-Community-Post ein. 📋");
+                    break;
+            }
+
+            if (shareUrl) {
+                window.open(shareUrl, '_blank');
+            }
+        }
+
+        // EMOJI REAKTIONEN STEUERUNG
+        const reactionCounts = { '🔥': 0, '💖': 0, '🎸': 0, '🎉': 0, '🍺': 0 };
+
+        function sendReaction(emoji) {
+            if (reactionCounts[emoji] !== undefined) {
+                reactionCounts[emoji]++;
+                document.getElementById(`count-${emoji}`).innerText = reactionCounts[emoji];
+            }
+            createFloatingEmoji(emoji);
+        }
+
+        function createFloatingEmoji(emoji) {
+            const el = document.createElement('div');
+            el.className = 'floating-emoji';
+            el.innerText = emoji;
+            const randomX = Math.random() * (window.innerWidth - 80) + 40;
+            el.style.left = `${randomX}px`;
+
+            document.body.appendChild(el);
+            setTimeout(() => { el.remove(); }, 2000);
+        }
+
+        // STUDIO STATUSANZEIGE AKTUALISIEREN
+        function updateStudioStatus(isLive, djName) {
+            const card = document.getElementById('studio-status-card');
+            const modeText = document.getElementById('status-mode');
+            const detailText = document.getElementById('status-detail');
+
+            if (!card || !modeText || !detailText) return;
+
+            if (isLive) {
+                card.className = "status-card live";
+                modeText.innerText = "🔴 LIVE";
+                detailText.innerText = djName ? `🎙️ ${djName}` : "Studio Live";
+            } else {
+                card.className = "status-card auto-dj";
+                modeText.innerText = "🤖 AUTO-DJ";
+                detailText.innerText = "Automation aktiv";
+            }
+        }
+
+        // WEB PUSH BENACHRICHTIGUNGEN
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            navigator.serviceWorker.register('/sw.js').then(() => {
+                checkPushStatus();
+            }).catch(err => console.log('ServiceWorker Hinweis:', err));
+        }
+
+        async function checkPushStatus() {
+            if (!('serviceWorker' in navigator)) return;
+            try {
+                const reg = await navigator.serviceWorker.ready;
+                const sub = await reg.pushManager.getSubscription();
+                const btn = document.getElementById('push-btn');
+
+                if (btn) {
+                    if (sub) {
+                        btn.innerHTML = '🔕 Alerts an';
+                        btn.style.borderColor = '#04d361';
+                    } else {
+                        btn.innerHTML = '🔔 Live-Alerts';
+                        btn.style.borderColor = '#ff4757';
+                    }
+                }
+            } catch(e) {}
+        }
+
+        async function togglePushNotifications() {
+            if (!('serviceWorker' in navigator)) return alert("Dein Browser unterstützt leider keine Push-Alerts.");
+            
+            const reg = await navigator.serviceWorker.ready;
+            const sub = await reg.pushManager.getSubscription();
+
+            if (sub) {
+                await sub.unsubscribe();
+                alert("Live-Alerts deaktiviert.");
+                checkPushStatus();
+            } else {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    alert("Super! Du wirst benachrichtigt, wenn ein DJ live geht! 🎙️");
+                    checkPushStatus();
+                } else {
+                    alert("Benachrichtigungen wurden im Browser nicht zugelassen.");
+                }
+            }
+        }
+
         // RADIO.CO STATS & TRACKLIST HOLEN
         async function fetchRadioCoData() {
             try {
@@ -291,7 +597,6 @@
 
                 const radioData = await res.json();
 
-                // Höreranzeige aktualisieren
                 // Tracklist (Historie) rendern
                 const tracklistUI = document.getElementById('tracklist-container');
                 if (tracklistUI && radioData.history) {
@@ -330,6 +635,13 @@
                 const currentTitleUI = document.getElementById('current-title');
                 if (currentTitleUI) {
                     currentTitleUI.innerText = data.currentTitle || "Kein Sendungstitel angegeben";
+                }
+
+                // STUDIO STATUS AUTOMATISCH PRÜFEN & UPDATE
+                if (data.isLive || (data.currentTitle && !data.currentTitle.toLowerCase().includes("non stop") && !data.currentTitle.toLowerCase().includes("autodj"))) {
+                    updateStudioStatus(true, data.djName || data.currentDJ || "");
+                } else {
+                    updateStudioStatus(false);
                 }
 
                 const scheduleUI = document.getElementById('schedule-container');

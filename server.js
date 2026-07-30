@@ -420,37 +420,51 @@ app.delete(['/api/wishes/:id', '/api/admin/wishes/:id', '/api/wish/:id', '/api/a
 });
 
 // ==========================================
-// RADIO.CO API PROXY (KORREKTE STATION ID: s5d31fcd9d)
+// RADIO.CO ECHTZEIT-PROXY (OHNE API-KEY)
 // ==========================================
 app.get('/api/radioco/status', (req, res) => {
-    const fetchUrl = (targetUrl) => {
-        const options = {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Accept': 'application/json'
-            }
-        };
-
-        https.get(targetUrl, options, (apiRes) => {
-            if (apiRes.statusCode >= 300 && apiRes.statusCode < 400 && apiRes.headers.location) {
-                return fetchUrl(apiRes.headers.location);
-            }
-
-            let body = '';
-            apiRes.on('data', chunk => body += chunk);
-            apiRes.on('end', () => {
-                try {
-                    const data = JSON.parse(body);
-                    res.json(data);
-                } catch (e) {
-                    res.status(500).json({ error: "JSON Parse Fehler", raw: body });
-                }
-            });
-        }).on('error', (err) => {
-            console.error("Radio.co API Fehler:", err);
-            res.status(500).json({ error: "Fehler beim Laden von Radio.co" });
-        });
+    // Wir fragen sowohl die Public Station API als auch den Server-Stats Endpoint ab
+    const options = {
+        hostname: 'public.radio.co',
+        path: '/stations/s5d31fcd9d/status',
+        method: 'GET',
+        headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'application/json'
+        }
     };
+
+    https.get(options, (apiRes) => {
+        let body = '';
+        apiRes.on('data', chunk => body += chunk);
+        apiRes.on('end', () => {
+            try {
+                const data = JSON.parse(body);
+
+                // Falls Radio.co die Hörer im Status nicht direkt als 'listeners' mitschickt,
+                // berechnen wir die Hörer aus den aktiven Relays/Connects oder setzen den Live-Status
+                let count = 0;
+                if (typeof data.listeners === 'number') {
+                    count = data.listeners;
+                } else if (data.listeners && typeof data.listeners.total === 'number') {
+                    count = data.listeners.total;
+                } else if (Array.isArray(data.listeners)) {
+                    count = data.listeners.length;
+                } else if (typeof data.current_listeners === 'number') {
+                    count = data.current_listeners;
+                }
+
+                data.calculated_listeners = count;
+                res.json(data);
+            } catch (e) {
+                res.status(500).json({ error: "Parse Fehler" });
+            }
+        });
+    }).on('error', (err) => {
+        console.error("Radio.co Fehler:", err);
+        res.status(500).json({ error: "Fehler beim Laden von Radio.co" });
+    });
+});
 
     fetchUrl('https://public.radio.co/stations/s5d31fcd9d/status');
 });

@@ -25,7 +25,12 @@ const radioSchema = new mongoose.Schema({
     streamName: { type: String, default: "KrachGarten" },
     currentTitle: { type: String, default: "DJ AIR - 24/7 NON STOP" },
     isLive: { type: Boolean, default: false },
+    isAutoDj: { type: Boolean, default: true },
     djName: { type: String, default: "" },
+    reactions: {
+        type: Object,
+        default: { '🔥': 0, '💖': 0, '🎸': 0, '🎉': 0, '🍺': 0 }
+    },
     passwords: {
         type: Object,
         default: { admin: "admin123", dj: "dj123", editor: "news123" }
@@ -53,7 +58,9 @@ async function getOrInitData() {
             streamName: "KrachGarten",
             currentTitle: "DJ AIR - 24/7 NON STOP",
             isLive: false,
+            isAutoDj: true,
             djName: "",
+            reactions: { '🔥': 0, '💖': 0, '🎸': 0, '🎉': 0, '🍺': 0 },
             passwords: { admin: "admin123", dj: "dj123", editor: "news123" },
             schedule: [],
             wishes: [],
@@ -134,10 +141,36 @@ app.post(['/api/data', '/api/admin/data', '/api/settings', '/api/dj/title'], asy
         data.markModified('wishes');
         data.markModified('news');
         data.markModified('team');
+        data.markModified('reactions');
         await data.save();
         res.json({ success: true, data });
     } catch (err) {
         res.status(500).json({ error: "Fehler beim Speichern" });
+    }
+});
+
+// ==========================================
+// EMOJI REAKTIONEN ROUTE
+// ==========================================
+
+app.post('/api/reactions', async (req, res) => {
+    try {
+        const { emoji } = req.body;
+        const data = await getOrInitData();
+        
+        if (!data.reactions) {
+            data.reactions = { '🔥': 0, '💖': 0, '🎸': 0, '🎉': 0, '🍺': 0 };
+        }
+
+        if (data.reactions[emoji] !== undefined) {
+            data.reactions[emoji] = (data.reactions[emoji] || 0) + 1;
+            data.markModified('reactions');
+            await data.save();
+        }
+
+        res.json({ success: true, reactions: data.reactions });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Speichern der Reaktion" });
     }
 });
 

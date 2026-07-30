@@ -24,6 +24,8 @@ mongoose.connect(MONGO_URI)
 const radioSchema = new mongoose.Schema({
     streamName: { type: String, default: "KrachGarten" },
     currentTitle: { type: String, default: "DJ AIR - 24/7 NON STOP" },
+    isLive: { type: Boolean, default: false },
+    djName: { type: String, default: "" },
     passwords: {
         type: Object,
         default: { admin: "admin123", dj: "dj123", editor: "news123" }
@@ -36,6 +38,13 @@ const radioSchema = new mongoose.Schema({
 
 const RadioData = mongoose.model('RadioData', radioSchema);
 
+// PUSH SUBSCRIPTION SCHEMA DEFINIEREN
+const pushSubSchema = new mongoose.Schema({
+    endpoint: String,
+    keys: Object
+});
+const PushSub = mongoose.model('PushSub', pushSubSchema);
+
 // HILFSFUNKTION: DATEN HOLEN ODER ERSTELLEN
 async function getOrInitData() {
     let data = await RadioData.findOne();
@@ -43,6 +52,8 @@ async function getOrInitData() {
         data = await RadioData.create({
             streamName: "KrachGarten",
             currentTitle: "DJ AIR - 24/7 NON STOP",
+            isLive: false,
+            djName: "",
             passwords: { admin: "admin123", dj: "dj123", editor: "news123" },
             schedule: [],
             wishes: [],
@@ -127,6 +138,25 @@ app.post(['/api/data', '/api/admin/data', '/api/settings', '/api/dj/title'], asy
         res.json({ success: true, data });
     } catch (err) {
         res.status(500).json({ error: "Fehler beim Speichern" });
+    }
+});
+
+// ==========================================
+// PUSH NOTIFICATION ROUTEN
+// ==========================================
+
+app.post('/api/push/subscribe', async (req, res) => {
+    try {
+        const subscription = req.body;
+        if (subscription && subscription.endpoint) {
+            const exists = await PushSub.findOne({ endpoint: subscription.endpoint });
+            if (!exists) {
+                await PushSub.create(subscription);
+            }
+        }
+        res.status(201).json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Abonnieren" });
     }
 });
 

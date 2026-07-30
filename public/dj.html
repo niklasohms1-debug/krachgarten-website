@@ -144,12 +144,17 @@
 
         <!-- LIVE TITEL & STUDIO STATUS ÄNDERN -->
         <div class="card">
-            <h3>🎵 Studio Live-Status / On-Air Titel</h3>
+            <h3>🎵 Studio Live-Status & Auto-DJ Steuerung</h3>
             
-            <div style="margin-bottom: 12px;">
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px;">
                 <label style="cursor: pointer; display: inline-flex; align-items: center; font-weight: bold; color: #04d361;">
                     <input type="checkbox" id="dj-is-live" style="transform: scale(1.3); margin-right: 10px; cursor: pointer;"> 
                     🔴 Ich bin JETZT Live On Air im Studio
+                </label>
+
+                <label style="cursor: pointer; display: inline-flex; align-items: center; font-weight: bold; color: #70a1ff;">
+                    <input type="checkbox" id="dj-is-autodj" checked style="transform: scale(1.3); margin-right: 10px; cursor: pointer;"> 
+                    🤖 Auto-DJ aktiv (Automatische Playlist)
                 </label>
             </div>
 
@@ -257,6 +262,10 @@
                     document.getElementById('dj-is-live').checked = !!data.isLive;
                 }
 
+                if (document.activeElement.id !== 'dj-is-autodj') {
+                    document.getElementById('dj-is-autodj').checked = data.isAutoDj !== false;
+                }
+
                 if (data.djName && document.activeElement.id !== 'dj-name-input') {
                     document.getElementById('dj-name-input').value = data.djName;
                 }
@@ -268,16 +277,17 @@
             }
         }
 
-        // SONGTITEL & LIVE-STATUS AKTUALISIEREN
+        // SONGTITEL, LIVE-STATUS & AUTO-DJ AKTUALISIEREN
         async function updateSongTitle() {
             const currentTitle = document.getElementById('new-title').value;
             const isLive = document.getElementById('dj-is-live').checked;
+            const isAutoDj = document.getElementById('dj-is-autodj').checked;
             const djName = document.getElementById('dj-name-input').value;
 
             const res = await fetch('/api/dj/title', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ currentTitle, isLive, djName })
+                body: JSON.stringify({ currentTitle, isLive, isAutoDj, djName })
             });
 
             if (res.ok) {

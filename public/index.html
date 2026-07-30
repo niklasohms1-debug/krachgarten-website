@@ -103,20 +103,6 @@
             display: inline-block;
         }
 
-        /* LIVE HÖRER BADGE (OBEN FIXIERT) */
-        .listener-badge {
-            background: #1a1a1e;
-            border: 1px solid #ff4757;
-            color: #04d361;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-
         /* MODAL POPUP FÜR TRACKLIST */
         .modal-overlay {
             display: none;
@@ -175,10 +161,6 @@
         <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: 0 auto 10px auto; background: #202024; padding: 12px 25px; border-radius: 8px; border: 1px solid #29292e;">
             <div style="display: flex; align-items: center; gap: 15px;">
                 <h2 style="margin:0; color:#ff4757;">📻 Radio Dashboard</h2>
-                <!-- FIXIERTE HÖRERANZEIGE -->
-                <div class="listener-badge" title="Aktuell Zuhörende">
-                    <span>🎧 Zuhörer:</span> <span id="listener-count" style="color:#fff;">0</span>
-                </div>
             </div>
             <div>
                 <button onclick="showPage('home')" id="btn-home" class="nav-btn active">Startseite</button>
@@ -310,19 +292,6 @@
                 const radioData = await res.json();
 
                 // Höreranzeige aktualisieren
-                const countUI = document.getElementById('listener-count');
-                if (countUI) {
-                    // Wenn eine konkrete Zahl von Radio.co kommt, zeige sie an
-                    if (radioData.calculated_listeners !== undefined && radioData.calculated_listeners > 0) {
-                        countUI.innerText = radioData.calculated_listeners;
-                    } else if (radioData.status === "online") {
-                        // Falls Radio.co die Zahl im public Endpoint versteckt, zeige LIVE als Zeichen an
-                        countUI.innerText = "1";
-                    } else {
-                        countUI.innerText = "0";
-                    }
-                }
-
                 // Tracklist (Historie) rendern
                 const tracklistUI = document.getElementById('tracklist-container');
                 if (tracklistUI && radioData.history) {

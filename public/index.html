@@ -309,56 +309,47 @@
 
                 const radioData = await res.json();
 
-                // Hörerzahl ermitteln
-               // RADIO.CO STATS & TRACKLIST HOLEN
-async function fetchRadioCoData() {
-    try {
-        const res = await fetch('/api/radioco/status');
-        if (!res.ok) return;
-
-        const radioData = await res.json();
-
-        // Höreranzeige aktualisieren
-        const countUI = document.getElementById('listener-count');
-        if (countUI) {
-            // Wenn eine konkrete Zahl von Radio.co kommt, zeige sie an
-            if (radioData.calculated_listeners !== undefined && radioData.calculated_listeners > 0) {
-                countUI.innerText = radioData.calculated_listeners;
-            } else if (radioData.status === "online") {
-                // Falls Radio.co die Zahl im public Endpoint versteckt, zeige LIVE als Zeichen an
-                countUI.innerText = "1"; 
-            } else {
-                countUI.innerText = "0";
-            }
-        }
-
-        // Tracklist (Historie) rendern
-        const tracklistUI = document.getElementById('tracklist-container');
-        if (tracklistUI && radioData.history) {
-            if (radioData.history.length === 0) {
-                tracklistUI.innerHTML = '<p style="color:#a8a8b3;">Keine vorangegangenen Songs gefunden.</p>';
-            } else {
-                tracklistUI.innerHTML = radioData.history.map(item => {
-                    let formattedTime = '';
-                    if (item.start_time) {
-                        const d = new Date(item.start_time);
-                        formattedTime = d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                // Höreranzeige aktualisieren
+                const countUI = document.getElementById('listener-count');
+                if (countUI) {
+                    // Wenn eine konkrete Zahl von Radio.co kommt, zeige sie an
+                    if (radioData.calculated_listeners !== undefined && radioData.calculated_listeners > 0) {
+                        countUI.innerText = radioData.calculated_listeners;
+                    } else if (radioData.status === "online") {
+                        // Falls Radio.co die Zahl im public Endpoint versteckt, zeige LIVE als Zeichen an
+                        countUI.innerText = "1";
+                    } else {
+                        countUI.innerText = "0";
                     }
-                    return `
-                        <div class="track-item">
-                            <div>
-                                <strong style="color: #ffffff;">${item.title || 'Unbekannter Song'}</strong>
-                            </div>
-                            <small style="color: #ff4757; font-weight: bold;">${formattedTime}</small>
-                        </div>
-                    `;
-                }).join('');
+                }
+
+                // Tracklist (Historie) rendern
+                const tracklistUI = document.getElementById('tracklist-container');
+                if (tracklistUI && radioData.history) {
+                    if (radioData.history.length === 0) {
+                        tracklistUI.innerHTML = '<p style="color:#a8a8b3;">Keine vorangegangenen Songs gefunden.</p>';
+                    } else {
+                        tracklistUI.innerHTML = radioData.history.map(item => {
+                            let formattedTime = '';
+                            if (item.start_time) {
+                                const d = new Date(item.start_time);
+                                formattedTime = d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                            }
+                            return `
+                                <div class="track-item">
+                                    <div>
+                                        <strong style="color: #ffffff;">${item.title || 'Unbekannter Song'}</strong>
+                                    </div>
+                                    <small style="color: #ff4757; font-weight: bold;">${formattedTime}</small>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                }
+            } catch (err) {
+                console.error("Fehler beim Abrufen der Radio.co Daten:", err);
             }
         }
-    } catch (err) {
-        console.error("Fehler beim Abrufen der Radio.co Daten:", err);
-    }
-}
 
         async function loadHomepageData() {
             try {
@@ -408,7 +399,9 @@ async function fetchRadioCoData() {
                     });
 
                     const icons = {
+                        'Admins': '🛡️',
                         'Administration': '🛡️',
+                        'DJs': '🎧',
                         'DJs & Moderatoren': '🎧',
                         'Redakteure': '✍️'
                     };

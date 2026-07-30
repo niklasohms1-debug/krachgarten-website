@@ -200,7 +200,7 @@
 
             <!-- RADIO.CO EMBED PLAYER -->
             <div class="radio-co-player-wrapper">
-                <script src="https://embed.radio.co/player/1ec17ac.js"></script>
+                <script src="https://embed.radio.co/player/s5d31fcd9d.js"></script>
             </div>
         </header>
     </div>
@@ -309,10 +309,23 @@
 
                 const radioData = await res.json();
 
-                // 1. Hörerzahl aktualisieren
+                // 1. Hörerzahl vollkommen flexibel aus allen möglichen Datenfeldern ermitteln
+                let count = 0;
+                if (typeof radioData.listeners === 'number') {
+                    count = radioData.listeners;
+                } else if (radioData.listeners && typeof radioData.listeners.total === 'number') {
+                    count = radioData.listeners.total;
+                } else if (radioData.listeners && Array.isArray(radioData.listeners)) {
+                    count = radioData.listeners.length;
+                } else if (typeof radioData.current_listeners === 'number') {
+                    count = radioData.current_listeners;
+                } else if (radioData.status && typeof radioData.status.listeners === 'number') {
+                    count = radioData.status.listeners;
+                }
+
                 const countUI = document.getElementById('listener-count');
-                if (countUI && radioData.listeners !== undefined) {
-                    countUI.innerText = radioData.listeners;
+                if (countUI) {
+                    countUI.innerText = count;
                 }
 
                 // 2. Tracklist (Historie) rendern

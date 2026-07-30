@@ -53,7 +53,7 @@ async function getOrInitData() {
     return data;
 }
 
-// HILFSFUNKTION: DEUTSCHE UHRZEIT & DATUM ERSTELLEN (EXAKTE ZEITZONE)
+// HILFSFUNKTION: DEUTSCHE UHRZEIT & DATUM ERSTELLEN
 function getGermanDateTime() {
     const now = new Date();
     const germanTime = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Berlin" }));
@@ -105,7 +105,6 @@ app.post('/api/editor/login', async (req, res) => {
 // ALLGEMEINE ROUTEN & ADMIN-ROUTEN
 // ==========================================
 
-// Daten abrufen
 app.get(['/api/data', '/api/admin/data'], async (req, res) => {
     try {
         const data = await getOrInitData();
@@ -115,7 +114,6 @@ app.get(['/api/data', '/api/admin/data'], async (req, res) => {
     }
 });
 
-// Daten komplett speichern / Radio-Settings ändern
 app.post(['/api/data', '/api/admin/data', '/api/settings', '/api/dj/title'], async (req, res) => {
     try {
         let data = await getOrInitData();
@@ -133,7 +131,7 @@ app.post(['/api/data', '/api/admin/data', '/api/settings', '/api/dj/title'], asy
 });
 
 // ==========================================
-// TEAM ROUTEN (/api/team UND /api/admin/team)
+// TEAM ROUTEN
 // ==========================================
 
 app.get(['/api/team', '/api/admin/team'], async (req, res) => {
@@ -175,7 +173,7 @@ app.delete('/api/admin/team/:id', async (req, res) => {
 });
 
 // ==========================================
-// NEWS ROUTEN (MIT KORREKTER DEUTSCHER UHRZEIT)
+// NEWS ROUTEN
 // ==========================================
 
 app.get(['/api/news', '/api/admin/news'], async (req, res) => {
@@ -232,7 +230,7 @@ app.delete(['/api/news/:id', '/api/admin/news/:id'], async (req, res) => {
 });
 
 // ==========================================
-// SENDEPLAN ROUTEN (INTELLIGENTE DATUMS- & UHRZEIT-LÖSCHUNG)
+// SENDEPLAN ROUTEN
 // ==========================================
 
 const schedulePaths = [
@@ -420,8 +418,9 @@ app.delete(['/api/wishes/:id', '/api/admin/wishes/:id', '/api/wish/:id', '/api/a
 });
 
 // ==========================================
-// RADIO.CO ECHTZEIT-PROXY
+// RADIO.CO API PROXY (STATUS & TRACKLIST)
 // ==========================================
+
 app.get('/api/radioco/status', (req, res) => {
     const options = {
         hostname: 'public.radio.co',
@@ -439,19 +438,6 @@ app.get('/api/radioco/status', (req, res) => {
         apiRes.on('end', () => {
             try {
                 const data = JSON.parse(body);
-
-                let count = 0;
-                if (typeof data.listeners === 'number') {
-                    count = data.listeners;
-                } else if (data.listeners && typeof data.listeners.total === 'number') {
-                    count = data.listeners.total;
-                } else if (Array.isArray(data.listeners)) {
-                    count = data.listeners.length;
-                } else if (typeof data.current_listeners === 'number') {
-                    count = data.current_listeners;
-                }
-
-                data.calculated_listeners = count;
                 res.json(data);
             } catch (e) {
                 res.status(500).json({ error: "Parse Fehler" });

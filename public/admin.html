@@ -434,7 +434,7 @@
         }
 
         // PRIVATER BEREICH: MEDIA UPLOAD & RENDERN
-        async function uploadPrivateMedia() {
+        function uploadPrivateMedia() {
             const fileInput = document.getElementById('private-file-input');
             const titleInput = document.getElementById('private-file-title');
 
@@ -442,28 +442,40 @@
                 return alert("Bitte wähle ein Foto oder Video aus!");
             }
 
-            const formData = new FormData();
-            formData.append('file', fileInput.files[0]);
-            formData.append('title', titleInput.value);
+            const file = fileInput.files[0];
+            const reader = new FileReader();
 
-            try {
-                const res = await fetch('/api/admin/private/upload', {
-                    method: 'POST',
-                    body: formData
-                });
+            reader.onload = async function(e) {
+                const base64Url = e.target.result;
+                const isVideo = file.type.startsWith('video');
 
-                if (res.ok) {
-                    alert("Datei erfolgreich in den privaten Bereich hochgeladen! 🔒");
-                    fileInput.value = '';
-                    titleInput.value = '';
-                    loadAdminData();
-                } else {
-                    alert("Fehler beim Hochladen.");
+                try {
+                    const res = await fetch('/api/admin/private/upload', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            url: base64Url,
+                            title: titleInput.value,
+                            type: isVideo ? 'video' : 'image',
+                            mimeType: file.type
+                        })
+                    });
+
+                    if (res.ok) {
+                        alert("Datei erfolgreich in den privaten Bereich hochgeladen! 🔒");
+                        fileInput.value = '';
+                        titleInput.value = '';
+                        loadAdminData();
+                    } else {
+                        alert("Fehler beim Hochladen der Datei.");
+                    }
+                } catch (err) {
+                    console.error("Upload-Fehler:", err);
+                    alert("Fehler beim Senden der Datei.");
                 }
-            } catch (err) {
-                console.error("Upload-Fehler:", err);
-                alert("Fehler beim Senden der Datei.");
-            }
+            };
+
+            reader.readAsDataURL(file);
         }
 
         async function deletePrivateMedia(id) {
@@ -490,7 +502,7 @@
             }
 
             gridUI.innerHTML = mediaList.map(item => {
-                const isVideo = item.type === 'video' || (item.url && item.url.match(/\.(mp4|webm|ogg|mov)$/i));
+                const isVideo = item.type === 'video' || (item.url && item.url.startsWith('data:video/'));
 
                 return `
                     <div style="background: #121214; border: 1px solid #29292e; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;">

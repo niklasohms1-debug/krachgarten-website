@@ -4,13 +4,20 @@ const express = require('express');
 const mongoose = require('mongoose');
 const path = require('path');
 const https = require('https');
+const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// UPLOADS ORDNER AUTOMATISCH ERSTELLEN
+const uploadsDir = path.join(__dirname, 'public', 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
 // Middleware (mit erhöhtem Limit für Foto- & Video-Uploads)
-app.use(express.json({ limit: '5000mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ limit: '100mb', extended: true }));
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 
 // MONGO_URI
@@ -86,7 +93,7 @@ function getGermanDateTime() {
 }
 
 // ==========================================
-// LOGIN ROUTEN (ADMIN, DJ, REDAKTEUR)
+// LOGIN ROUTEN
 // ==========================================
 
 app.post('/api/admin/login', async (req, res) => {
@@ -154,7 +161,7 @@ app.post(['/api/data', '/api/admin/data', '/api/settings', '/api/dj/title'], asy
 });
 
 // ==========================================
-// PRIVATER BEREICH (ADMIN MEDIA) ROUTEN
+// PRIVATER BEREICH (DATEI-UPLOAD AUF DISK)
 // ==========================================
 
 app.post('/api/admin/private/upload', async (req, res) => {
@@ -162,12 +169,27 @@ app.post('/api/admin/private/upload', async (req, res) => {
         const { url, title, type, mimeType } = req.body;
         if (!url) return res.status(400).json({ error: "Keine Datei übergeben" });
 
+        const matches = url.match(/^data:(.+);base64,(.+)$/);
+        if (!matches) {
+            return res.status(400).json({ error: "Ungültiges Dateiformat" });
+        }
+
+        const extParts = (mimeType || 'file/bin').split('/');
+        const ext = extParts[1] || 'bin';
+        const filename = `private_${Date.now()}.${ext}`;
+        const filePath = path.join(uploadsDir, filename);
+        const buffer = Buffer.from(matches[2], 'base64');
+
+        // Datei im System speichern
+        fs.writeFileSync(filePath, buffer);
+
+        const filePublicUrl = `/uploads/${filename}`;
         const data = await getOrInitData();
         if (!Array.isArray(data.privateMedia)) data.privateMedia = [];
 
         const newMedia = {
             id: String(Date.now()),
-            url: url,
+            url: filePublicUrl,
             title: title || (type === 'video' ? '🎥 Video' : '🖼️ Foto'),
             type: type || 'image',
             mimeType: mimeType || 'image/jpeg',
@@ -181,7 +203,7 @@ app.post('/api/admin/private/upload', async (req, res) => {
         res.json({ success: true, privateMedia: data.privateMedia });
     } catch (err) {
         console.error("Fehler beim Datei-Upload:", err);
-        res.status(500).json({ error: "Fehler beim Speichern der Datei" });
+        res.status(500).json({ error: "Fehler beim Speichern der Datei auf dem Server" });
     }
 });
 
@@ -191,6 +213,14 @@ app.delete('/api/admin/private/:id', async (req, res) => {
         const mediaId = req.params.id;
 
         if (Array.isArray(data.privateMedia)) {
+            const itemToDelete = data.privateMedia.find(m => String(m.id) === String(mediaId));
+            if (itemToDelete && itemToDelete.url && itemToDelete.url.startsWith('/uploads/')) {
+                const localPath = path.join(__dirname, 'public', itemToDelete.url);
+                if (fs.existsSync(localPath)) {
+                    fs.unlinkSync(localPath);
+                }
+            }
+
             data.privateMedia = data.privateMedia.filter(m => String(m.id) !== String(mediaId));
             data.markModified('privateMedia');
             await data.save();

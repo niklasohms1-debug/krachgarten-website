@@ -16,7 +16,7 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// MULTER SPEICHER-KONFIGURATION (Kein RAM-Absturz mehr!)
+// MULTER SPEICHER-KONFIGURATION
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, uploadsDir);
@@ -29,12 +29,13 @@ const storage = multer.diskStorage({
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 500 * 1024 * 1024 } // Limit: 500 MB
+    limits: { fileSize: 500 * 1024 * 1024 } // 500 MB Max
 });
 
-// Middleware
+// Middleware & Statische Ordner (Explizit für Uploads freigeben!)
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use('/uploads', express.static(uploadsDir)); // DIRECT STREAM ROUTE
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 
 // MONGO_URI

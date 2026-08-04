@@ -9,6 +9,7 @@
   "dependencies": {
     "body-parser": "^2.3.0",
     "express": "^5.2.1",
-    "mongoose": "^9.8.1"
+    "mongoose": "^9.8.1",
+    "multer": "^2.2.0"
   }
 }

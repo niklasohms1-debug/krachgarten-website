@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const path = require('path');
 const https = require('https');
 const fs = require('fs');
+const multer = require('multer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,9 +16,25 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Middleware (mit erhöhtem Limit für Foto- & Video-Uploads)
-app.use(express.json({ limit: '100mb' }));
-app.use(express.urlencoded({ limit: '100mb', extended: true }));
+// MULTER SPEICHER-KONFIGURATION (Kein RAM-Absturz mehr!)
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, uploadsDir);
+    },
+    filename: (req, file, cb) => {
+        const ext = path.extname(file.originalname) || (file.mimetype.startsWith('video') ? '.mp4' : '.jpg');
+        cb(null, `private_${Date.now()}${ext}`);
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 500 * 1024 * 1024 } // Limit: 500 MB
+});
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 
 // MONGO_URI
@@ -161,38 +178,28 @@ app.post(['/api/data', '/api/admin/data', '/api/settings', '/api/dj/title'], asy
 });
 
 // ==========================================
-// PRIVATER BEREICH (DATEI-UPLOAD AUF DISK)
+// PRIVATER BEREICH (DATEI-UPLOAD MIT MULTER)
 // ==========================================
 
-app.post('/api/admin/private/upload', async (req, res) => {
+app.post('/api/admin/private/upload', upload.single('file'), async (req, res) => {
     try {
-        const { url, title, type, mimeType } = req.body;
-        if (!url) return res.status(400).json({ error: "Keine Datei übergeben" });
-
-        const matches = url.match(/^data:(.+);base64,(.+)$/);
-        if (!matches) {
-            return res.status(400).json({ error: "Ungültiges Dateiformat" });
+        if (!req.file) {
+            return res.status(400).json({ error: "Keine Datei hochgeladen" });
         }
 
-        const extParts = (mimeType || 'file/bin').split('/');
-        const ext = extParts[1] || 'bin';
-        const filename = `private_${Date.now()}.${ext}`;
-        const filePath = path.join(uploadsDir, filename);
-        const buffer = Buffer.from(matches[2], 'base64');
+        const title = req.body.title;
+        const filePublicUrl = `/uploads/${req.file.filename}`;
+        const isVideo = req.file.mimetype.startsWith('video');
 
-        // Datei im System speichern
-        fs.writeFileSync(filePath, buffer);
-
-        const filePublicUrl = `/uploads/${filename}`;
         const data = await getOrInitData();
         if (!Array.isArray(data.privateMedia)) data.privateMedia = [];
 
         const newMedia = {
             id: String(Date.now()),
             url: filePublicUrl,
-            title: title || (type === 'video' ? '🎥 Video' : '🖼️ Foto'),
-            type: type || 'image',
-            mimeType: mimeType || 'image/jpeg',
+            title: title || (isVideo ? '🎥 Video' : '🖼️ Foto'),
+            type: isVideo ? 'video' : 'image',
+            mimeType: req.file.mimetype,
             date: getGermanDateTime()
         };
 
@@ -202,8 +209,8 @@ app.post('/api/admin/private/upload', async (req, res) => {
 
         res.json({ success: true, privateMedia: data.privateMedia });
     } catch (err) {
-        console.error("Fehler beim Datei-Upload:", err);
-        res.status(500).json({ error: "Fehler beim Speichern der Datei auf dem Server" });
+        console.error("Upload-Fehler:", err);
+        res.status(500).json({ error: "Fehler beim Verarbeiten der Datei" });
     }
 });
 

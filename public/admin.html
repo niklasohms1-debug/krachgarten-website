@@ -318,6 +318,9 @@
 
     <!-- JAVASCRIPT LOGIK -->
     <script>
+        // GLOBALE VARIABLE GEGEN DAS DAUERHAFTE RE-RENDER-PROBLEM BEI VIDEOS
+        let lastPrivateMediaJSON = "";
+
         window.onload = function() {
             if (localStorage.getItem('adminLoggedIn') === 'true') {
                 showAdminContent();
@@ -501,6 +504,13 @@
         function renderPrivateMedia(mediaList) {
             const gridUI = document.getElementById('private-media-grid');
             if (!gridUI) return;
+
+            // CHECK: Haben sich die Daten seit dem letzten Aufruf geändert?
+            const currentJSON = JSON.stringify(mediaList || []);
+            if (currentJSON === lastPrivateMediaJSON) {
+                return; // Keine Änderung -> HTML und laufende Videos NICHT antasten!
+            }
+            lastPrivateMediaJSON = currentJSON;
 
             if (!mediaList || mediaList.length === 0) {
                 gridUI.innerHTML = '<p style="color:#a8a8b3; grid-column: 1/-1;">Noch keine privaten Medien vorhanden.</p>';

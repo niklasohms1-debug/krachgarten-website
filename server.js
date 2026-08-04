@@ -8,8 +8,9 @@ const https = require('https');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
-app.use(express.json());
+// Middleware (mit erhöhtem Limit für Foto- & Video-Uploads)
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 
 // MONGO_URI
@@ -38,7 +39,8 @@ const radioSchema = new mongoose.Schema({
     schedule: { type: Array, default: [] },
     wishes: { type: Array, default: [] },
     news: { type: Array, default: [] },
-    team: { type: Array, default: [] }
+    team: { type: Array, default: [] },
+    privateMedia: { type: Array, default: [] }
 });
 
 const RadioData = mongoose.model('RadioData', radioSchema);
@@ -65,7 +67,8 @@ async function getOrInitData() {
             schedule: [],
             wishes: [],
             news: [],
-            team: []
+            team: [],
+            privateMedia: []
         });
     }
     return data;
@@ -142,10 +145,60 @@ app.post(['/api/data', '/api/admin/data', '/api/settings', '/api/dj/title'], asy
         data.markModified('news');
         data.markModified('team');
         data.markModified('reactions');
+        data.markModified('privateMedia');
         await data.save();
         res.json({ success: true, data });
     } catch (err) {
         res.status(500).json({ error: "Fehler beim Speichern" });
+    }
+});
+
+// ==========================================
+// PRIVATER BEREICH (ADMIN MEDIA) ROUTEN
+// ==========================================
+
+app.post('/api/admin/private/upload', async (req, res) => {
+    try {
+        const { url, title, type, mimeType } = req.body;
+        if (!url) return res.status(400).json({ error: "Keine Datei übergeben" });
+
+        const data = await getOrInitData();
+        if (!Array.isArray(data.privateMedia)) data.privateMedia = [];
+
+        const newMedia = {
+            id: String(Date.now()),
+            url: url,
+            title: title || (type === 'video' ? '🎥 Video' : '🖼️ Foto'),
+            type: type || 'image',
+            mimeType: mimeType || 'image/jpeg',
+            date: getGermanDateTime()
+        };
+
+        data.privateMedia.unshift(newMedia);
+        data.markModified('privateMedia');
+        await data.save();
+
+        res.json({ success: true, privateMedia: data.privateMedia });
+    } catch (err) {
+        console.error("Fehler beim Datei-Upload:", err);
+        res.status(500).json({ error: "Fehler beim Speichern der Datei" });
+    }
+});
+
+app.delete('/api/admin/private/:id', async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        const mediaId = req.params.id;
+
+        if (Array.isArray(data.privateMedia)) {
+            data.privateMedia = data.privateMedia.filter(m => String(m.id) !== String(mediaId));
+            data.markModified('privateMedia');
+            await data.save();
+        }
+
+        res.json({ success: true, privateMedia: data.privateMedia });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Löschen der Datei" });
     }
 });
 

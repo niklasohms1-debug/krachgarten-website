@@ -438,8 +438,8 @@
             }
         }
 
-        // PRIVATER BEREICH: UPLOAD LOGIK MIT LADE-ANZEIGE
-        function uploadPrivateMedia() {
+        // PRIVATER BEREICH: SAUBERER STREAM-UPLOAD MIT FORMDATA
+        async function uploadPrivateMedia() {
             const fileInput = document.getElementById('private-file-input');
             const titleInput = document.getElementById('private-file-title');
             const uploadBtn = document.getElementById('private-upload-btn');
@@ -449,60 +449,39 @@
             }
 
             const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('title', titleInput.value);
 
-            // VISUELLES LADE-FEEDBACK
             if (uploadBtn) {
                 uploadBtn.disabled = true;
                 uploadBtn.innerText = "⏳ Upload läuft... bitte warten!";
             }
 
-            const reader = new FileReader();
+            try {
+                const res = await fetch('/api/admin/private/upload', {
+                    method: 'POST',
+                    body: formData
+                });
 
-            reader.onload = async function(e) {
-                const base64Url = e.target.result;
-                const isVideo = file.type.startsWith('video');
-
-                try {
-                    const res = await fetch('/api/admin/private/upload', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            url: base64Url,
-                            title: titleInput.value,
-                            type: isVideo ? 'video' : 'image',
-                            mimeType: file.type
-                        })
-                    });
-
-                    if (res.ok) {
-                        alert("Datei erfolgreich in den privaten Bereich hochgeladen! 🔒");
-                        fileInput.value = '';
-                        titleInput.value = '';
-                        loadAdminData();
-                    } else {
-                        const errData = await res.json().catch(() => ({}));
-                        alert("Fehler beim Hochladen: " + (errData.error || "Datei möglicherweise zu groß."));
-                    }
-                } catch (err) {
-                    console.error("Upload-Fehler:", err);
-                    alert("Netzwerkfehler beim Hochladen der Datei.");
-                } finally {
-                    if (uploadBtn) {
-                        uploadBtn.disabled = false;
-                        uploadBtn.innerText = "Datei hochladen 📤";
-                    }
+                if (res.ok) {
+                    alert("Datei erfolgreich in den privaten Bereich hochgeladen! 🔒");
+                    fileInput.value = '';
+                    titleInput.value = '';
+                    loadAdminData();
+                } else {
+                    const errData = await res.json().catch(() => ({}));
+                    alert("Fehler beim Hochladen: " + (errData.error || "Unbekannter Fehler."));
                 }
-            };
-
-            reader.onerror = function() {
-                alert("Fehler beim Lesen der Datei.");
+            } catch (err) {
+                console.error("Upload-Fehler:", err);
+                alert("Netzwerkfehler beim Hochladen der Datei.");
+            } finally {
                 if (uploadBtn) {
                     uploadBtn.disabled = false;
                     uploadBtn.innerText = "Datei hochladen 📤";
                 }
-            };
-
-            reader.readAsDataURL(file);
+            }
         }
 
         async function deletePrivateMedia(id) {

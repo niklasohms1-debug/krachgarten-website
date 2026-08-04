@@ -64,6 +64,11 @@
             background: #e03e4d;
         }
 
+        .btn-action:disabled {
+            background: #555 !important;
+            cursor: not-allowed;
+        }
+
         .btn-delete {
             background: #ff4757;
             color: white;
@@ -166,7 +171,7 @@
     <!-- 2. ADMIN DASHBOARD CONTENT -->
     <div id="admin-content">
         
-        <!-- NAVIGATION LEISTE (MIT TABS SWITCHING) -->
+        <!-- NAVIGATION LEISTE -->
         <div class="nav-header">
             <h2 style="margin:0; color:#ff4757;">👑 Admin Dashboard</h2>
             <div class="nav-links">
@@ -180,7 +185,7 @@
             </div>
         </div>
 
-        <!-- SEITE 1: ÜBERSICHT (DEFAULTSICHT) -->
+        <!-- SEITE 1: ÜBERSICHT -->
         <div id="tab-dashboard" class="tab-page active">
             <div class="card">
                 <h3>📻 Radio Settings & Studio Live-Status</h3>
@@ -240,7 +245,7 @@
             </div>
         </div>
 
-        <!-- SEITE 3: ARTIKEL SCHREIBEN (NEWS MANAGEMENT) -->
+        <!-- SEITE 3: ARTIKEL SCHREIBEN -->
         <div id="tab-news" class="tab-page">
             <div class="card">
                 <h3>📰 News-Artikel verfassen</h3>
@@ -282,7 +287,7 @@
             </div>
         </div>
 
-        <!-- SEITE 5: PRIVATER BEREICH (ADMIN ONLY FOTOS & VIDEOS) -->
+        <!-- SEITE 5: PRIVATER BEREICH -->
         <div id="tab-private" class="tab-page">
             <div class="card">
                 <h3>🔒 Privater Admin-Bereich (Fotos & Videos)</h3>
@@ -297,7 +302,7 @@
                     <label style="font-size:0.85rem; color:#a8a8b3;">Titel / Beschreibung (optional):</label>
                     <input type="text" id="private-file-title" class="input-field" placeholder="z. B. Backstage Party 2026">
                     
-                    <button onclick="uploadPrivateMedia()" class="btn-action">Datei hochladen 📤</button>
+                    <button id="private-upload-btn" onclick="uploadPrivateMedia()" class="btn-action">Datei hochladen 📤</button>
                 </div>
             </div>
 
@@ -433,16 +438,24 @@
             }
         }
 
-        // PRIVATER BEREICH: MEDIA UPLOAD & RENDERN
+        // PRIVATER BEREICH: UPLOAD LOGIK MIT LADE-ANZEIGE
         function uploadPrivateMedia() {
             const fileInput = document.getElementById('private-file-input');
             const titleInput = document.getElementById('private-file-title');
+            const uploadBtn = document.getElementById('private-upload-btn');
 
             if (!fileInput.files || fileInput.files.length === 0) {
                 return alert("Bitte wähle ein Foto oder Video aus!");
             }
 
             const file = fileInput.files[0];
+
+            // VISUELLES LADE-FEEDBACK
+            if (uploadBtn) {
+                uploadBtn.disabled = true;
+                uploadBtn.innerText = "⏳ Upload läuft... bitte warten!";
+            }
+
             const reader = new FileReader();
 
             reader.onload = async function(e) {
@@ -467,11 +480,25 @@
                         titleInput.value = '';
                         loadAdminData();
                     } else {
-                        alert("Fehler beim Hochladen der Datei.");
+                        const errData = await res.json().catch(() => ({}));
+                        alert("Fehler beim Hochladen: " + (errData.error || "Datei möglicherweise zu groß."));
                     }
                 } catch (err) {
                     console.error("Upload-Fehler:", err);
-                    alert("Fehler beim Senden der Datei.");
+                    alert("Netzwerkfehler beim Hochladen der Datei.");
+                } finally {
+                    if (uploadBtn) {
+                        uploadBtn.disabled = false;
+                        uploadBtn.innerText = "Datei hochladen 📤";
+                    }
+                }
+            };
+
+            reader.onerror = function() {
+                alert("Fehler beim Lesen der Datei.");
+                if (uploadBtn) {
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerText = "Datei hochladen 📤";
                 }
             };
 
@@ -502,7 +529,7 @@
             }
 
             gridUI.innerHTML = mediaList.map(item => {
-                const isVideo = item.type === 'video' || (item.url && item.url.startsWith('data:video/'));
+                const isVideo = item.type === 'video' || (item.url && item.url.match(/\.(mp4|webm|ogg|mov)$/i));
 
                 return `
                     <div style="background: #121214; border: 1px solid #29292e; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;">

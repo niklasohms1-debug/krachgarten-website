@@ -98,12 +98,15 @@
             border-radius: 8px; 
             border: 1px solid #29292e;
             margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .nav-links {
             display: flex;
             align-items: center;
             gap: 10px;
+            flex-wrap: wrap;
         }
 
         .nav-btn {
@@ -171,6 +174,7 @@
                 <button onclick="switchTab('schedule')" id="btn-tab-schedule" class="nav-btn">📅 Sendeplan</button>
                 <button onclick="switchTab('news')" id="btn-tab-news" class="nav-btn">📰 Artikel schreiben</button>
                 <button onclick="switchTab('team')" id="btn-tab-team" class="nav-btn">👥 Team verwalten</button>
+                <button onclick="switchTab('private')" id="btn-tab-private" class="nav-btn">🔒 Privater Bereich</button>
                 <a href="/" style="color:#a8a8b3; text-decoration:none; font-weight: bold; font-size: 0.95rem; margin-left: 10px;">Zur Hauptseite</a>
                 <button onclick="logout()" style="background:none; border:1px solid #ff4757; color:#ff4757; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold; margin-left: 10px;">Abmelden</button>
             </div>
@@ -178,7 +182,6 @@
 
         <!-- SEITE 1: ÜBERSICHT (DEFAULTSICHT) -->
         <div id="tab-dashboard" class="tab-page active">
-            <!-- STREAM-NAME, STUDIO-STATUS & SONGTITEL ÄNDERN -->
             <div class="card">
                 <h3>📻 Radio Settings & Studio Live-Status</h3>
                 
@@ -205,7 +208,6 @@
                 <button onclick="updateRadioInfo()" class="btn-action">Speichern & Senden 🚀</button>
             </div>
 
-            <!-- MUSIKWÜNSCHE & GRÜßE -->
             <div class="card">
                 <h3>💌 Eingegangene Wünsche & Grüße</h3>
                 <div id="wishes-list">
@@ -253,7 +255,6 @@
                 <button onclick="publishNews()" class="btn-action">Artikel veröffentlichen 📢</button>
             </div>
 
-            <!-- LISTE DER BEREITS VERÖFFENTLICHTEN ARTIKEL -->
             <div class="card">
                 <h4 style="color:#a8a8b3; margin-bottom:10px;">Veröffentlichte Artikel:</h4>
                 <div id="news-list">
@@ -267,7 +268,6 @@
             <div class="card">
                 <h3>👥 Team verwalten</h3>
                 
-                <!-- TEAM MITGLIED HINZUFÜGEN -->
                 <div style="margin-bottom: 20px;">
                     <input type="text" id="team-name" class="input-field" placeholder="Name des Team-Mitglieds">
                     <input type="text" id="team-role" class="input-field" placeholder="Rolle (z. B. Moderator, Inhaber, DJ)">
@@ -275,10 +275,36 @@
                     <button onclick="addTeamMember()" class="btn-action">Mitglied Hinzufügen ➕</button>
                 </div>
 
-                <!-- LISTE DER AKTUELLEN TEAMMITGLIEDER -->
                 <h4 style="color:#a8a8b3; margin-bottom:10px;">Aktuelles Team:</h4>
                 <div id="team-list">
                     <p style="color:#666;">Lade Teammitglieder...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEITE 5: PRIVATER BEREICH (ADMIN ONLY FOTOS & VIDEOS) -->
+        <div id="tab-private" class="tab-page">
+            <div class="card">
+                <h3>🔒 Privater Admin-Bereich (Fotos & Videos)</h3>
+                <p style="color: #a8a8b3; font-size: 0.9rem; margin-bottom: 15px;">
+                    Exklusiv für Admins! Lade Videos und Fotos hoch, die nur hier im Admin Panel sichtbar sind.
+                </p>
+                
+                <div style="margin-bottom: 10px;">
+                    <label style="font-size:0.85rem; color:#a8a8b3;">Datei auswählen (Foto oder Video):</label>
+                    <input type="file" id="private-file-input" class="input-field" accept="image/*,video/*" style="padding: 8px;">
+                    
+                    <label style="font-size:0.85rem; color:#a8a8b3;">Titel / Beschreibung (optional):</label>
+                    <input type="text" id="private-file-title" class="input-field" placeholder="z. B. Backstage Party 2026">
+                    
+                    <button onclick="uploadPrivateMedia()" class="btn-action">Datei hochladen 📤</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4 style="color:#a8a8b3; margin-bottom:15px;">Hochgeladene Fotos & Videos:</h4>
+                <div id="private-media-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+                    <p style="color:#666;">Lade Medien...</p>
                 </div>
             </div>
         </div>
@@ -293,7 +319,7 @@
             }
         };
 
-        // TAB-WECHSEL LOGIK (ÜBERSICHT / SENDEPLAN / NEWS / TEAM)
+        // TAB-WECHSEL LOGIK
         function switchTab(tabName) {
             document.querySelectorAll('.tab-page').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
@@ -310,6 +336,9 @@
             } else if (tabName === 'team') {
                 document.getElementById('tab-team').classList.add('active');
                 document.getElementById('btn-tab-team').classList.add('active');
+            } else if (tabName === 'private') {
+                document.getElementById('tab-private').classList.add('active');
+                document.getElementById('btn-tab-private').classList.add('active');
             }
         }
 
@@ -378,6 +407,7 @@
                 renderTeamList(data.team || []);
                 renderWishesList(data.wishes || []);
                 renderNewsList(data.news || []);
+                renderPrivateMedia(data.privateMedia || []);
             } catch (err) {
                 console.error("Fehler beim Laden:", err);
             }
@@ -401,6 +431,89 @@
             } else {
                 alert("Fehler beim Aktualisieren.");
             }
+        }
+
+        // PRIVATER BEREICH: MEDIA UPLOAD & RENDERN
+        async function uploadPrivateMedia() {
+            const fileInput = document.getElementById('private-file-input');
+            const titleInput = document.getElementById('private-file-title');
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                return alert("Bitte wähle ein Foto oder Video aus!");
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('title', titleInput.value);
+
+            try {
+                const res = await fetch('/api/admin/private/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (res.ok) {
+                    alert("Datei erfolgreich in den privaten Bereich hochgeladen! 🔒");
+                    fileInput.value = '';
+                    titleInput.value = '';
+                    loadAdminData();
+                } else {
+                    alert("Fehler beim Hochladen.");
+                }
+            } catch (err) {
+                console.error("Upload-Fehler:", err);
+                alert("Fehler beim Senden der Datei.");
+            }
+        }
+
+        async function deletePrivateMedia(id) {
+            if (!confirm("Datei wirklich löschen?")) return;
+
+            const res = await fetch(`/api/admin/private/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                loadAdminData();
+            } else {
+                alert("Fehler beim Löschen.");
+            }
+        }
+
+        function renderPrivateMedia(mediaList) {
+            const gridUI = document.getElementById('private-media-grid');
+            if (!gridUI) return;
+
+            if (!mediaList || mediaList.length === 0) {
+                gridUI.innerHTML = '<p style="color:#a8a8b3; grid-column: 1/-1;">Noch keine privaten Medien vorhanden.</p>';
+                return;
+            }
+
+            gridUI.innerHTML = mediaList.map(item => {
+                const isVideo = item.type === 'video' || (item.url && item.url.match(/\.(mp4|webm|ogg|mov)$/i));
+
+                return `
+                    <div style="background: #121214; border: 1px solid #29292e; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;">
+                        <div style="width: 100%; height: 180px; background: #000; display: flex; align-items: center; justify-content: center;">
+                            ${isVideo ? `
+                                <video controls style="width: 100%; height: 100%; object-fit: contain;">
+                                    <source src="${item.url}" type="${item.mimeType || 'video/mp4'}">
+                                    Dein Browser unterstützt dieses Video nicht.
+                                </video>
+                            ` : `
+                                <img src="${item.url}" alt="${item.title || 'Foto'}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="window.open('${item.url}', '_blank')">
+                            `}
+                        </div>
+                        <div style="padding: 12px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <strong style="color: #fff; font-size: 0.95rem;">${item.title || (isVideo ? '🎥 Video' : '🖼️ Foto')}</strong>
+                                <br><small style="color: #a8a8b3;">${item.date || ''}</small>
+                            </div>
+                            <button class="btn-delete" style="margin-top: 10px; width: 100%;" onclick="deletePrivateMedia('${item.id}')">🗑️ Löschen</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         // SENDEPLAN EINTRAGEN & LÖSCHEN
@@ -490,7 +603,6 @@
             }
         }
 
-        // ARTIKEL LÖSCHEN (NEWS)
         async function deleteNews(id) {
             if (!confirm("Artikel wirklich löschen?")) return;
 
@@ -582,7 +694,6 @@
             `).join('');
         }
 
-        // WUNSCH LÖSCHEN
         async function deleteWish(id) {
             if (!confirm("Wunsch/Gruß wirklich löschen?")) return;
 
@@ -597,7 +708,6 @@
             }
         }
 
-        // WÜNSCHE RENDERN (MIT LÖSCHEN-BUTTON)
         function renderWishesList(wishes) {
             const wishesUI = document.getElementById('wishes-list');
             if (!wishes || wishes.length === 0) {

@@ -16,19 +16,91 @@
         }
 
         body { font-family: 'Segoe UI', sans-serif; background: #121214; color: #e1e1e6; padding: 0 20px 20px 20px; margin: 0; }
-        .header { display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: auto; padding-bottom: 10px; }
+        .header { display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: auto; padding-bottom: 10px; flex-wrap: wrap; gap: 15px; }
         .main { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; max-width: 1000px; margin: 20px auto; }
         .card { background: #202024; padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #29292e; }
 
-        /* CONTAINER FÜR DEN STREAM PLAYER */
-        .radio-co-player-wrapper {
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-            max-width: 400px;
+        /* NEUER STYLISCHER OVERLAY PLAYER */
+        .custom-player-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
             background: #202024;
-            padding: 10px;
             border: 1px solid #29292e;
+            border-radius: 12px;
+            padding: 12px 18px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+            min-width: 320px;
+            max-width: 420px;
+        }
+
+        .player-cover-box {
+            width: 75px;
+            height: 75px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #121214;
+            flex-shrink: 0;
+            border: 1px solid #29292e;
+        }
+
+        .player-cover-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .player-info-box {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        .player-title {
+            color: #ffffff;
+            font-weight: bold;
+            font-size: 0.95rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .player-artist {
+            color: #a8a8b3;
+            font-size: 0.85rem;
+            margin-top: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .player-btn {
+            margin-top: 8px;
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            width: fit-content;
+        }
+
+        .player-btn:hover {
+            background: #e03e4d;
+            transform: scale(1.03);
+        }
+
+        .player-btn.playing {
+            background: #04d361;
+            color: #000;
         }
 
         /* NAVIGATIONSTASTEN OHNE SEITENNEULADEN */
@@ -94,7 +166,6 @@
             background-color: #70a1ff;
             border-radius: 50%;
         }
-        /* STATUS: OFFLINE (Auto-DJ aus & kein DJ live) */
         .status-card.offline {
             background: rgba(168, 168, 179, 0.15);
             border-color: #a8a8b3;
@@ -328,7 +399,7 @@
             </div>
         </div>
 
-        <!-- HEADER MIT STREAM-TITEL, CURRENT SONG & PLAYER -->
+        <!-- HEADER MIT STREAM-TITEL, CURRENT SONG & NEUEM OVERLAY PLAYER -->
         <header class="header">
             <div>
                 <h1 id="stream-name" style="margin:0;">📻 KRACHGARTEN</h1>
@@ -339,12 +410,20 @@
                 </p>
             </div>
 
-            <!-- NEUER LAUT.FM AUDIO PLAYER -->
-            <div class="radio-co-player-wrapper">
-                <audio controls style="width: 100%; min-width: 280px; display: block; outline: none;">
-                    <source src="https://stream.laut.fm/xoticradio" type="audio/mpeg">
-                    Dein Browser unterstützt diesen Audioplayer leider nicht.
-                </audio>
+            <!-- NEUES LAUT.FM OVERLAY CARD (MIT COVER, ARTIST, TITLE & CUSTOM PLAY BUTTON) -->
+            <div class="custom-player-card">
+                <div class="player-cover-box">
+                    <img id="player-cover-img" src="https://assets.laut.fm/images/default_cover.png" alt="Cover">
+                </div>
+                <div class="player-info-box">
+                    <div id="player-song-title" class="player-title">Lade Song...</div>
+                    <div id="player-artist-name" class="player-artist">Lade Künstler...</div>
+                    <button id="player-toggle-btn" class="player-btn" onclick="togglePlayStream()">
+                        <span>▶️</span> <span id="player-btn-text">Anhören</span>
+                    </button>
+                </div>
+                <!-- UNSICHTBARES AUDIO ELEMENT -->
+                <audio id="radio-audio-element" src="https://stream.laut.fm/xoticradio" preload="none"></audio>
             </div>
         </header>
     </div>
@@ -469,10 +548,97 @@
             }
         }
 
+        // PLAYER PLAY/PAUSE LOGIK
+        function togglePlayStream() {
+            const audio = document.getElementById('radio-audio-element');
+            const btn = document.getElementById('player-toggle-btn');
+            const btnText = document.getElementById('player-btn-text');
+
+            if (audio.paused) {
+                audio.play().then(() => {
+                    btn.className = "player-btn playing";
+                    btn.querySelector('span').innerText = "⏸️";
+                    btnText.innerText = "Pause";
+                }).catch(e => console.error("Play-Fehler:", e));
+            } else {
+                audio.pause();
+                btn.className = "player-btn";
+                btn.querySelector('span').innerText = "▶️";
+                btnText.innerText = "Anhören";
+            }
+        }
+
+        // LAUT.FM METADATEN (COVER, ARTIST & TITLE) ABFRAGEN
+        async function fetchLautFmMetadata() {
+            try {
+                const res = await fetch('https://api.laut.fm/station/xoticradio/current_song');
+                if (!res.ok) return;
+
+                const song = await res.json();
+                if (song) {
+                    const title = song.title || 'Live Stream';
+                    const artist = (song.artist && song.artist.name) ? song.artist.name : 'xoticradio';
+
+                    // Overlay Player Beschriftung
+                    document.getElementById('player-song-title').innerText = title;
+                    document.getElementById('player-artist-name').innerText = artist;
+
+                    // Cover Bild setzen
+                    const coverImg = document.getElementById('player-cover-img');
+                    if (song.images && song.images.cover_200) {
+                        coverImg.src = song.images.cover_200;
+                    } else if (song.images && song.images.thumb) {
+                        coverImg.src = song.images.thumb;
+                    } else {
+                        coverImg.src = "https://assets.laut.fm/images/default_cover.png";
+                    }
+
+                    // Auch in der Header-Anzeige aktualisieren
+                    const currentTitleUI = document.getElementById('current-title');
+                    if (currentTitleUI) {
+                        currentTitleUI.innerText = `${artist} - ${title}`;
+                    }
+                }
+            } catch (e) {
+                console.error("Fehler beim Abrufen der laut.fm Metadaten:", e);
+            }
+        }
+
+        // LAUT.FM HISTORIE FÜR DAS TRACKLIST MODAL
+        async function fetchLautFmHistory() {
+            try {
+                const res = await fetch('https://api.laut.fm/station/xoticradio/last_songs');
+                if (!res.ok) return;
+
+                const history = await res.json();
+                const tracklistUI = document.getElementById('tracklist-container');
+                if (tracklistUI && Array.isArray(history)) {
+                    if (history.length === 0) {
+                        tracklistUI.innerHTML = '<p style="color:#a8a8b3;">Keine vorangegangenen Songs gefunden.</p>';
+                    } else {
+                        tracklistUI.innerHTML = history.map(item => {
+                            const title = item.title || 'Unbekannter Song';
+                            const artist = item.artist ? item.artist.name : '';
+                            return `
+                                <div class="track-item">
+                                    <div>
+                                        <strong style="color: #ffffff;">${artist ? artist + ' - ' : ''}${title}</strong>
+                                    </div>
+                                    <small style="color: #ff4757; font-weight: bold;">🎵</small>
+                                </div>
+                            `;
+                        }).join('');
+                    }
+                }
+            } catch (err) {
+                console.error("Fehler beim Abrufen der laut.fm Historie:", err);
+            }
+        }
+
         // TRACKLIST MODAL STEUERUNG
         function openTracklistModal() {
             document.getElementById('modal-tracklist').style.display = 'flex';
-            fetchRadioCoData();
+            fetchLautFmHistory();
         }
 
         function closeTracklistModal() {
@@ -483,7 +649,7 @@
         function openShareModal() {
             const currentTrack = document.getElementById('current-title')?.innerText || 'geile Mucke';
             const siteUrl = window.location.origin || window.location.href;
-            const defaultText = `Ich höre gerade "${currentTrack}" auf KrachGartenRadio! 🎧 Hört mal rein: ${siteUrl}`;
+            const defaultText = `Ich höre gerade "${currentTrack}" auf xoticradio! 🎧 Hört mal rein: ${siteUrl}`;
             
             document.getElementById('share-text-input').value = defaultText;
             document.getElementById('modal-share').style.display = 'flex';
@@ -520,7 +686,7 @@
             }
         }
 
-        // EMOJI REAKTIONEN STEUERUNG (PERSISTENT IN MONGODB)
+        // EMOJI REAKTIONEN STEUERUNG
         async function sendReaction(emoji) {
             createFloatingEmoji(emoji);
 
@@ -558,7 +724,7 @@
             setTimeout(() => { el.remove(); }, 2000);
         }
 
-        // STUDIO STATUSANZEIGE AKTUALISIEREN (LIVE, AUTO-DJ ODER OFFLINE)
+        // STUDIO STATUSANZEIGE AKTUALISIEREN
         function updateStudioStatus(isLive, isAutoDj, djName) {
             const card = document.getElementById('studio-status-card');
             const modeText = document.getElementById('status-mode');
@@ -628,42 +794,6 @@
             }
         }
 
-        // RADIO.CO STATS & TRACKLIST HOLEN
-        async function fetchRadioCoData() {
-            try {
-                const res = await fetch('/api/radioco/status');
-                if (!res.ok) return;
-
-                const radioData = await res.json();
-
-                // Tracklist (Historie) rendern
-                const tracklistUI = document.getElementById('tracklist-container');
-                if (tracklistUI && radioData.history) {
-                    if (radioData.history.length === 0) {
-                        tracklistUI.innerHTML = '<p style="color:#a8a8b3;">Keine vorangegangenen Songs gefunden.</p>';
-                    } else {
-                        tracklistUI.innerHTML = radioData.history.map(item => {
-                            let formattedTime = '';
-                            if (item.start_time) {
-                                const d = new Date(item.start_time);
-                                formattedTime = d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                            }
-                            return `
-                                <div class="track-item">
-                                    <div>
-                                        <strong style="color: #ffffff;">${item.title || 'Unbekannter Song'}</strong>
-                                    </div>
-                                    <small style="color: #ff4757; font-weight: bold;">${formattedTime}</small>
-                                </div>
-                            `;
-                        }).join('');
-                    }
-                }
-            } catch (err) {
-                console.error("Fehler beim Abrufen der Radio.co Daten:", err);
-            }
-        }
-
         async function loadHomepageData() {
             try {
                 const res = await fetch('/api/data');
@@ -671,14 +801,9 @@
 
                 document.getElementById('stream-name').innerText = "📻 " + (data.streamName || "Radio");
 
-                const currentTitleUI = document.getElementById('current-title');
-                if (currentTitleUI) {
-                    currentTitleUI.innerText = data.currentTitle || "Kein Sendungstitel angegeben";
-                }
-
                 // STUDIO STATUS UPDATEN
                 const isLive = !!data.isLive;
-                const isAutoDj = data.isAutoDj !== false; // Standardmäßig true
+                const isAutoDj = data.isAutoDj !== false;
                 updateStudioStatus(isLive, isAutoDj, data.djName || data.currentDJ || "");
 
                 // EMOJI REAKTIONEN ANZEIGEN
@@ -779,11 +904,12 @@
             }
         }
 
+        // INITIALISIERUNG & INTERVALLE
         loadHomepageData();
-        fetchRadioCoData();
+        fetchLautFmMetadata();
 
-        setInterval(loadHomepageData, 3000);
-        setInterval(fetchRadioCoData, 10000);
+        setInterval(loadHomepageData, 5000);
+        setInterval(fetchLautFmMetadata, 5000);
     </script>
 </body>
 </html>

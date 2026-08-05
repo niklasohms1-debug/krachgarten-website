@@ -404,7 +404,7 @@
         <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: 0 auto 10px auto; background: #202024; padding: 12px 25px; border-radius: 8px; border: 1px solid #29292e; flex-wrap: wrap; gap: 10px;">
             <div style="display: flex; align-items: center; gap: 12px;">
                 <h2 style="margin:0; color:#ff4757; font-size: 1.3rem;">📻 Radio Dashboard</h2>
-                
+
                 <!-- STUDIO STATUSANZEIGE -->
                 <div id="studio-status-card" class="status-card auto-dj">
                     <span class="status-dot"></span>
@@ -429,7 +429,7 @@
             <div>
                 <h1 id="stream-name" style="margin:0;">📻 KRACHGARTEN</h1>
                 <p style="margin: 5px 0 0 0; color: #a8a8b3;">🔴 Live On Air</p>
-                <!-- SENDETITEL ANZEIGE -->
+                <!-- SENDETITEL ANZEIGE (wird über Admin-/DJ-Panel gesetzt) -->
                 <p style="margin: 8px 0 0 0; font-size: 1.05rem;">
                     📻 Sendung: <strong id="current-show" style="color: #04d361;">Lade Sendung...</strong>
                 </p>
@@ -443,12 +443,12 @@
                 <div class="player-info-box">
                     <div id="player-song-title" class="player-title">Lade Song...</div>
                     <div id="player-artist-name" class="player-artist">Lade Künstler...</div>
-                    
+
                     <div class="player-controls-row">
                         <button id="player-toggle-btn" class="player-btn" onclick="togglePlayStream()">
                             <span>▶️</span> <span id="player-btn-text">Anhören</span>
                         </button>
-                        
+
                         <!-- LAUTSTÄRKEREGLER -->
                         <div class="volume-control-box">
                             <span>🔊</span>
@@ -457,14 +457,14 @@
                     </div>
                 </div>
                 <!-- UNSICHTBARES AUDIO ELEMENT -->
-                <audio id="radio-audio-element" src="https://stream.laut.fm/xoticradio" preload="none"></audio>
+                <audio id="radio-audio-element" src="https://xoticradio.stream.laut.fm/xoticradio" preload="none"></audio>
             </div>
         </header>
     </div>
 
     <!-- HAUPTBEREICH / STARTSEITE -->
     <main id="content-home" class="main page-section active">
-        
+
         <!-- LINKS: REAKTIONEN & NEWS FEED -->
         <section>
             <!-- EMOJI REAKTIONEN CARD -->
@@ -496,7 +496,7 @@
             <div class="card">
                 <h3>💌 Gruß- & Wunschbox</h3>
                 <p style="font-size: 0.85em; color: #a8a8b3; margin-bottom: 12px;">Sende dem DJ eine Nachricht!</p>
-                
+
                 <div id="wish-form">
                     <select id="w-type" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box; background: #121214; border: 1px solid #29292e; color: #fff; border-radius: 4px;">
                         <option value="Musikwunsch">🎵 Musikwunsch</option>
@@ -507,7 +507,7 @@
                     <input type="text" id="w-name" placeholder="Dein Name" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box; background: #121214; border: 1px solid #29292e; color: #fff; border-radius: 4px;">
                     <input type="text" id="w-song" placeholder="Songwunsch (optional bei reiner Grußbotschaft)" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box; background: #121214; border: 1px solid #29292e; color: #fff; border-radius: 4px;">
                     <textarea id="w-msg" placeholder="Deine Grußnachricht..." rows="3" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box; background: #121214; border: 1px solid #29292e; color: #fff; border-radius: 4px; resize: vertical;"></textarea>
-                    
+
                     <button onclick="sendWish()" style="width: 100%; padding: 10px; background: #ff4757; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">Absenden 🚀</button>
                 </div>
             </div>
@@ -545,9 +545,9 @@
                 <h3 style="margin: 0; color: #ff4757;">📢 Sender teilen</h3>
                 <button class="modal-close" onclick="closeShareModal()">&times;</button>
             </div>
-            
+
             <p style="font-size: 0.9rem; color: #a8a8b3; margin-top:0;">Pass den Text bei Bedarf an und wähle deine Plattform:</p>
-            
+
             <textarea id="share-text-input" rows="3" style="width: 100%; padding: 10px; box-sizing: border-box; background: #121214; border: 1px solid #29292e; color: #fff; border-radius: 6px; resize: vertical; margin-bottom: 15px;"></textarea>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -563,7 +563,7 @@
     <script>
         // AUSFALLSICHERES DUNKLES VINYL PLATZHALTER-BILD
         const DEFAULT_SVG_COVER = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 24 24' fill='none' stroke='%23ff4757' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' style='background:%2318181b;'><circle cx='12' cy='12' r='10'/><circle cx='12' cy='12' r='3'/><path d='M12 2a10 10 0 0 1 10 10'/></svg>";
-        
+
         let lastTrackKey = ""; // Merkt sich den aktuell geladenen Song für Cover-Checks
 
         function showPage(page) {
@@ -615,30 +615,11 @@
             }
         }
 
-        // AUTOMATISCHE ITUNES COVER-SUCHE
-        async function fetchItunesCover(artist, title) {
-            if (!artist || !title || artist === 'xoticradio' || artist === '🔴 On Air') return null;
-            try {
-                const query = encodeURIComponent(`${artist} ${title}`);
-                const res = await fetch(`https://itunes.apple.com/search?term=${query}&entity=song&limit=1`);
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.results && data.results.length > 0 && data.results[0].artworkUrl100) {
-                        return data.results[0].artworkUrl100.replace('100x100bb', '300x300bb');
-                    }
-                }
-            } catch (e) {
-                console.error("iTunes API Fehler:", e);
-            }
-            return null;
-        }
-
-        // METADATEN (SONG + SENDETITEL SEPARAT & PRÄZISE HOEN)
+        // METADATEN (SONG + KÜNSTLER + COVER) VOM EIGENEN SERVER-PROXY HOLEN
         async function fetchLautFmMetadata() {
             const titleEl = document.getElementById('player-song-title');
             const artistEl = document.getElementById('player-artist-name');
             const coverImg = document.getElementById('player-cover-img');
-            const currentShowUI = document.getElementById('current-show');
 
             if (coverImg) {
                 coverImg.onerror = function() {
@@ -648,23 +629,15 @@
             }
 
             try {
-                // 1. Sendungs-Name im Hintergrund abfragen
-                fetch('https://api.laut.fm/station/xoticradio?_t=' + Date.now(), { cache: 'no-store' })
-                    .then(r => r.ok ? r.json() : null)
-                    .then(station => {
-                        if (station && station.current_playlist && station.current_playlist.name && currentShowUI) {
-                            currentShowUI.innerText = station.current_playlist.name;
-                        }
-                    }).catch(() => {});
-
-                // 2. Aktuellen Song & Künstler über Proxy oder laut.fm holen
                 let song = null;
-                let res = await fetch('/api/lautfm/current?_t=' + Date.now(), { cache: 'no-store' }).catch(() => null);
 
+                // 1. Eigener Server-Proxy (vermeidet CORS-/Adblocker-Probleme)
+                const res = await fetch('/api/lautfm/current?_t=' + Date.now(), { cache: 'no-store' }).catch(() => null);
                 if (res && res.ok) {
                     song = await res.json();
                 }
 
+                // 2. Fallback: direkt bei laut.fm anfragen
                 if (!song || !song.title) {
                     const directRes = await fetch('https://api.laut.fm/station/xoticradio/current_song?_t=' + Date.now(), { cache: 'no-store' }).catch(() => null);
                     if (directRes && directRes.ok) {
@@ -680,14 +653,8 @@
                         artist = (typeof song.artist === 'object' && song.artist.name) ? song.artist.name : song.artist;
                     }
 
-                    // Künstler und Titel direkt anzeigen
                     if (titleEl) titleEl.innerText = title;
                     if (artistEl) artistEl.innerText = artist;
-
-                    // Sendungs-Name Fallback, falls von oben noch nicht geladen
-                    if (song.playlist && currentShowUI && currentShowUI.innerText === 'Lade Sendung...') {
-                        currentShowUI.innerText = song.playlist;
-                    }
 
                     const currentTrackKey = `${artist} - ${title}`;
 
@@ -695,24 +662,13 @@
                     if (currentTrackKey !== lastTrackKey) {
                         lastTrackKey = currentTrackKey;
 
-                        let lautFmImage = "";
-                        if (song.images) {
-                            if (song.images.cover_200) lautFmImage = song.images.cover_200;
-                            else if (song.images.cover) lautFmImage = song.images.cover;
-                            else if (song.images.thumb) lautFmImage = song.images.thumb;
+                        // laut.fm liefert das Künstlerbild unter artist.image / artist.thumb
+                        let coverUrl = "";
+                        if (song.artist && typeof song.artist === 'object') {
+                            coverUrl = song.artist.image || song.artist.thumb || "";
                         }
 
-                        if (lautFmImage && !lautFmImage.includes('default_cover')) {
-                            if (lautFmImage.startsWith('http://')) lautFmImage = lautFmImage.replace('http://', 'https://');
-                            coverImg.src = lautFmImage;
-                        } else {
-                            const itunesCover = await fetchItunesCover(artist, title);
-                            if (itunesCover) {
-                                coverImg.src = itunesCover;
-                            } else {
-                                coverImg.src = DEFAULT_SVG_COVER;
-                            }
-                        }
+                        coverImg.src = coverUrl || DEFAULT_SVG_COVER;
                     }
                     return;
                 }
@@ -721,42 +677,53 @@
             }
 
             // FALLBACK BEI FEHLER ODER SOLANGE KEINE DATEN VORLIEGEN
-            if (titleEl && titleEl.innerText === 'Lade Song...') titleEl.innerText = 'xoticradio Stream';
+            if (titleEl && titleEl.innerText === 'Lade Song...') titleEl.innerText = 'KrachGarten Stream';
             if (artistEl && artistEl.innerText === 'Lade Künstler...') artistEl.innerText = '🔴 On Air';
-            if (currentShowUI && currentShowUI.innerText === 'Lade Sendung...') currentShowUI.innerText = 'xoticradio Live Show';
-            if (coverImg && (!coverImg.src || coverImg.src === window.location.href)) coverImg.src = DEFAULT_SVG_COVER;
+            if (coverImg && !coverImg.src) coverImg.src = DEFAULT_SVG_COVER;
         }
 
-        // LAUT.FM HISTORIE FÜR DAS TRACKLIST MODAL
+        // SONG-HISTORIE FÜR DAS TRACKLIST MODAL (ÜBER EIGENEN SERVER-PROXY)
         async function fetchLautFmHistory() {
+            const tracklistUI = document.getElementById('tracklist-container');
             try {
-                const res = await fetch('https://api.laut.fm/station/xoticradio/last_songs?_t=' + Date.now(), { cache: 'no-store' });
-                const tracklistUI = document.getElementById('tracklist-container');
-                
-                if (res.ok) {
-                    const history = await res.json();
-                    if (tracklistUI && Array.isArray(history) && history.length > 0) {
-                        tracklistUI.innerHTML = history.map(item => {
-                            const title = item.title || 'Unbekannter Song';
-                            const artist = item.artist ? (item.artist.name || item.artist) : '';
-                            return `
-                                <div class="track-item">
-                                    <div>
-                                        <strong style="color: #ffffff;">${artist ? artist + ' - ' : ''}${title}</strong>
-                                    </div>
-                                    <small style="color: #ff4757; font-weight: bold;">🎵</small>
-                                </div>
-                            `;
-                        }).join('');
-                        return;
+                let history = null;
+
+                const res = await fetch('/api/lautfm/history?_t=' + Date.now(), { cache: 'no-store' }).catch(() => null);
+                if (res && res.ok) {
+                    history = await res.json();
+                }
+
+                if (!Array.isArray(history)) {
+                    const directRes = await fetch('https://api.laut.fm/station/xoticradio/last_songs?_t=' + Date.now(), { cache: 'no-store' }).catch(() => null);
+                    if (directRes && directRes.ok) {
+                        history = await directRes.json();
                     }
                 }
-                
+
+                if (tracklistUI && Array.isArray(history) && history.length > 0) {
+                    tracklistUI.innerHTML = history.map(item => {
+                        const title = item.title || 'Unbekannter Song';
+                        const artist = item.artist ? (item.artist.name || item.artist) : '';
+                        return `
+                            <div class="track-item">
+                                <div>
+                                    <strong style="color: #ffffff;">${artist ? artist + ' - ' : ''}${title}</strong>
+                                </div>
+                                <small style="color: #ff4757; font-weight: bold;">🎵</small>
+                            </div>
+                        `;
+                    }).join('');
+                    return;
+                }
+
                 if (tracklistUI) {
                     tracklistUI.innerHTML = '<p style="color:#a8a8b3;">Aktuell keine Song-Historie verfügbar.</p>';
                 }
             } catch (err) {
-                console.error("Fehler beim Abrufen der laut.fm Historie:", err);
+                console.error("Fehler beim Abrufen der Song-Historie:", err);
+                if (tracklistUI) {
+                    tracklistUI.innerHTML = '<p style="color:#a8a8b3;">Aktuell keine Song-Historie verfügbar.</p>';
+                }
             }
         }
 
@@ -772,11 +739,11 @@
 
         // TEILEN MODAL STEUERUNG
         function openShareModal() {
-            const currentShow = document.getElementById('current-show')?.innerText || 'xoticradio Show';
+            const currentShow = document.getElementById('current-show')?.innerText || 'KrachGarten Show';
             const currentTrack = `${document.getElementById('player-artist-name')?.innerText || ''} - ${document.getElementById('player-song-title')?.innerText || ''}`;
             const siteUrl = window.location.origin || window.location.href;
-            const defaultText = `Ich höre gerade "${currentShow}" (${currentTrack}) auf xoticradio! 🎧 Hört mal rein: ${siteUrl}`;
-            
+            const defaultText = `Ich höre gerade "${currentShow}" (${currentTrack}) auf KrachGarten! 🎧 Hört mal rein: ${siteUrl}`;
+
             document.getElementById('share-text-input').value = defaultText;
             document.getElementById('modal-share').style.display = 'flex';
         }
@@ -901,7 +868,7 @@
 
         async function togglePushNotifications() {
             if (!('serviceWorker' in navigator)) return alert("Dein Browser unterstützt leider keine Push-Alerts.");
-            
+
             const reg = await navigator.serviceWorker.ready;
             const sub = await reg.pushManager.getSubscription();
 
@@ -927,11 +894,10 @@
 
                 document.getElementById('stream-name').innerText = "📻 " + (data.streamName || "Radio");
 
-                // Falls vom Server ein Sendetitel mitgegeben wird
-                if (data.currentShow || data.showTitle) {
-                    const showEl = document.getElementById('current-show');
-                    if (showEl) showEl.innerText = data.currentShow || data.showTitle;
-                }
+                // SENDETITEL: kommt ausschließlich aus deinen eigenen Daten,
+                // wird über Admin- bzw. DJ-Panel gesetzt (Feld: currentTitle)
+                const showEl = document.getElementById('current-show');
+                if (showEl) showEl.innerText = data.currentTitle || "Kein Sendetitel gesetzt";
 
                 // STUDIO STATUS UPDATEN
                 const isLive = !!data.isLive;
@@ -950,7 +916,7 @@
                             <span style="color:#ff4757; font-weight:bold;">
                                 ${item.day ? item.day + ' | ' : ''}${item.time || ''}${item.endTime ? ' bis ' + item.endTime : ''} Uhr
                             </span><br>
-                            <span style="color:#fff; font-weight:600;">🎙️ ${item.dj || item.name || 'DJ'}</span> 
+                            <span style="color:#fff; font-weight:600;">🎙️ ${item.dj || item.name || 'DJ'}</span>
                             <span style="color:#a8a8b3;">- ${item.title || item.show || 'Show'}</span>
                         </li>
                     `).join('');

@@ -633,7 +633,7 @@
             return null;
         }
 
-        // METADATEN MIT CACHE-BUSTING VOM SERVER LADEN (GERÄUSCHLOS IM HINTERGRUND)
+        // METADATEN MIT ANTI-CACHE UND ERWEITERTEM AUTO-CHECK
         async function fetchLautFmMetadata() {
             const titleEl = document.getElementById('player-song-title');
             const artistEl = document.getElementById('player-artist-name');
@@ -648,50 +648,63 @@
             }
 
             try {
-                // CACHE-BUSTING ERZWINGEN (mit ?_t= Timestamp und cache: 'no-store')
-                let res = await fetch('/api/lautfm/current?_t=' + Date.now(), { cache: 'no-store' }).catch(() => null);
-                
-                if (!res || !res.ok) {
-                    res = await fetch('https://api.laut.fm/station/xoticradio/current_song?_t=' + Date.now(), { cache: 'no-store' }).catch(() => null);
-                }
+                let song = null;
+
+                // 1. Zuerst versuchen wir, den aktuellsten Song über den Server-Proxy zu holen
+                let res = await fetch('/api/lautfm/current?_t=' + Date.now(), { 
+                    cache: 'no-store',
+                    headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+                }).catch(() => null);
 
                 if (res && res.ok) {
-                    const song = await res.json();
-                    if (song && (song.title || song.artist)) {
-                        const title = song.title || 'Live Stream';
-                        const artist = (song.artist && song.artist.name) ? song.artist.name : 'xoticradio';
-                        const currentTrackKey = `${artist} - ${title}`;
+                    song = await res.json();
+                }
 
-                        // Titel & Künstler IMMER sofort im Text-DOM aktualisieren
-                        if (titleEl) titleEl.innerText = title;
-                        if (artistEl) artistEl.innerText = artist;
-                        if (currentTitleUI) currentTitleUI.innerText = currentTrackKey;
+                // 2. Fallback auf laut.fm last_songs (Eintrag [0] ist bei laut.fm oft aktueller als current_song!)
+                if (!song || !song.title) {
+                    const lastSongsRes = await fetch('https://api.laut.fm/station/xoticradio/last_songs?_t=' + Date.now(), { cache: 'no-store' }).catch(() => null);
+                    if (lastSongsRes && lastSongsRes.ok) {
+                        const history = await lastSongsRes.json();
+                        if (Array.isArray(history) && history.length > 0) {
+                            song = history[0]; // Erster Eintrag in der Historie = Der eben gestartete Track
+                        }
+                    }
+                }
 
-                        // Nur bei tatsächlichem Songwechsel Cover neu suchen
-                        if (currentTrackKey !== lastTrackKey) {
-                            lastTrackKey = currentTrackKey;
+                if (song && (song.title || song.artist)) {
+                    const title = song.title || 'Live Stream';
+                    const artist = (song.artist && song.artist.name) ? song.artist.name : (typeof song.artist === 'string' ? song.artist : 'xoticradio');
+                    const currentTrackKey = `${artist} - ${title}`;
 
-                            let lautFmImage = "";
-                            if (song.images) {
-                                if (song.images.cover_200) lautFmImage = song.images.cover_200;
-                                else if (song.images.cover) lautFmImage = song.images.cover;
-                                else if (song.images.thumb) lautFmImage = song.images.thumb;
-                            }
+                    // Titel & Künstler im Text aktualisieren
+                    if (titleEl) titleEl.innerText = title;
+                    if (artistEl) artistEl.innerText = artist;
+                    if (currentTitleUI) currentTitleUI.innerText = currentTrackKey;
 
-                            if (lautFmImage && !lautFmImage.includes('default_cover')) {
-                                if (lautFmImage.startsWith('http://')) lautFmImage = lautFmImage.replace('http://', 'https://');
-                                coverImg.src = lautFmImage;
+                    // Cover-Bild prüfen wenn sich der Song geändert hat
+                    if (currentTrackKey !== lastTrackKey) {
+                        lastTrackKey = currentTrackKey;
+
+                        let lautFmImage = "";
+                        if (song.images) {
+                            if (song.images.cover_200) lautFmImage = song.images.cover_200;
+                            else if (song.images.cover) lautFmImage = song.images.cover;
+                            else if (song.images.thumb) lautFmImage = song.images.thumb;
+                        }
+
+                        if (lautFmImage && !lautFmImage.includes('default_cover')) {
+                            if (lautFmImage.startsWith('http://')) lautFmImage = lautFmImage.replace('http://', 'https://');
+                            coverImg.src = lautFmImage;
+                        } else {
+                            const itunesCover = await fetchItunesCover(artist, title);
+                            if (itunesCover) {
+                                coverImg.src = itunesCover;
                             } else {
-                                const itunesCover = await fetchItunesCover(artist, title);
-                                if (itunesCover) {
-                                    coverImg.src = itunesCover;
-                                } else {
-                                    coverImg.src = DEFAULT_SVG_COVER;
-                                }
+                                coverImg.src = DEFAULT_SVG_COVER;
                             }
                         }
-                        return;
                     }
+                    return;
                 }
             } catch (e) {
                 console.error("Metadaten Abruf-Fehler:", e);
@@ -715,7 +728,7 @@
                     if (tracklistUI && Array.isArray(history) && history.length > 0) {
                         tracklistUI.innerHTML = history.map(item => {
                             const title = item.title || 'Unbekannter Song';
-                            const artist = item.artist ? item.artist.name : '';
+                            const artist = item.artist ? (item.artist.name || item.artist) : '';
                             return `
                                 <div class="track-item">
                                     <div>
@@ -1006,7 +1019,7 @@
             }
         }
 
-        // INITIALISIERUNG & INTERVALLE
+        // INITIALISIERUNG & INTERVALLE (ALLE 5 SEKUNDEN)
         loadHomepageData();
         fetchLautFmMetadata();
 

@@ -437,8 +437,8 @@
                     <img id="player-cover-img" src="https://assets.laut.fm/images/default_cover.png" alt="Cover" onerror="this.src='https://assets.laut.fm/images/default_cover.png'">
                 </div>
                 <div class="player-info-box">
-                    <div id="player-song-title" class="player-title">Lade Song...</div>
-                    <div id="player-artist-name" class="player-artist">Lade Künstler...</div>
+                    <div id="player-song-title" class="player-title">xoticradio Stream</div>
+                    <div id="player-artist-name" class="player-artist">🔴 On Air</div>
                     
                     <div class="player-controls-row">
                         <button id="player-toggle-btn" class="player-btn" onclick="togglePlayStream()">
@@ -606,45 +606,60 @@
             }
         }
 
-        // LAUT.FM METADATEN (COVER, ARTIST & TITLE) ÜBER DEN EIGENEN SERVER-PROXY ABFRAGEN
+        // METADATEN MIT FALLBACK-STRATEGIE (DECKT AUCH SENDER AB, DIE BEI LAUT.FM NOCH IN PRÜFUNG SIND)
         async function fetchLautFmMetadata() {
+            const titleEl = document.getElementById('player-song-title');
+            const artistEl = document.getElementById('player-artist-name');
+            const coverImg = document.getElementById('player-cover-img');
+            const currentTitleUI = document.getElementById('current-title');
+
             try {
-                const res = await fetch('/api/lautfm/current');
-                if (!res.ok) return;
+                // Versuche zuerst deinen Server-Proxy, ansonsten direkt laut.fm
+                let res = await fetch('/api/lautfm/current').catch(() => null);
+                if (!res || !res.ok) {
+                    res = await fetch('https://api.laut.fm/station/xoticradio/current_song?_t=' + Date.now(), { cache: 'no-store' }).catch(() => null);
+                }
 
-                const song = await res.json();
-                if (song) {
-                    const title = song.title || 'Live Stream';
-                    const artist = (song.artist && song.artist.name) ? song.artist.name : 'xoticradio';
+                if (res && res.ok) {
+                    const song = await res.json();
+                    if (song && (song.title || song.artist)) {
+                        const title = song.title || 'Live Stream';
+                        const artist = (song.artist && song.artist.name) ? song.artist.name : 'xoticradio';
 
-                    // Overlay Player Beschriftung
-                    document.getElementById('player-song-title').innerText = title;
-                    document.getElementById('player-artist-name').innerText = artist;
+                        if (titleEl) titleEl.innerText = title;
+                        if (artistEl) artistEl.innerText = artist;
+                        if (currentTitleUI) currentTitleUI.innerText = `${artist} - ${title}`;
 
-                    // Cover Bild auflösen & HTTPS erzwingen
-                    const coverImg = document.getElementById('player-cover-img');
-                    let imgUrl = "https://assets.laut.fm/images/default_cover.png";
+                        let imgUrl = "https://assets.laut.fm/images/default_cover.png";
+                        if (song.images) {
+                            if (song.images.cover_200) imgUrl = song.images.cover_200;
+                            else if (song.images.cover) imgUrl = song.images.cover;
+                            else if (song.images.thumb) imgUrl = song.images.thumb;
+                        }
 
-                    if (song.images) {
-                        if (song.images.cover_200) imgUrl = song.images.cover_200;
-                        else if (song.images.cover) imgUrl = song.images.cover;
-                        else if (song.images.thumb) imgUrl = song.images.thumb;
-                    }
-
-                    if (imgUrl.startsWith('http://')) {
-                        imgUrl = imgUrl.replace('http://', 'https://');
-                    }
-
-                    coverImg.src = imgUrl;
-
-                    // Auch in der Header-Anzeige aktualisieren
-                    const currentTitleUI = document.getElementById('current-title');
-                    if (currentTitleUI) {
-                        currentTitleUI.innerText = `${artist} - ${title}`;
+                        if (imgUrl.startsWith('http://')) {
+                            imgUrl = imgUrl.replace('http://', 'https://');
+                        }
+                        if (coverImg) coverImg.src = imgUrl;
+                        return; // Erfolgreich echte Daten geladen
                     }
                 }
             } catch (e) {
-                console.error("Fehler beim Abrufen der laut.fm Metadaten:", e);
+                console.error("Metadaten-Hinweis:", e);
+            }
+
+            // FALLBACK: Solange laut.fm noch nicht freigeschaltet ist oder nicht antwortet
+            if (titleEl && (titleEl.innerText === 'Lade Song...' || !titleEl.innerText)) {
+                titleEl.innerText = 'xoticradio Stream';
+            }
+            if (artistEl && (artistEl.innerText === 'Lade Künstler...' || !artistEl.innerText)) {
+                artistEl.innerText = '🔴 On Air';
+            }
+            if (currentTitleUI && currentTitleUI.innerText.includes('Lade Titel')) {
+                currentTitleUI.innerText = 'xoticradio Live Stream';
+            }
+            if (coverImg && (!coverImg.src || coverImg.src.includes('default_cover.png'))) {
+                coverImg.src = 'https://assets.laut.fm/images/default_cover.png';
             }
         }
 
@@ -652,14 +667,11 @@
         async function fetchLautFmHistory() {
             try {
                 const res = await fetch('https://api.laut.fm/station/xoticradio/last_songs?_t=' + Date.now(), { cache: 'no-store' });
-                if (!res.ok) return;
-
-                const history = await res.json();
                 const tracklistUI = document.getElementById('tracklist-container');
-                if (tracklistUI && Array.isArray(history)) {
-                    if (history.length === 0) {
-                        tracklistUI.innerHTML = '<p style="color:#a8a8b3;">Keine vorangegangenen Songs gefunden.</p>';
-                    } else {
+                
+                if (res.ok) {
+                    const history = await res.json();
+                    if (tracklistUI && Array.isArray(history) && history.length > 0) {
                         tracklistUI.innerHTML = history.map(item => {
                             const title = item.title || 'Unbekannter Song';
                             const artist = item.artist ? item.artist.name : '';
@@ -672,7 +684,12 @@
                                 </div>
                             `;
                         }).join('');
+                        return;
                     }
+                }
+                
+                if (tracklistUI) {
+                    tracklistUI.innerHTML = '<p style="color:#a8a8b3;">Aktuell keine Song-Historie verfügbar.</p>';
                 }
             } catch (err) {
                 console.error("Fehler beim Abrufen der laut.fm Historie:", err);

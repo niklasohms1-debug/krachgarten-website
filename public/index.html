@@ -429,7 +429,7 @@
             <div>
                 <h1 id="stream-name" style="margin:0;">📻 KRACHGARTEN</h1>
                 <p style="margin: 5px 0 0 0; color: #a8a8b3;">🔴 Live On Air</p>
-                <!-- SENDETITEL ANZEIGE (WIE FRÜHER) -->
+                <!-- SENDETITEL ANZEIGE -->
                 <p style="margin: 8px 0 0 0; font-size: 1.05rem;">
                     📻 Sendung: <strong id="current-show" style="color: #04d361;">Lade Sendung...</strong>
                 </p>
@@ -441,8 +441,8 @@
                     <img id="player-cover-img" src="" alt="Cover">
                 </div>
                 <div class="player-info-box">
-                    <div id="player-song-title" class="player-title">xoticradio Stream</div>
-                    <div id="player-artist-name" class="player-artist">🔴 On Air</div>
+                    <div id="player-song-title" class="player-title">Lade Song...</div>
+                    <div id="player-artist-name" class="player-artist">Lade Künstler...</div>
                     
                     <div class="player-controls-row">
                         <button id="player-toggle-btn" class="player-btn" onclick="togglePlayStream()">
@@ -615,7 +615,7 @@
             }
         }
 
-        // AUTOMATISCHE ITUNES COVER-SUCHE (FALLBACK WENN LAUT.FM KEIN BILD HAT)
+        // AUTOMATISCHE ITUNES COVER-SUCHE
         async function fetchItunesCover(artist, title) {
             if (!artist || !title || artist === 'xoticradio' || artist === '🔴 On Air') return null;
             try {
@@ -633,7 +633,7 @@
             return null;
         }
 
-        // METADATEN (SONG + SENDETITEL) DYNAMISCH UND OHNE PROXYS / CACHE ABFRAGEN
+        // METADATEN (SONG + SENDETITEL SEPARAT & PRÄZISE HOEN)
         async function fetchLautFmMetadata() {
             const titleEl = document.getElementById('player-song-title');
             const artistEl = document.getElementById('player-artist-name');
@@ -648,67 +648,50 @@
             }
 
             try {
-                let song = null;
-                let showName = "";
-
-                // 1. Station-Objekt direkt bei laut.fm abfragen (enthält den ECHTEN aktuellen Song & Sendetitel)
-                const stationRes = await fetch('https://api.laut.fm/station/xoticradio?_t=' + Date.now(), { 
-                    cache: 'no-store',
-                    headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
-                }).catch(() => null);
-
-                if (stationRes && stationRes.ok) {
-                    const stationData = await stationRes.json();
-                    if (stationData) {
-                        if (stationData.current_song) song = stationData.current_song;
-                        if (stationData.current_playlist && stationData.current_playlist.name) {
-                            showName = stationData.current_playlist.name;
-                        } else if (stationData.playlist) {
-                            showName = stationData.playlist;
+                // 1. Sendungs-Name im Hintergrund abfragen
+                fetch('https://api.laut.fm/station/xoticradio?_t=' + Date.now(), { cache: 'no-store' })
+                    .then(r => r.ok ? r.json() : null)
+                    .then(station => {
+                        if (station && station.current_playlist && station.current_playlist.name && currentShowUI) {
+                            currentShowUI.innerText = station.current_playlist.name;
                         }
-                    }
+                    }).catch(() => {});
+
+                // 2. Aktuellen Song & Künstler über Proxy oder laut.fm holen
+                let song = null;
+                let res = await fetch('/api/lautfm/current?_t=' + Date.now(), { cache: 'no-store' }).catch(() => null);
+
+                if (res && res.ok) {
+                    song = await res.json();
                 }
 
-                // 2. Fallback: Direkte Abfrage von current_song
                 if (!song || !song.title) {
-                    const currentRes = await fetch('https://api.laut.fm/station/xoticradio/current_song?_t=' + Date.now(), { 
-                        cache: 'no-store',
-                        headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
-                    }).catch(() => null);
-
-                    if (currentRes && currentRes.ok) {
-                        song = await currentRes.json();
+                    const directRes = await fetch('https://api.laut.fm/station/xoticradio/current_song?_t=' + Date.now(), { cache: 'no-store' }).catch(() => null);
+                    if (directRes && directRes.ok) {
+                        song = await directRes.json();
                     }
                 }
 
-                // 3. Fallback: Eigener Server Proxy
-                if (!song || !song.title) {
-                    const proxyRes = await fetch('/api/lautfm/current?_t=' + Date.now(), { cache: 'no-store' }).catch(() => null);
-                    if (proxyRes && proxyRes.ok) {
-                        song = await proxyRes.json();
-                    }
-                }
-
-                // Sendetitel unter "Live On Air" aktualisieren
-                if (showName && currentShowUI) {
-                    currentShowUI.innerText = showName;
-                }
-
-                // Songtitel & Künstler im Overlay Player aktualisieren
                 if (song && (song.title || song.artist)) {
-                    const title = song.title || 'Live Stream';
-                    const artist = (song.artist && song.artist.name) ? song.artist.name : (typeof song.artist === 'string' ? song.artist : 'xoticradio');
-                    const currentTrackKey = `${artist} - ${title}`;
+                    const title = song.title || 'Unbekannter Titel';
+                    let artist = 'Unbekannter Künstler';
 
-                    // Sendetitel aus dem Song-Objekt übernehmen, falls oben noch nicht gesetzt
-                    if (!showName && song.playlist && currentShowUI) {
-                        currentShowUI.innerText = song.playlist;
+                    if (song.artist) {
+                        artist = (typeof song.artist === 'object' && song.artist.name) ? song.artist.name : song.artist;
                     }
 
+                    // Künstler und Titel direkt anzeigen
                     if (titleEl) titleEl.innerText = title;
                     if (artistEl) artistEl.innerText = artist;
 
-                    // Nur wenn sich der Song wirklich geändert hat, neues Cover laden
+                    // Sendungs-Name Fallback, falls von oben noch nicht geladen
+                    if (song.playlist && currentShowUI && currentShowUI.innerText === 'Lade Sendung...') {
+                        currentShowUI.innerText = song.playlist;
+                    }
+
+                    const currentTrackKey = `${artist} - ${title}`;
+
+                    // Nur wenn sich der Song geändert hat, neues Cover laden
                     if (currentTrackKey !== lastTrackKey) {
                         lastTrackKey = currentTrackKey;
 
@@ -737,10 +720,10 @@
                 console.error("Metadaten Abruf-Fehler:", e);
             }
 
-            // FALLBACK BEI FEHLER
-            if (titleEl && (titleEl.innerText === 'Lade Song...' || !titleEl.innerText)) titleEl.innerText = 'xoticradio Stream';
-            if (artistEl && (artistEl.innerText === 'Lade Künstler...' || !artistEl.innerText)) artistEl.innerText = '🔴 On Air';
-            if (currentShowUI && (currentShowUI.innerText === 'Lade Sendung...' || !currentShowUI.innerText)) currentShowUI.innerText = 'xoticradio Live Show';
+            // FALLBACK BEI FEHLER ODER SOLANGE KEINE DATEN VORLIEGEN
+            if (titleEl && titleEl.innerText === 'Lade Song...') titleEl.innerText = 'xoticradio Stream';
+            if (artistEl && artistEl.innerText === 'Lade Künstler...') artistEl.innerText = '🔴 On Air';
+            if (currentShowUI && currentShowUI.innerText === 'Lade Sendung...') currentShowUI.innerText = 'xoticradio Live Show';
             if (coverImg && (!coverImg.src || coverImg.src === window.location.href)) coverImg.src = DEFAULT_SVG_COVER;
         }
 

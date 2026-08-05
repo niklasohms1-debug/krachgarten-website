@@ -572,13 +572,15 @@ app.delete(['/api/wishes/:id', '/api/admin/wishes/:id', '/api/wish/:id', '/api/a
 });
 
 // ==========================================
-// RADIO.CO API PROXY (STATUS & TRACKLIST)
+// LAUT.FM API PROXY (AKTUELLER SONG & HISTORIE)
 // ==========================================
 
-app.get('/api/radioco/status', (req, res) => {
+const LAUTFM_STATION = 'xoticradio';
+
+function fetchLautFmJson(pathSuffix, res, errorMsg) {
     const options = {
-        hostname: 'public.radio.co',
-        path: '/stations/s5d31fcd9d/status',
+        hostname: 'api.laut.fm',
+        path: `/station/${LAUTFM_STATION}${pathSuffix}`,
         method: 'GET',
         headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -598,9 +600,21 @@ app.get('/api/radioco/status', (req, res) => {
             }
         });
     }).on('error', (err) => {
-        console.error("Radio.co Fehler:", err);
-        res.status(500).json({ error: "Fehler beim Laden von Radio.co" });
+        console.error("laut.fm Fehler:", err);
+        res.status(500).json({ error: errorMsg });
     });
+}
+
+app.get('/api/lautfm/current', (req, res) => {
+    fetchLautFmJson('/current_song', res, "Fehler beim Laden des aktuellen Songs");
+});
+
+app.get('/api/lautfm/history', (req, res) => {
+    fetchLautFmJson('/last_songs', res, "Fehler beim Laden der Song-Historie");
+});
+
+app.get('/api/lautfm/station', (req, res) => {
+    fetchLautFmJson('', res, "Fehler beim Laden der Sender-Infos");
 });
 
 // SERVER START

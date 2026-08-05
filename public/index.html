@@ -42,12 +42,16 @@
             background: #121214;
             flex-shrink: 0;
             border: 1px solid #29292e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .player-cover-box img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: opacity 0.3s ease;
         }
 
         .player-info-box {
@@ -434,7 +438,7 @@
             <!-- OVERLAY PLAYER CARD MIT LAUTSTÄRKEREGLER -->
             <div class="custom-player-card">
                 <div class="player-cover-box">
-                    <img id="player-cover-img" src="https://assets.laut.fm/images/default_cover.png" alt="Cover" onerror="this.src='https://assets.laut.fm/images/default_cover.png'">
+                    <img id="player-cover-img" src="" alt="Cover">
                 </div>
                 <div class="player-info-box">
                     <div id="player-song-title" class="player-title">xoticradio Stream</div>
@@ -557,6 +561,11 @@
 
     <!-- JAVASCRIPT GANZ UNTEN -->
     <script>
+        // AUSFALLSICHERES DUNKLES VINYL PLATZHALTER-BILD (ALS INLINE SVG DATA-URI)
+        const DEFAULT_SVG_COVER = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 24 24' fill='none' stroke='%23ff4757' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' style='background:%2318181b;'><circle cx='12' cy='12' r='10'/><circle cx='12' cy='12' r='3'/><path d='M12 2a10 10 0 0 1 10 10'/></svg>";
+        
+        let lastTrackKey = ""; // Merkt sich den aktuell geladenen Song, um doppelte API-Suchen zu vermeiden
+
         function showPage(page) {
             const homeSection = document.getElementById('content-home');
             const teamSection = document.getElementById('content-team');
@@ -606,15 +615,41 @@
             }
         }
 
-        // METADATEN MIT FALLBACK-STRATEGIE (DECKT AUCH SENDER AB, DIE BEI LAUT.FM NOCH IN PRÜFUNG SIND)
+        // AUTOMATISCHE ITUNES COVER-SUCHE (FALLBACK WENN LAUT.FM KEIN BILD HAT)
+        async function fetchItunesCover(artist, title) {
+            if (!artist || !title || artist === 'xoticradio' || artist === '🔴 On Air') return null;
+            try {
+                const query = encodeURIComponent(`${artist} ${title}`);
+                const res = await fetch(`https://itunes.apple.com/search?term=${query}&entity=song&limit=1`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.results && data.results.length > 0 && data.results[0].artworkUrl100) {
+                        // Bessere Bildauflösung (300x300 statt 100x100) erzwingen
+                        return data.results[0].artworkUrl100.replace('100x100bb', '300x300bb');
+                    }
+                }
+            } catch (e) {
+                console.error("iTunes API Fehler:", e);
+            }
+            return null;
+        }
+
+        // METADATEN & COVER-VERARBEITUNG
         async function fetchLautFmMetadata() {
             const titleEl = document.getElementById('player-song-title');
             const artistEl = document.getElementById('player-artist-name');
             const coverImg = document.getElementById('player-cover-img');
             const currentTitleUI = document.getElementById('current-title');
 
+            // Bildfehler abfangen und durch das Vinyl-Platzhalterbild ersetzen
+            if (coverImg) {
+                coverImg.onerror = function() {
+                    this.onerror = null;
+                    this.src = DEFAULT_SVG_COVER;
+                };
+            }
+
             try {
-                // Versuche zuerst deinen Server-Proxy, ansonsten direkt laut.fm
                 let res = await fetch('/api/lautfm/current').catch(() => null);
                 if (!res || !res.ok) {
                     res = await fetch('https://api.laut.fm/station/xoticradio/current_song?_t=' + Date.now(), { cache: 'no-store' }).catch(() => null);
@@ -625,42 +660,50 @@
                     if (song && (song.title || song.artist)) {
                         const title = song.title || 'Live Stream';
                         const artist = (song.artist && song.artist.name) ? song.artist.name : 'xoticradio';
+                        const currentTrackKey = `${artist} - ${title}`;
 
                         if (titleEl) titleEl.innerText = title;
                         if (artistEl) artistEl.innerText = artist;
-                        if (currentTitleUI) currentTitleUI.innerText = `${artist} - ${title}`;
+                        if (currentTitleUI) currentTitleUI.innerText = currentTrackKey;
 
-                        let imgUrl = "https://assets.laut.fm/images/default_cover.png";
-                        if (song.images) {
-                            if (song.images.cover_200) imgUrl = song.images.cover_200;
-                            else if (song.images.cover) imgUrl = song.images.cover;
-                            else if (song.images.thumb) imgUrl = song.images.thumb;
-                        }
+                        // Cover prüfen, wenn sich der Song geändert hat
+                        if (currentTrackKey !== lastTrackKey) {
+                            lastTrackKey = currentTrackKey;
 
-                        if (imgUrl.startsWith('http://')) {
-                            imgUrl = imgUrl.replace('http://', 'https://');
+                            let lautFmImage = "";
+                            if (song.images) {
+                                if (song.images.cover_200) lautFmImage = song.images.cover_200;
+                                else if (song.images.cover) lautFmImage = song.images.cover;
+                                else if (song.images.thumb) lautFmImage = song.images.thumb;
+                            }
+
+                            // 1. Priorität: Echtes Bild von laut.fm
+                            if (lautFmImage && !lautFmImage.includes('default_cover')) {
+                                if (lautFmImage.startsWith('http://')) lautFmImage = lautFmImage.replace('http://', 'https://');
+                                coverImg.src = lautFmImage;
+                            } else {
+                                // 2. Priorität: iTunes Datenbank automatisch durchsuchen!
+                                const itunesCover = await fetchItunesCover(artist, title);
+                                if (itunesCover) {
+                                    coverImg.src = itunesCover;
+                                } else {
+                                    // 3. Priorität: Stylischer SVG-Vinyl-Platzhalter
+                                    coverImg.src = DEFAULT_SVG_COVER;
+                                }
+                            }
                         }
-                        if (coverImg) coverImg.src = imgUrl;
-                        return; // Erfolgreich echte Daten geladen
+                        return; // Metadaten erfolgreich verarbeitet
                     }
                 }
             } catch (e) {
                 console.error("Metadaten-Hinweis:", e);
             }
 
-            // FALLBACK: Solange laut.fm noch nicht freigeschaltet ist oder nicht antwortet
-            if (titleEl && (titleEl.innerText === 'Lade Song...' || !titleEl.innerText)) {
-                titleEl.innerText = 'xoticradio Stream';
-            }
-            if (artistEl && (artistEl.innerText === 'Lade Künstler...' || !artistEl.innerText)) {
-                artistEl.innerText = '🔴 On Air';
-            }
-            if (currentTitleUI && currentTitleUI.innerText.includes('Lade Titel')) {
-                currentTitleUI.innerText = 'xoticradio Live Stream';
-            }
-            if (coverImg && (!coverImg.src || coverImg.src.includes('default_cover.png'))) {
-                coverImg.src = 'https://assets.laut.fm/images/default_cover.png';
-            }
+            // FALLBACK BEI FEHLER / LAUT.FM OFFLINE
+            if (titleEl && (titleEl.innerText === 'Lade Song...' || !titleEl.innerText)) titleEl.innerText = 'xoticradio Stream';
+            if (artistEl && (artistEl.innerText === 'Lade Künstler...' || !artistEl.innerText)) artistEl.innerText = '🔴 On Air';
+            if (currentTitleUI && currentTitleUI.innerText.includes('Lade Titel')) currentTitleUI.innerText = 'xoticradio Live Stream';
+            if (coverImg && (!coverImg.src || coverImg.src === window.location.href)) coverImg.src = DEFAULT_SVG_COVER;
         }
 
         // LAUT.FM HISTORIE FÜR DAS TRACKLIST MODAL

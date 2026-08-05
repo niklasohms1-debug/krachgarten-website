@@ -20,12 +20,15 @@
         .main { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; max-width: 1000px; margin: 20px auto; }
         .card { background: #202024; padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #29292e; }
 
-        /* CONTAINER FÜR DEN ORIGINAL RADIO.CO PLAYER */
+        /* CONTAINER FÜR DEN STREAM PLAYER */
         .radio-co-player-wrapper {
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
             max-width: 400px;
+            background: #202024;
+            padding: 10px;
+            border: 1px solid #29292e;
         }
 
         /* NAVIGATIONSTASTEN OHNE SEITENNEULADEN */
@@ -325,7 +328,7 @@
             </div>
         </div>
 
-        <!-- HEADER MIT STREAM-TITEL, CURRENT SONG & EMBED PLAYER -->
+        <!-- HEADER MIT STREAM-TITEL, CURRENT SONG & PLAYER -->
         <header class="header">
             <div>
                 <h1 id="stream-name" style="margin:0;">📻 KRACHGARTEN</h1>
@@ -336,9 +339,12 @@
                 </p>
             </div>
 
-            <!-- RADIO.CO EMBED PLAYER -->
+            <!-- NEUER LAUT.FM AUDIO PLAYER -->
             <div class="radio-co-player-wrapper">
-                <script src="https://embed.radio.co/player/1ec17ac.js"></script>
+                <audio controls style="width: 100%; min-width: 280px; display: block; outline: none;">
+                    <source src="https://stream.laut.fm/xoticradio" type="audio/mpeg">
+                    Dein Browser unterstützt diesen Audioplayer leider nicht.
+                </audio>
             </div>
         </header>
     </div>

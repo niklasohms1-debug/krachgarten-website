@@ -606,11 +606,10 @@
             }
         }
 
-        // LAUT.FM METADATEN (COVER, ARTIST & TITLE) ABFRAGEN - MIT CACHE BUSTING!
+        // LAUT.FM METADATEN (COVER, ARTIST & TITLE) ÜBER DEN EIGENEN SERVER-PROXY ABFRAGEN
         async function fetchLautFmMetadata() {
             try {
-                // Cache-Busting durch timestamp (_t=...), damit der Browser nicht alte Songs cacht!
-                const res = await fetch('https://api.laut.fm/station/xoticradio/current_song?_t=' + Date.now(), { cache: 'no-store' });
+                const res = await fetch('/api/lautfm/current');
                 if (!res.ok) return;
 
                 const song = await res.json();
@@ -626,15 +625,12 @@
                     const coverImg = document.getElementById('player-cover-img');
                     let imgUrl = "https://assets.laut.fm/images/default_cover.png";
 
-                    if (song.images && song.images.cover_200) {
-                        imgUrl = song.images.cover_200;
-                    } else if (song.images && song.images.cover) {
-                        imgUrl = song.images.cover;
-                    } else if (song.images && song.images.thumb) {
-                        imgUrl = song.images.thumb;
+                    if (song.images) {
+                        if (song.images.cover_200) imgUrl = song.images.cover_200;
+                        else if (song.images.cover) imgUrl = song.images.cover;
+                        else if (song.images.thumb) imgUrl = song.images.thumb;
                     }
 
-                    // HTTPS erzwingen, damit der Browser nicht blockiert
                     if (imgUrl.startsWith('http://')) {
                         imgUrl = imgUrl.replace('http://', 'https://');
                     }

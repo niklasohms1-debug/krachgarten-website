@@ -20,7 +20,7 @@
         .main { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; max-width: 1000px; margin: 20px auto; }
         .card { background: #202024; padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #29292e; }
 
-        /* NEUER STYLISCHER OVERLAY PLAYER */
+        /* OVERLAY PLAYER CARD */
         .custom-player-card {
             display: flex;
             align-items: center;
@@ -128,7 +128,7 @@
             cursor: pointer;
         }
 
-        /* NAVIGATIONSTASTEN OHNE SEITENNEULADEN */
+        /* NAVIGATIONSTASTEN */
         .nav-btn {
             background: none;
             border: none;
@@ -561,10 +561,10 @@
 
     <!-- JAVASCRIPT GANZ UNTEN -->
     <script>
-        // AUSFALLSICHERES DUNKLES VINYL PLATZHALTER-BILD (ALS INLINE SVG DATA-URI)
+        // AUSFALLSICHERES DUNKLES VINYL PLATZHALTER-BILD
         const DEFAULT_SVG_COVER = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 24 24' fill='none' stroke='%23ff4757' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' style='background:%2318181b;'><circle cx='12' cy='12' r='10'/><circle cx='12' cy='12' r='3'/><path d='M12 2a10 10 0 0 1 10 10'/></svg>";
         
-        let lastTrackKey = ""; // Merkt sich den aktuell geladenen Song, um doppelte API-Suchen zu vermeiden
+        let lastTrackKey = ""; // Merkt sich den aktuell geladenen Song für Cover-Checks
 
         function showPage(page) {
             const homeSection = document.getElementById('content-home');
@@ -624,7 +624,6 @@
                 if (res.ok) {
                     const data = await res.json();
                     if (data.results && data.results.length > 0 && data.results[0].artworkUrl100) {
-                        // Bessere Bildauflösung (300x300 statt 100x100) erzwingen
                         return data.results[0].artworkUrl100.replace('100x100bb', '300x300bb');
                     }
                 }
@@ -634,14 +633,13 @@
             return null;
         }
 
-        // METADATEN & COVER-VERARBEITUNG
+        // METADATEN MIT CACHE-BUSTING VOM SERVER LADEN (GERÄUSCHLOS IM HINTERGRUND)
         async function fetchLautFmMetadata() {
             const titleEl = document.getElementById('player-song-title');
             const artistEl = document.getElementById('player-artist-name');
             const coverImg = document.getElementById('player-cover-img');
             const currentTitleUI = document.getElementById('current-title');
 
-            // Bildfehler abfangen und durch das Vinyl-Platzhalterbild ersetzen
             if (coverImg) {
                 coverImg.onerror = function() {
                     this.onerror = null;
@@ -650,7 +648,9 @@
             }
 
             try {
-                let res = await fetch('/api/lautfm/current').catch(() => null);
+                // CACHE-BUSTING ERZWINGEN (mit ?_t= Timestamp und cache: 'no-store')
+                let res = await fetch('/api/lautfm/current?_t=' + Date.now(), { cache: 'no-store' }).catch(() => null);
+                
                 if (!res || !res.ok) {
                     res = await fetch('https://api.laut.fm/station/xoticradio/current_song?_t=' + Date.now(), { cache: 'no-store' }).catch(() => null);
                 }
@@ -662,11 +662,12 @@
                         const artist = (song.artist && song.artist.name) ? song.artist.name : 'xoticradio';
                         const currentTrackKey = `${artist} - ${title}`;
 
+                        // Titel & Künstler IMMER sofort im Text-DOM aktualisieren
                         if (titleEl) titleEl.innerText = title;
                         if (artistEl) artistEl.innerText = artist;
                         if (currentTitleUI) currentTitleUI.innerText = currentTrackKey;
 
-                        // Cover prüfen, wenn sich der Song geändert hat
+                        // Nur bei tatsächlichem Songwechsel Cover neu suchen
                         if (currentTrackKey !== lastTrackKey) {
                             lastTrackKey = currentTrackKey;
 
@@ -677,29 +678,26 @@
                                 else if (song.images.thumb) lautFmImage = song.images.thumb;
                             }
 
-                            // 1. Priorität: Echtes Bild von laut.fm
                             if (lautFmImage && !lautFmImage.includes('default_cover')) {
                                 if (lautFmImage.startsWith('http://')) lautFmImage = lautFmImage.replace('http://', 'https://');
                                 coverImg.src = lautFmImage;
                             } else {
-                                // 2. Priorität: iTunes Datenbank automatisch durchsuchen!
                                 const itunesCover = await fetchItunesCover(artist, title);
                                 if (itunesCover) {
                                     coverImg.src = itunesCover;
                                 } else {
-                                    // 3. Priorität: Stylischer SVG-Vinyl-Platzhalter
                                     coverImg.src = DEFAULT_SVG_COVER;
                                 }
                             }
                         }
-                        return; // Metadaten erfolgreich verarbeitet
+                        return;
                     }
                 }
             } catch (e) {
-                console.error("Metadaten-Hinweis:", e);
+                console.error("Metadaten Abruf-Fehler:", e);
             }
 
-            // FALLBACK BEI FEHLER / LAUT.FM OFFLINE
+            // FALLBACK BEI FEHLER
             if (titleEl && (titleEl.innerText === 'Lade Song...' || !titleEl.innerText)) titleEl.innerText = 'xoticradio Stream';
             if (artistEl && (artistEl.innerText === 'Lade Künstler...' || !artistEl.innerText)) artistEl.innerText = '🔴 On Air';
             if (currentTitleUI && currentTitleUI.innerText.includes('Lade Titel')) currentTitleUI.innerText = 'xoticradio Live Stream';
@@ -900,7 +898,7 @@
 
         async function loadHomepageData() {
             try {
-                const res = await fetch('/api/data');
+                const res = await fetch('/api/data?_t=' + Date.now(), { cache: 'no-store' });
                 const data = await res.json();
 
                 document.getElementById('stream-name').innerText = "📻 " + (data.streamName || "Radio");

@@ -30,13 +30,13 @@
             border-radius: 12px;
             padding: 12px 18px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-            min-width: 320px;
-            max-width: 420px;
+            min-width: 340px;
+            max-width: 440px;
         }
 
         .player-cover-box {
-            width: 75px;
-            height: 75px;
+            width: 80px;
+            height: 80px;
             border-radius: 8px;
             overflow: hidden;
             background: #121214;
@@ -70,14 +70,20 @@
         .player-artist {
             color: #a8a8b3;
             font-size: 0.85rem;
-            margin-top: 3px;
+            margin-top: 2px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        .player-btn {
+        .player-controls-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
             margin-top: 8px;
+        }
+
+        .player-btn {
             background: #ff4757;
             color: white;
             border: none;
@@ -90,7 +96,6 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            width: fit-content;
         }
 
         .player-btn:hover {
@@ -101,6 +106,22 @@
         .player-btn.playing {
             background: #04d361;
             color: #000;
+        }
+
+        /* LAUTSTÄRKEREGLER */
+        .volume-control-box {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #a8a8b3;
+            font-size: 0.85rem;
+        }
+
+        .volume-slider {
+            width: 70px;
+            height: 4px;
+            accent-color: #ff4757;
+            cursor: pointer;
         }
 
         /* NAVIGATIONSTASTEN OHNE SEITENNEULADEN */
@@ -399,7 +420,7 @@
             </div>
         </div>
 
-        <!-- HEADER MIT STREAM-TITEL, CURRENT SONG & NEUEM OVERLAY PLAYER -->
+        <!-- HEADER MIT STREAM-TITEL, CURRENT SONG & OVERLAY PLAYER -->
         <header class="header">
             <div>
                 <h1 id="stream-name" style="margin:0;">📻 KRACHGARTEN</h1>
@@ -410,17 +431,26 @@
                 </p>
             </div>
 
-            <!-- NEUES LAUT.FM OVERLAY CARD (MIT COVER, ARTIST, TITLE & CUSTOM PLAY BUTTON) -->
+            <!-- OVERLAY PLAYER CARD MIT LAUTSTÄRKEREGLER -->
             <div class="custom-player-card">
                 <div class="player-cover-box">
-                    <img id="player-cover-img" src="https://assets.laut.fm/images/default_cover.png" alt="Cover">
+                    <img id="player-cover-img" src="https://assets.laut.fm/images/default_cover.png" alt="Cover" onerror="this.src='https://assets.laut.fm/images/default_cover.png'">
                 </div>
                 <div class="player-info-box">
                     <div id="player-song-title" class="player-title">Lade Song...</div>
                     <div id="player-artist-name" class="player-artist">Lade Künstler...</div>
-                    <button id="player-toggle-btn" class="player-btn" onclick="togglePlayStream()">
-                        <span>▶️</span> <span id="player-btn-text">Anhören</span>
-                    </button>
+                    
+                    <div class="player-controls-row">
+                        <button id="player-toggle-btn" class="player-btn" onclick="togglePlayStream()">
+                            <span>▶️</span> <span id="player-btn-text">Anhören</span>
+                        </button>
+                        
+                        <!-- LAUTSTÄRKEREGLER -->
+                        <div class="volume-control-box">
+                            <span>🔊</span>
+                            <input type="range" id="player-volume-slider" class="volume-slider" min="0" max="1" step="0.01" value="0.8" oninput="changeVolume(this.value)">
+                        </div>
+                    </div>
                 </div>
                 <!-- UNSICHTBARES AUDIO ELEMENT -->
                 <audio id="radio-audio-element" src="https://stream.laut.fm/xoticradio" preload="none"></audio>
@@ -568,10 +598,19 @@
             }
         }
 
-        // LAUT.FM METADATEN (COVER, ARTIST & TITLE) ABFRAGEN
+        // LAUTSTÄRKE ÄNDERN
+        function changeVolume(val) {
+            const audio = document.getElementById('radio-audio-element');
+            if (audio) {
+                audio.volume = parseFloat(val);
+            }
+        }
+
+        // LAUT.FM METADATEN (COVER, ARTIST & TITLE) ABFRAGEN - MIT CACHE BUSTING!
         async function fetchLautFmMetadata() {
             try {
-                const res = await fetch('https://api.laut.fm/station/xoticradio/current_song');
+                // Cache-Busting durch timestamp (_t=...), damit der Browser nicht alte Songs cacht!
+                const res = await fetch('https://api.laut.fm/station/xoticradio/current_song?_t=' + Date.now(), { cache: 'no-store' });
                 if (!res.ok) return;
 
                 const song = await res.json();
@@ -583,15 +622,24 @@
                     document.getElementById('player-song-title').innerText = title;
                     document.getElementById('player-artist-name').innerText = artist;
 
-                    // Cover Bild setzen
+                    // Cover Bild auflösen & HTTPS erzwingen
                     const coverImg = document.getElementById('player-cover-img');
+                    let imgUrl = "https://assets.laut.fm/images/default_cover.png";
+
                     if (song.images && song.images.cover_200) {
-                        coverImg.src = song.images.cover_200;
+                        imgUrl = song.images.cover_200;
+                    } else if (song.images && song.images.cover) {
+                        imgUrl = song.images.cover;
                     } else if (song.images && song.images.thumb) {
-                        coverImg.src = song.images.thumb;
-                    } else {
-                        coverImg.src = "https://assets.laut.fm/images/default_cover.png";
+                        imgUrl = song.images.thumb;
                     }
+
+                    // HTTPS erzwingen, damit der Browser nicht blockiert
+                    if (imgUrl.startsWith('http://')) {
+                        imgUrl = imgUrl.replace('http://', 'https://');
+                    }
+
+                    coverImg.src = imgUrl;
 
                     // Auch in der Header-Anzeige aktualisieren
                     const currentTitleUI = document.getElementById('current-title');
@@ -607,7 +655,7 @@
         // LAUT.FM HISTORIE FÜR DAS TRACKLIST MODAL
         async function fetchLautFmHistory() {
             try {
-                const res = await fetch('https://api.laut.fm/station/xoticradio/last_songs');
+                const res = await fetch('https://api.laut.fm/station/xoticradio/last_songs?_t=' + Date.now(), { cache: 'no-store' });
                 if (!res.ok) return;
 
                 const history = await res.json();

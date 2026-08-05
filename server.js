@@ -584,9 +584,15 @@ function fetchLautFmJson(pathSuffix, res, errorMsg) {
         method: 'GET',
         headers: {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'application/json'
+            'Accept': 'application/json',
+            'Cache-Control': 'no-cache'
         }
     };
+
+    // Verhindert, dass Browser, Hoster oder ein davorgeschalteter CDN die Antwort zwischenspeichern
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
 
     https.get(options, (apiRes) => {
         let body = '';

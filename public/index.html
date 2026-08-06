@@ -306,7 +306,7 @@
 
         // ITUNES COVER FINDER
         async function fetchItunesCover(artist, title) {
-            if (!artist || !title || artist === 'krachgarten' || artist === 'xoticradio') return null;
+            if (!artist || !title || artist === '🔴 On Air') return null;
             try {
                 const query = encodeURIComponent(`${artist} ${title}`);
                 const res = await fetch(`https://itunes.apple.com/search?term=${query}&entity=song&limit=1`);
@@ -320,7 +320,7 @@
             return null;
         }
 
-        // ECHTZEIT-METADATEN MIT ENDS_AT TIMESTAMP VERIFIZIERUNG
+        // ECHTZEIT-METADATEN MIT EXAKTER ARTIST/TITLE AUFTEILUNG
         async function fetchSongInfo() {
             if (coverImg) {
                 coverImg.onerror = function() {
@@ -329,7 +329,6 @@
                 };
             }
 
-            // Strikter Cache-Buster
             const cb = '?r=' + Math.random().toString(36).substring(7) + '&_t=' + Date.now();
 
             try {
@@ -340,6 +339,8 @@
                         if (station) {
                             if (station.current_playlist && station.current_playlist.name) {
                                 showEl.innerText = station.current_playlist.name;
+                            } else if (station.display_name) {
+                                showEl.innerText = station.display_name;
                             } else if (station.name) {
                                 showEl.innerText = station.name;
                             }
@@ -357,39 +358,50 @@
                     song = await res.json();
                 }
 
-                // 3. Prüfen, ob der gelieferte Song laut 'ends_at' eigentlich schon abgelaufen ist
+                // 3. Prüfen, ob der gelieferte Song abgelaufen ist
                 let isExpired = false;
                 if (song && song.ends_at) {
                     const endsAtDate = new Date(song.ends_at.replace(' ', 'T'));
                     if (!isNaN(endsAtDate.getTime()) && Date.now() > endsAtDate.getTime()) {
-                        isExpired = true; // Der von laut.fm gelieferte current_song hängt hinterher!
+                        isExpired = true;
                     }
                 }
 
-                // 4. Falls abgelaufen oder leer -> Neueren Song aus der Historie laden
+                // 4. Falls abgelaufen oder leer -> Historie
                 if (!song || !song.title || isExpired) {
                     const lastRes = await fetch('https://api.laut.fm/station/xoticradio/last_songs' + cb, { cache: 'no-store' });
                     if (lastRes.ok) {
                         const history = await lastRes.json();
                         if (Array.isArray(history) && history.length > 0) {
-                            song = history[0]; // Das allerneueste Element der Historie nutzen
+                            song = history[0];
                         }
                     }
                 }
 
-                // 5. Song & Künstler in der UI aktualisieren
+                // 5. Song & Künstler parsen und sauber auftrennen
                 if (song && (song.title || song.artist)) {
-                    const title = song.title || 'Live Stream';
-                    let artist = 'krachgarten';
+                    let rawTitle = song.title || '';
+                    let rawArtist = '';
 
                     if (song.artist) {
-                        artist = (typeof song.artist === 'object' && song.artist.name) ? song.artist.name : song.artist;
+                        if (typeof song.artist === 'string') {
+                            rawArtist = song.artist;
+                        } else if (typeof song.artist === 'object' && song.artist !== null) {
+                            rawArtist = song.artist.name || '';
+                        }
                     }
 
-                    titleEl.innerText = title;
-                    artistEl.innerText = artist;
+                    // Falls der Künstler fehlt, aber im Titel "Künstler - Song" steht
+                    if (!rawArtist && rawTitle.includes(' - ')) {
+                        const parts = rawTitle.split(' - ');
+                        rawArtist = parts[0].trim();
+                        rawTitle = parts.slice(1).join(' - ').trim();
+                    }
 
-                    const currentSongKey = `${artist} - ${title}`;
+                    titleEl.innerText = rawTitle || 'Live Stream';
+                    artistEl.innerText = rawArtist || '🔴 On Air';
+
+                    const currentSongKey = `${rawArtist} - ${rawTitle}`;
 
                     // Cover nur bei Songwechsel neu laden
                     if (currentSongKey !== lastSongKey) {
@@ -404,9 +416,11 @@
                         if (imgUrl && !imgUrl.includes('default_cover')) {
                             if (imgUrl.startsWith('http://')) imgUrl = imgUrl.replace('http://', 'https://');
                             coverImg.src = imgUrl;
-                        } else {
-                            const itunesCover = await fetchItunesCover(artist, title);
+                        } else if (rawArtist && rawTitle) {
+                            const itunesCover = await fetchItunesCover(rawArtist, rawTitle);
                             coverImg.src = itunesCover ? itunesCover : DEFAULT_SVG_COVER;
+                        } else {
+                            coverImg.src = DEFAULT_SVG_COVER;
                         }
                     }
                     return;
@@ -415,14 +429,14 @@
                 console.log("Metadaten Hinweis:", e);
             }
 
-            // Fallback
+            // Fallback bei Fehler
             if (titleEl.innerText === 'Lade Titel...') titleEl.innerText = 'krachgarten Stream';
             if (artistEl.innerText === 'Lade Künstler...') artistEl.innerText = '🔴 On Air';
             if (showEl.innerText === 'Lade Sendung...') showEl.innerText = 'krachgarten Radio';
             if (!coverImg.src || coverImg.src === window.location.href) coverImg.src = DEFAULT_SVG_COVER;
         }
 
-        // START & INTERVALL (alle 3 Sekunden prüfen für minimale Verzögerung)
+        // START & INTERVALL (alle 3 Sekunden)
         fetchSongInfo();
         setInterval(fetchSongInfo, 3000);
     </script>

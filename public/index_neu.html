@@ -3,330 +3,610 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Krachgarten V2 (<script>
-    const audio = document.getElementById('v2-audio');
-    const playBtn = document.getElementById('v2-play-btn');
-    const titleEl = document.getElementById('v2-title');
-    const artistEl = document.getElementById('v2-artist');
-
-    // STREAM PLAYER STEUERUNG
-    function togglePlay() {
-        if (audio.paused) {
-            audio.play().then(() => {
-                if (playBtn) {
-                    playBtn.innerText = "⏸️ Pause";
-                    playBtn.classList.add('playing');
-                }
-            }).catch(e => console.error("Play Fehler:", e));
-        } else {
-            audio.pause();
-            if (playBtn) {
-                playBtn.innerText = "▶️ Start";
-                playBtn.classList.remove('playing');
-            }
-        }
-    }
-
-    // FEHLERFREIES ECHTZEIT-METADATEN-PARSING
-    async function loadStreamMetadata() {
-        try {
-            // Anti-Cache Zeitstempel an die Server-Abfrage hängen
-            const res = await fetch('/api/lautfm/current?_t=' + Date.now());
-            if (!res.ok) return;
-
-            const song = await res.json();
-            
-            // Prüfen, ob sinnvolle Daten vom Server kamen
-            if (song && (song.title || song.artist)) {
-                let rawTitle = song.title || 'Live Stream';
-                let rawArtist = '';
-
-                // 1. Künstler sauber aus allen möglichen Formaten extrahieren
-                if (song.artist) {
-                    if (typeof song.artist === 'string') {
-                        rawArtist = song.artist;
-                    } else if (typeof song.artist === 'object' && song.artist.name) {
-                        rawArtist = song.artist.name;
-                    }
-                }
-
-                // 2. Falls laut.fm "Künstler - Songtitel" komplett in den Titel gepackt hat
-                if ((!rawArtist || rawArtist.toLowerCase().includes('krachgarten')) && rawTitle.includes(' - ')) {
-                    const parts = rawTitle.split(' - ');
-                    rawArtist = parts[0].trim();
-                    rawTitle = parts.slice(1).join(' - ').trim();
-                }
-
-                // 3. UI Sicher aktualisieren
-                if (titleEl) titleEl.innerText = rawTitle || 'krachgarten Stream';
-                if (artistEl) artistEl.innerText = rawArtist || '🔴 On Air';
-
-                // 4. Cover-Bild aktualisieren (falls vorhanden)
-                const coverImg = document.getElementById('cover-img');
-                if (coverImg && song.images) {
-                    let imgUrl = song.images.cover_200 || song.images.cover || '';
-                    if (imgUrl && !imgUrl.includes('default_cover')) {
-                        coverImg.src = imgUrl.replace('http://', 'https://');
-                    }
-                }
-            } else {
-                // Fallback, wenn kurz keine Daten da sind
-                if (titleEl && titleEl.innerText === 'Lade Stream...') titleEl.innerText = 'krachgarten Stream';
-                if (artistEl) artistEl.innerText = '🔴 On Air';
-            }
-        } catch (e) {
-            console.error("Metadaten Fehler:", e);
-        }
-    }
-
-    // SOFORT STARTEN & ALLE 3 SEKUNDEN AKTUALISIEREN
-    loadStreamMetadata();
-    setInterval(loadStreamMetadata, 3000);
-</script>Entwicklungs-Vorschau)</title>
+    <title>Krachgarten Radio | Dashboard V2</title>
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', -apple-system, sans-serif; background: #121214; color: #e1e1e6; padding: 20px; }
+        /* ======================================================
+           HABBOFUN NOSTALGIE DESIGN (Web 2.0 Fan-Site Style)
+           ====================================================== */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-        /* HEADER & BADGE */
-        .container { max-width: 1000px; margin: 0 auto; }
-        
+        body {
+            font-family: 'Verdana', 'Segoe UI', Tahoma, Geneva, sans-serif;
+            background: #0b4975 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" opacity="0.12"><circle cx="20" cy="20" r="1.5" fill="%23fff"/><circle cx="80" cy="50" r="2" fill="%23fff"/><circle cx="40" cy="80" r="1" fill="%23fff"/></svg>') repeat;
+            color: #222;
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
+        .page-wrapper {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 10px 15px;
+        }
+
+        /* OBERER HEADER & BANNER BEREICH */
         header {
             display: flex;
+            align-items: center;
             justify-content: space-between;
-            align-items: center;
-            background: #202024;
-            padding: 15px 25px;
-            border-radius: 12px;
-            border: 1px solid #29292e;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 15px;
+            padding: 15px 10px;
+            color: #fff;
         }
 
-        .dev-badge {
-            background: #ff9f43;
-            color: #000;
-            font-size: 0.75rem;
-            font-weight: 800;
-            padding: 4px 10px;
-            border-radius: 4px;
-            letter-spacing: 0.5px;
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-area h1 {
+            font-size: 2.1rem;
+            font-weight: 900;
             text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #ffffff;
+            text-shadow: 2px 2px 0px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 3px 3px 6px rgba(0,0,0,0.6);
         }
 
-        /* LAYOUT GRID */
-        .main-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
+        .logo-badge {
+            background: linear-gradient(180deg, #ff9f43 0%, #ff5252 100%);
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #ffffff33;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
-        @media (max-width: 768px) {
-            .main-grid { grid-template-columns: 1fr; }
+        /* RECHTECKE SPRUCHBLASE / TICKER */
+        .speech-bubble {
+            background: #ffffff;
+            color: #333;
+            padding: 8px 16px;
+            border-radius: 18px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.3);
+            position: relative;
+            max-width: 320px;
+        }
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-width: 6px 10px 6px 0;
+            border-style: solid;
+            border-color: transparent #ffffff transparent transparent;
         }
 
-        .card {
-            background: #202024;
-            border: 1px solid #29292e;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-
-        .card-title {
-            color: #ff4757;
-            font-size: 1.2rem;
-            margin-bottom: 12px;
+        /* NAVIGATION BAR (GLOSSY ORANGE TABS) */
+        nav {
+            background: linear-gradient(180deg, #ff6b35 0%, #d63031 100%);
+            border: 2px solid #900c3f;
+            border-radius: 8px 8px 0 0;
             display: flex;
-            align-items: center;
-            gap: 8px;
+            gap: 4px;
+            padding: 4px 6px 0 6px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
         }
 
-        /* PLAYER V2 PROTOTYP */
-        .player-box {
-            background: #121214;
-            border: 1px solid #29292e;
-            border-radius: 10px;
+        .nav-tab {
+            background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(0,0,0,0.1) 100%);
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: bold;
+            padding: 8px 18px;
+            border-radius: 6px 6px 0 0;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-bottom: none;
+            transition: all 0.15s;
+        }
+
+        .nav-tab:hover, .nav-tab.active {
+            background: #ffffff;
+            color: #d63031;
+            text-shadow: none;
+        }
+
+        /* METALLIC CONSOLE PLAYER (HABBOFUN PLAYER BAR) */
+        .habbo-player-console {
+            background: linear-gradient(180deg, #434953 0%, #242830 50%, #17191e 100%);
+            border: 3px solid #111317;
+            border-radius: 0 0 8px 8px;
             padding: 15px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+            flex-wrap: wrap;
         }
 
-        .cover-preview {
-            width: 60px;
-            height: 60px;
-            background: #29292e;
+        .player-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-grow: 1;
+        }
+
+        .player-avatar-box {
+            width: 55px;
+            height: 55px;
+            background: #111317;
+            border: 2px solid #555;
             border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            flex-shrink: 0;
+            font-size: 1.8rem;
+            box-shadow: inset 0 0 8px #000;
         }
 
-        .player-btn {
-            background: #ff4757;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
+        .track-details {
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .track-artist {
+            color: #ff9f43;
+            font-size: 1.1rem;
             font-weight: bold;
-            cursor: pointer;
-            transition: all 0.2s;
+            text-shadow: 1px 1px 2px #000;
         }
 
-        .player-btn:hover { background: #e03e4d; }
-        .player-btn.playing { background: #04d361; color: #000; }
+        .track-title {
+            color: #dddddd;
+            font-size: 0.95rem;
+        }
+
+        .player-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-einschalten {
+            background: linear-gradient(180deg, #ff9f43 0%, #ee5253 100%);
+            border: 2px solid #fff;
+            color: #fff;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: bold;
+            padding: 10px 22px;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+            transition: transform 0.1s, filter 0.2s;
+        }
+
+        .btn-einschalten:hover {
+            filter: brightness(1.1);
+            transform: scale(1.03);
+        }
+
+        .btn-einschalten.playing {
+            background: linear-gradient(180deg, #10ac84 0%, #1dd1a1 100%);
+            color: #000;
+            text-shadow: none;
+        }
+
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: #aaa;
+            font-size: 0.85rem;
+        }
+
+        .volume-slider {
+            width: 80px;
+            accent-color: #ff9f43;
+            cursor: pointer;
+        }
+
+        /* CONTENT GRID LAYOUT (MAIN 70% / SIDEBAR 30%) */
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 310px;
+            gap: 20px;
+        }
+
+        @media (max-width: 850px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* HABBOFUN WEISSE CARD MIT ORANGEM HEADER */
+        .habbo-card {
+            background: #ffffff;
+            border: 2px solid #083b60;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
+
+        .card-header {
+            background: linear-gradient(180deg, #ff6b35 0%, #e84118 100%);
+            color: #ffffff;
+            padding: 10px 15px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #c23616;
+        }
+
+        .card-body {
+            padding: 15px;
+            color: #2c3e50;
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+
+        /* WELCOME BANNER BOX */
+        .welcome-banner {
+            background: linear-gradient(135deg, #1e3799 0%, #0c2461 100%);
+            color: #fff;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 2px solid #4a69bd;
+        }
+
+        .welcome-banner h2 {
+            font-size: 1.2rem;
+            color: #f6b93b;
+            margin-bottom: 5px;
+        }
+
+        /* DJ POST / WUNSCHBOX CONTAINER (SIDEBAR FEATURE) */
+        .dj-post-header {
+            background: linear-gradient(180deg, #353b48 0%, #2f3640 100%);
+            color: #fff;
+            padding: 12px;
+            text-align: center;
+            font-weight: 900;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            border-bottom: 3px solid #ff6b35;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+            color: #2f3640;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #dcdde1;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            background: #f5f6fa;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #ff6b35;
+            background: #fff;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(180deg, #ff9f43 0%, #ee5253 100%);
+            color: #fff;
+            border: none;
+            padding: 10px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .btn-submit:hover {
+            filter: brightness(1.08);
+        }
+
+        /* NEWS LIST ITEMS */
+        .news-item {
+            padding: 10px 0;
+            border-bottom: 1px dashed #dcdde1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .news-item:last-child {
+            border-bottom: none;
+        }
+
+        .news-title {
+            color: #e84118;
+            font-weight: bold;
+            text-decoration: none;
+        }
+
+        .news-title:hover {
+            text-decoration: underline;
+        }
+
+        .news-date {
+            color: #7f8c8d;
+            font-size: 0.78rem;
+        }
+
+        footer {
+            text-align: center;
+            color: #a4b0be;
+            font-size: 0.8rem;
+            margin-top: 30px;
+        }
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <div class="page-wrapper">
+        
         <!-- HEADER -->
         <header>
-            <div>
-                <span class="dev-badge">🚧 V2 Entwicklungs-Vorschau</span>
-                <h1 style="margin-top: 5px; font-size: 1.5rem;">📻 Krachgarten Dashboard</h1>
+            <div class="logo-area">
+                <h1>Krachgarten</h1>
+                <span class="logo-badge">V2 BETA</span>
             </div>
-            <div>
-                <span style="color: #a8a8b3; font-size: 0.85rem;">Status: 🔒 Admin-Bereich aktiv</span>
+
+            <div class="speech-bubble">
+                💬 Willkommen bei Krachgarten! Die beste Musik rund um die Uhr.
             </div>
         </header>
 
-        <!-- STREAM PLAYER V2 PROTOTYP -->
-        <div class="card">
-            <div class="card-title">🎵 Live Stream Player</div>
-            <div class="player-box">
-                <div class="cover-preview">📻</div>
-                <div style="flex-grow: 1; overflow: hidden;">
-                    <div id="v2-title" style="font-weight: bold; color: #fff;">Lade Stream...</div>
-                    <div id="v2-artist" style="color: #a8a8b3; font-size: 0.85rem;">🔴 On Air</div>
+        <!-- NAVIGATION TABS -->
+        <nav>
+            <a href="#" class="nav-tab active">Startseite</a>
+            <a href="#" class="nav-tab">Community</a>
+            <a href="#" class="nav-tab">Radio</a>
+            <a href="#" class="nav-tab">Sendeplan</a>
+            <a href="#" class="nav-tab">Team</a>
+        </nav>
+
+        <!-- CONSOLE METALLIC PLAYER (HABBOFUN PLAYER BAR) -->
+        <div class="habbo-player-console">
+            <div class="player-left">
+                <div class="player-avatar-box">📻</div>
+                <div class="track-details">
+                    <div id="v2-artist" class="track-artist">Lade Künstler...</div>
+                    <div id="v2-title" class="track-title">Lade Stream...</div>
                 </div>
-                <button id="v2-play-btn" class="player-btn" onclick="togglePlay()">▶️ Start</button>
             </div>
+
+            <div class="player-controls">
+                <div class="volume-container">
+                    <span>🔊</span>
+                    <input type="range" id="v2-volume" class="volume-slider" min="0" max="1" step="0.01" value="0.8" oninput="setVolume(this.value)">
+                </div>
+
+                <button id="v2-play-btn" class="btn-einschalten" onclick="togglePlay()">
+                    ▶️ Einschalten
+                </button>
+            </div>
+
             <audio id="v2-audio" src="https://stream.laut.fm/xoticradio" preload="none"></audio>
         </div>
 
-        <!-- HAUPT-RASTER (BAUSTELLE) -->
-        <div class="main-grid">
+        <!-- MAIN CONTENT AREA -->
+        <div class="content-grid">
             
-            <!-- LINKESEITE -->
+            <!-- LEFT COLUMN (MAIN CONTENT) -->
             <div>
-                <div class="card">
-                    <div class="card-title">📰 News & Ankündigungen</div>
-                    <p style="color: #a8a8b3; font-size: 0.9rem;">
-                        Hier entsteht das neue Layout für die News-Beiträge...
-                    </p>
+                
+                <!-- WELCOME BANNER -->
+                <div class="welcome-banner">
+                    <div style="font-size: 2.5rem;">🎉</div>
+                    <div>
+                        <h2>Willkommen auf der neuen krachgarten Webseite!</h2>
+                        <p>Wir haben unser Design überarbeitet! Hier findest du ab sofort aktuelle News, Sendepläne und die direkte Wunschbox zum Studio.</p>
+                    </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-title">🎉 Interaktive Wall / Reaktionen</div>
-                    <p style="color: #a8a8b3; font-size: 0.9rem;">
-                        Platzhalter für neue Interaktions-Features.
-                    </p>
+                <!-- WILLKOMMEN CARD -->
+                <div class="habbo-card">
+                    <div class="card-header">
+                        <span>📌 Willkommen bei Krachgarten</span>
+                        <span>OFFIZIELLER FANSENDER</span>
+                    </div>
+                    <div class="card-body">
+                        <p>
+                            Bei <strong>Krachgarten</strong> bestimmst DU das Programm! Schreibe dem sendenden DJ einfach deine Musikwünsche, Grüße und Feedback über unsere Wunschbox. Trau dich und sei dabei!
+                        </p>
+                    </div>
                 </div>
+
+                <!-- NEWS CARD -->
+                <div class="habbo-card">
+                    <div class="card-header">
+                        <span>📰 Neue Ankündigungen & News</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="news-item">
+                            <a href="#" class="news-title">Krachgarten Webseite erstrahlt im neuen Habbo-Look!</a>
+                            <span class="news-date">Heute</span>
+                        </div>
+                        <div class="news-item">
+                            <a href="#" class="news-title">Sendeplan-Update für das Wochenende ist online</a>
+                            <span class="news-date">Gestern</span>
+                        </div>
+                        <div class="news-item">
+                            <a href="#" class="news-title">Neue DJs für unser Radio-Team gesucht!</a>
+                            <span class="news-date">Vor 3 Tagen</span>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
-            <!-- RECHTE SEITE -->
+            <!-- RIGHT COLUMN (SIDEBAR) -->
             <div>
-                <div class="card">
-                    <div class="card-title">📅 Sendeplan</div>
-                    <p style="color: #a8a8b3; font-size: 0.9rem;">
-                        Platzhalter für den Sendeplan.
-                    </p>
+                
+                <!-- DJ POST / WUNSCHBOX -->
+                <div class="habbo-card">
+                    <div class="dj-post-header">
+                        ✉️ DJ POST / WUNSCHBOX
+                    </div>
+                    <div class="card-body">
+                        <form onsubmit="sendWish(event)">
+                            <div class="form-group">
+                                <label for="wish-name">Dein Name:</label>
+                                <input type="text" id="wish-name" class="form-control" placeholder="Z. B. DJ_Fan" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="wish-song">Musikwunsch / Interpret:</label>
+                                <input type="text" id="wish-song" class="form-control" placeholder="Interpret - Songtitel" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="wish-msg">Grussbotschaft:</label>
+                                <textarea id="wish-msg" class="form-control" rows="3" placeholder="Deine Nachricht an den DJ..."></textarea>
+                            </div>
+                            <button type="submit" class="btn-submit">Absenden 🚀</button>
+                        </form>
+                    </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-title">💌 Wunschbox V2</div>
-                    <p style="color: #a8a8b3; font-size: 0.9rem;">
-                        Platzhalter für das neue Wunschbox-Formular.
-                    </p>
+                <!-- RECHTE INFO CARD -->
+                <div class="habbo-card">
+                    <div class="card-header">
+                        <span>🎧 Status & Team</span>
+                    </div>
+                    <div class="card-body" style="text-align: center;">
+                        <p style="font-weight: bold; color: #10ac84; margin-bottom: 8px;">🟢 Stream ist online</p>
+                        <p style="color: #7f8c8d; font-size: 0.8rem;">24/7 Krachgarten Live-Sendung</p>
+                    </div>
                 </div>
+
             </div>
 
         </div>
+
+        <footer>
+            &copy; Krachgarten Radio – Alle Rechte vorbehalten. Inspiriert vom HabboFun Design.
+        </footer>
+
     </div>
 
-   <script>
-    const audio = document.getElementById('v2-audio');
-    const playBtn = document.getElementById('v2-play-btn');
-    const titleEl = document.getElementById('v2-title');
-    const artistEl = document.getElementById('v2-artist');
+    <!-- JS PLAYER & ECHTZEIT-METADATEN LOGIK -->
+    <script>
+        const audio = document.getElementById('v2-audio');
+        const playBtn = document.getElementById('v2-play-btn');
+        const artistEl = document.getElementById('v2-artist');
+        const titleEl = document.getElementById('v2-title');
 
-    // STREAM PLAYER STEUERUNG
-    function togglePlay() {
-        if (audio.paused) {
-            audio.play().then(() => {
-                if (playBtn) {
-                    playBtn.innerText = "⏸️ Pause";
+        // AUDIO STEUERUNG
+        function togglePlay() {
+            if (audio.paused) {
+                audio.play().then(() => {
+                    playBtn.innerText = "⏸️ Pausieren";
                     playBtn.classList.add('playing');
-                }
-            }).catch(e => console.error("Play Fehler:", e));
-        } else {
-            audio.pause();
-            if (playBtn) {
-                playBtn.innerText = "▶️ Start";
+                }).catch(e => console.error("Play Fehler:", e));
+            } else {
+                audio.pause();
+                playBtn.innerText = "▶️ Einschalten";
                 playBtn.classList.remove('playing');
             }
         }
-    }
 
-    // FEHLERFREIES ECHTZEIT-METADATEN-PARSING
-    async function loadStreamMetadata() {
-        try {
-            // Anti-Cache Zeitstempel an die Server-Abfrage hängen
-            const res = await fetch('/api/lautfm/current?_t=' + Date.now());
-            if (!res.ok) return;
-
-            const song = await res.json();
-            
-            // Prüfen, ob sinnvolle Daten vom Server kamen
-            if (song && (song.title || song.artist)) {
-                let rawTitle = song.title || 'Live Stream';
-                let rawArtist = '';
-
-                // 1. Künstler sauber aus allen möglichen Formaten extrahieren
-                if (song.artist) {
-                    if (typeof song.artist === 'string') {
-                        rawArtist = song.artist;
-                    } else if (typeof song.artist === 'object' && song.artist.name) {
-                        rawArtist = song.artist.name;
-                    }
-                }
-
-                // 2. Falls laut.fm "Künstler - Songtitel" komplett in den Titel gepackt hat
-                if ((!rawArtist || rawArtist.toLowerCase().includes('krachgarten')) && rawTitle.includes(' - ')) {
-                    const parts = rawTitle.split(' - ');
-                    rawArtist = parts[0].trim();
-                    rawTitle = parts.slice(1).join(' - ').trim();
-                }
-
-                // 3. UI Sicher aktualisieren
-                if (titleEl) titleEl.innerText = rawTitle || 'krachgarten Stream';
-                if (artistEl) artistEl.innerText = rawArtist || '🔴 On Air';
-
-                // 4. Cover-Bild aktualisieren (falls vorhanden)
-                const coverImg = document.getElementById('cover-img');
-                if (coverImg && song.images) {
-                    let imgUrl = song.images.cover_200 || song.images.cover || '';
-                    if (imgUrl && !imgUrl.includes('default_cover')) {
-                        coverImg.src = imgUrl.replace('http://', 'https://');
-                    }
-                }
-            } else {
-                // Fallback, wenn kurz keine Daten da sind
-                if (titleEl && titleEl.innerText === 'Lade Stream...') titleEl.innerText = 'krachgarten Stream';
-                if (artistEl) artistEl.innerText = '🔴 On Air';
-            }
-        } catch (e) {
-            console.error("Metadaten Fehler:", e);
+        function setVolume(val) {
+            if (audio) audio.volume = parseFloat(val);
         }
-    }
 
-    // SOFORT STARTEN & ALLE 3 SEKUNDEN AKTUALISIEREN
-    loadStreamMetadata();
-    setInterval(loadStreamMetadata, 3000);
-</script>
+        // METADATEN VOM SERVER LADEN
+        async function loadStreamMetadata() {
+            try {
+                const res = await fetch('/api/lautfm/current');
+                if (!res.ok) return;
+
+                const song = await res.json();
+                
+                if (song && (song.title || song.artist)) {
+                    let titleText = song.title || '';
+                    let artistText = '';
+
+                    if (song.artist) {
+                        if (typeof song.artist === 'string') {
+                            artistText = song.artist;
+                        } else if (typeof song.artist === 'object' && song.artist.name) {
+                            artistText = song.artist.name;
+                        }
+                    }
+
+                    // Falls Künstler & Titel zusammen im Titel stehen ("Artist - Title")
+                    if (!artistText && titleText.includes(' - ')) {
+                        const parts = titleText.split(' - ');
+                        artistText = parts[0].trim();
+                        titleText = parts.slice(1).join(' - ').trim();
+                    }
+
+                    if (artistEl) artistEl.innerText = artistText || '🔴 On Air';
+                    if (titleEl) titleEl.innerText = titleText || 'Krachgarten Stream';
+                }
+            } catch (e) {
+                console.error("Metadaten Fehler:", e);
+            }
+        }
+
+        // WUNSCHBOX SENDEN
+        async function sendWish(e) {
+            e.preventDefault();
+            const name = document.getElementById('wish-name').value;
+            const song = document.getElementById('wish-song').value;
+            const message = document.getElementById('wish-msg').value;
+
+            try {
+                const res = await fetch('/api/wishes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, song, message })
+                });
+
+                if (res.ok) {
+                    alert('🎉 Dein Wunsch wurde erfolgreich an das DJ-Pult gesendet!');
+                    document.getElementById('wish-song').value = '';
+                    document.getElementById('wish-msg').value = '';
+                } else {
+                    alert('Fehler beim Senden des Wunsches.');
+                }
+            } catch (err) {
+                alert('Netzwerkfehler beim Senden.');
+            }
+        }
+
+        // SOFORT STARTEN UND ALLE 3 SEKUNDEN AKTUALISIEREN
+        loadStreamMetadata();
+        setInterval(loadStreamMetadata, 3000);
+    </script>
 </body>
 </html>

@@ -3,7 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Krachgarten V2 (Entwicklungs-Vorschau)</title>
+    <title>Krachgarten V2 (<script>
+    const audio = document.getElementById('v2-audio');
+    const playBtn = document.getElementById('v2-play-btn');
+    const titleEl = document.getElementById('v2-title');
+    const artistEl = document.getElementById('v2-artist');
+
+    // STREAM PLAYER STEUERUNG
+    function togglePlay() {
+        if (audio.paused) {
+            audio.play().then(() => {
+                if (playBtn) {
+                    playBtn.innerText = "⏸️ Pause";
+                    playBtn.classList.add('playing');
+                }
+            }).catch(e => console.error("Play Fehler:", e));
+        } else {
+            audio.pause();
+            if (playBtn) {
+                playBtn.innerText = "▶️ Start";
+                playBtn.classList.remove('playing');
+            }
+        }
+    }
+
+    // FEHLERFREIES ECHTZEIT-METADATEN-PARSING
+    async function loadStreamMetadata() {
+        try {
+            // Anti-Cache Zeitstempel an die Server-Abfrage hängen
+            const res = await fetch('/api/lautfm/current?_t=' + Date.now());
+            if (!res.ok) return;
+
+            const song = await res.json();
+            
+            // Prüfen, ob sinnvolle Daten vom Server kamen
+            if (song && (song.title || song.artist)) {
+                let rawTitle = song.title || 'Live Stream';
+                let rawArtist = '';
+
+                // 1. Künstler sauber aus allen möglichen Formaten extrahieren
+                if (song.artist) {
+                    if (typeof song.artist === 'string') {
+                        rawArtist = song.artist;
+                    } else if (typeof song.artist === 'object' && song.artist.name) {
+                        rawArtist = song.artist.name;
+                    }
+                }
+
+                // 2. Falls laut.fm "Künstler - Songtitel" komplett in den Titel gepackt hat
+                if ((!rawArtist || rawArtist.toLowerCase().includes('krachgarten')) && rawTitle.includes(' - ')) {
+                    const parts = rawTitle.split(' - ');
+                    rawArtist = parts[0].trim();
+                    rawTitle = parts.slice(1).join(' - ').trim();
+                }
+
+                // 3. UI Sicher aktualisieren
+                if (titleEl) titleEl.innerText = rawTitle || 'krachgarten Stream';
+                if (artistEl) artistEl.innerText = rawArtist || '🔴 On Air';
+
+                // 4. Cover-Bild aktualisieren (falls vorhanden)
+                const coverImg = document.getElementById('cover-img');
+                if (coverImg && song.images) {
+                    let imgUrl = song.images.cover_200 || song.images.cover || '';
+                    if (imgUrl && !imgUrl.includes('default_cover')) {
+                        coverImg.src = imgUrl.replace('http://', 'https://');
+                    }
+                }
+            } else {
+                // Fallback, wenn kurz keine Daten da sind
+                if (titleEl && titleEl.innerText === 'Lade Stream...') titleEl.innerText = 'krachgarten Stream';
+                if (artistEl) artistEl.innerText = '🔴 On Air';
+            }
+        } catch (e) {
+            console.error("Metadaten Fehler:", e);
+        }
+    }
+
+    // SOFORT STARTEN & ALLE 3 SEKUNDEN AKTUALISIEREN
+    loadStreamMetadata();
+    setInterval(loadStreamMetadata, 3000);
+</script>Entwicklungs-Vorschau)</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', -apple-system, sans-serif; background: #121214; color: #e1e1e6; padding: 20px; }
@@ -169,41 +248,85 @@
         </div>
     </div>
 
-    <script>
-        const audio = document.getElementById('v2-audio');
-        const playBtn = document.getElementById('v2-play-btn');
+   <script>
+    const audio = document.getElementById('v2-audio');
+    const playBtn = document.getElementById('v2-play-btn');
+    const titleEl = document.getElementById('v2-title');
+    const artistEl = document.getElementById('v2-artist');
 
-        function togglePlay() {
-            if (audio.paused) {
-                audio.play().then(() => {
+    // STREAM PLAYER STEUERUNG
+    function togglePlay() {
+        if (audio.paused) {
+            audio.play().then(() => {
+                if (playBtn) {
                     playBtn.innerText = "⏸️ Pause";
                     playBtn.classList.add('playing');
-                }).catch(e => console.error("Play Fehler:", e));
-            } else {
-                audio.pause();
+                }
+            }).catch(e => console.error("Play Fehler:", e));
+        } else {
+            audio.pause();
+            if (playBtn) {
                 playBtn.innerText = "▶️ Start";
                 playBtn.classList.remove('playing');
             }
         }
+    }
 
-        // METADATEN INITIAL LADEN
-        async function loadStreamMetadata() {
-            try {
-                const res = await fetch('/api/lautfm/current');
-                if (res.ok) {
-                    const song = await res.json();
-                    if (song && song.title) {
-                        document.getElementById('v2-title').innerText = song.title;
-                        document.getElementById('v2-artist').innerText = (song.artist && song.artist.name) ? song.artist.name : (song.artist || 'krachgarten');
+    // FEHLERFREIES ECHTZEIT-METADATEN-PARSING
+    async function loadStreamMetadata() {
+        try {
+            // Anti-Cache Zeitstempel an die Server-Abfrage hängen
+            const res = await fetch('/api/lautfm/current?_t=' + Date.now());
+            if (!res.ok) return;
+
+            const song = await res.json();
+            
+            // Prüfen, ob sinnvolle Daten vom Server kamen
+            if (song && (song.title || song.artist)) {
+                let rawTitle = song.title || 'Live Stream';
+                let rawArtist = '';
+
+                // 1. Künstler sauber aus allen möglichen Formaten extrahieren
+                if (song.artist) {
+                    if (typeof song.artist === 'string') {
+                        rawArtist = song.artist;
+                    } else if (typeof song.artist === 'object' && song.artist.name) {
+                        rawArtist = song.artist.name;
                     }
                 }
-            } catch (e) {
-                console.log("Hinweis:", e);
-            }
-        }
 
-        loadStreamMetadata();
-        setInterval(loadStreamMetadata, 5000);
-    </script>
+                // 2. Falls laut.fm "Künstler - Songtitel" komplett in den Titel gepackt hat
+                if ((!rawArtist || rawArtist.toLowerCase().includes('krachgarten')) && rawTitle.includes(' - ')) {
+                    const parts = rawTitle.split(' - ');
+                    rawArtist = parts[0].trim();
+                    rawTitle = parts.slice(1).join(' - ').trim();
+                }
+
+                // 3. UI Sicher aktualisieren
+                if (titleEl) titleEl.innerText = rawTitle || 'krachgarten Stream';
+                if (artistEl) artistEl.innerText = rawArtist || '🔴 On Air';
+
+                // 4. Cover-Bild aktualisieren (falls vorhanden)
+                const coverImg = document.getElementById('cover-img');
+                if (coverImg && song.images) {
+                    let imgUrl = song.images.cover_200 || song.images.cover || '';
+                    if (imgUrl && !imgUrl.includes('default_cover')) {
+                        coverImg.src = imgUrl.replace('http://', 'https://');
+                    }
+                }
+            } else {
+                // Fallback, wenn kurz keine Daten da sind
+                if (titleEl && titleEl.innerText === 'Lade Stream...') titleEl.innerText = 'krachgarten Stream';
+                if (artistEl) artistEl.innerText = '🔴 On Air';
+            }
+        } catch (e) {
+            console.error("Metadaten Fehler:", e);
+        }
+    }
+
+    // SOFORT STARTEN & ALLE 3 SEKUNDEN AKTUALISIEREN
+    loadStreamMetadata();
+    setInterval(loadStreamMetadata, 3000);
+</script>
 </body>
 </html>

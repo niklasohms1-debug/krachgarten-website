@@ -6,6 +6,7 @@ const path = require('path');
 const https = require('https');
 const fs = require('fs');
 const multer = require('multer');
+const cookieParser = require('cookie-parser'); // NEU: Für den Admin-Login Schutz
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -32,10 +33,49 @@ const upload = multer({
     limits: { fileSize: 500 * 1024 * 1024 } // 500 MB Max
 });
 
-// Middleware & Statische Ordner (Explizit für Uploads freigeben!)
+// Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser()); // NEU: Middleware für Cookies
+
 app.use('/uploads', express.static(uploadsDir)); // DIRECT STREAM ROUTE
+
+// ==========================================
+// SCHUTZ FÜR DIE NEUE BAUSTELLE (index_neu.html)
+// ==========================================
+
+// 1. Login-Endpunkt für den Umbau-Bereich
+app.post('/api/dev-login', async (req, res) => {
+    try {
+        const { password } = req.body;
+        const data = await getOrInitData();
+        const adminPass = data.passwords?.admin || "admin123";
+
+        if (password === adminPass) {
+            // Setzt ein sicheres Auth-Cookie für 7 Tage
+            res.cookie('dev_auth', 'authenticated_admin', {
+                maxAge: 7 * 24 * 60 * 60 * 1000,
+                httpOnly: true,
+                sameSite: 'lax'
+            });
+            return res.json({ success: true });
+        }
+        return res.status(401).json({ error: "Falsches Passwort" });
+    } catch (err) {
+        return res.status(500).json({ error: "Serverfehler beim Login" });
+    }
+});
+
+// 2. Türsteher-Route: Prüft, ob der Admin eingeloggt ist, BEVOR die Datei ausgeliefert wird
+app.get(['/index_neu', '/index_neu.html'], (req, res) => {
+    if (req.cookies && req.cookies.dev_auth === 'authenticated_admin') {
+        return res.sendFile(path.join(__dirname, 'public', 'index_neu.html'));
+    }
+    // Nicht eingeloggt -> Umleitung auf Login-Seite
+    res.redirect('/login.html');
+});
+
+// Statische Ordner-Freigabe erst NACH der geschützten Route platzieren!
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 
 // MONGO_URI
@@ -589,7 +629,6 @@ function fetchLautFmJson(pathSuffix, res, errorMsg) {
         }
     };
 
-    // Verhindert, dass Browser, Hoster oder ein davorgeschalteter CDN die Antwort zwischenspeichern
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');

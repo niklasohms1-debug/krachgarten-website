@@ -522,7 +522,7 @@
         <div id="tab-radio" class="tab-content">
             <div class="habbo-card">
                 <div class="card-header">
-                    <span>📜 Zuletzt gespeilte Songs (Historie)</span>
+                    <span>📜 Zuletzt gespeilte Songs (Historie mit Uhrzeit)</span>
                 </div>
                 <div class="card-body">
                     <div id="history-container">
@@ -536,6 +536,31 @@
              TAB 5: COMMUNITY (MINIGAMES ARCADE)
              =================================================== -->
         <div id="tab-community" class="tab-content">
+            
+            <!-- GAME 3: HABBO JUMP N RUN (OBEN VOLLBREITE) -->
+            <div class="habbo-card">
+                <div class="card-header">
+                    <span>🏃 Habbo Jump 'n' Run</span>
+                    <span id="jnr-stats" style="font-size: 0.8rem; font-weight: normal;">Score: 0 | Highscore: 0</span>
+                </div>
+                <div class="card-body" style="text-align: center;">
+                    <p style="font-size: 0.85rem; margin-bottom: 10px; color: #7f8c8d;">
+                        Klicke / Tippe ins Spielfeld oder drücke <strong>[LEERTASTE]</strong> zum Springen! Weiche den Hindernissen aus.
+                    </p>
+                    
+                    <div style="position: relative; display: inline-block; width: 100%; max-width: 650px;">
+                        <canvas id="jnr-canvas" width="600" height="150" style="background: linear-gradient(180deg, #74b9ff 0%, #0984e3 80%, #2d3436 80%); border: 2px solid #083b60; border-radius: 6px; cursor: pointer; width: 100%; height: auto;"></canvas>
+                    </div>
+
+                    <div style="margin-top: 10px;">
+                        <button onclick="startJnRGame()" class="btn-submit" style="width: auto; padding: 8px 24px;">
+                            🎮 Spiel Starten / Neustarten
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UNTEN: MEMORY & QUIZ GRID -->
             <div class="content-grid">
                 
                 <!-- GAME 1: MEMORY -->
@@ -620,6 +645,7 @@
             if (tabName === 'community') {
                 initMemory();
                 initQuiz();
+                initJnR();
             }
             if (tabName === 'startseite') loadNews();
         }
@@ -764,7 +790,7 @@
             }
         }
 
-        // SONG HISTORIE LADEN
+        // SONG HISTORIE LADEN (NUN MIT GENAUER UHRZEIT!)
         async function loadRadioHistory() {
             try {
                 const res = await fetch('/api/lautfm/history');
@@ -777,14 +803,30 @@
                     return;
                 }
 
-                container.innerHTML = history.map((item, idx) => `
-                    <div style="padding:8px 0; border-bottom:1px dashed #dcdde1; display:flex; justify-content:space-between; align-items:center;">
-                        <div style="font-size:0.9rem;">
-                            <strong>${escapeHtml(item.artist?.name || item.artist || 'Unbekannt')}</strong> - ${escapeHtml(item.title || '')}
+                container.innerHTML = history.map((item, idx) => {
+                    let timeBadge = '';
+                    const rawTime = item.started_at || item.ends_at || item.created_at;
+                    
+                    if (rawTime) {
+                        try {
+                            const dateObj = new Date(rawTime);
+                            if (!isNaN(dateObj)) {
+                                const timeFormatted = dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                                timeBadge = `<span style="background: linear-gradient(180deg, #ff9f43 0%, #ee5253 100%); color: #fff; font-size: 0.72rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-right: 8px;">${timeFormatted} Uhr</span>`;
+                            }
+                        } catch (err) {}
+                    }
+
+                    return `
+                        <div style="padding:10px 0; border-bottom:1px dashed #dcdde1; display:flex; justify-content:space-between; align-items:center;">
+                            <div style="font-size:0.9rem; display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
+                                ${timeBadge}
+                                <strong>${escapeHtml(item.artist?.name || item.artist || 'Unbekannt')}</strong> - ${escapeHtml(item.title || '')}
+                            </div>
+                            <div style="font-size:0.75rem; color:#7f8c8d; font-weight:bold;">#${idx + 1}</div>
                         </div>
-                        <div style="font-size:0.75rem; color:#7f8c8d;">#${idx + 1}</div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             } catch (e) {
                 console.error("Historie Fehler:", e);
             }
@@ -817,7 +859,7 @@
         }
 
         // ==========================================
-        // MINIGAMES LOGIK (MEMORY & QUIZ)
+        // MINIGAMES LOGIK (MEMORY, QUIZ & JUMP N RUN)
         // ==========================================
 
         // --- 1. MEMORY GAME ---
@@ -956,6 +998,158 @@
             }
             currentQuizIdx++;
             showQuizQuestion();
+        }
+
+        // --- 3. HABBO JUMP N RUN GAME ---
+        let jnrCanvas, jnrCtx;
+        let jnrAnimationId = null;
+        let jnrScore = 0;
+        let jnrHighscore = 0;
+        let jnrRunning = false;
+        let jnrFrame = 0;
+
+        let jnrPlayer = {
+            x: 50,
+            y: 95,
+            vy: 0,
+            gravity: 0.65,
+            jumpForce: -11.5,
+            grounded: false
+        };
+
+        let jnrObstacles = [];
+
+        function initJnR() {
+            jnrCanvas = document.getElementById('jnr-canvas');
+            if (!jnrCanvas) return;
+            jnrCtx = jnrCanvas.getContext('2d');
+
+            jnrCanvas.onclick = jnrJump;
+            window.onkeydown = function(e) {
+                if (e.code === 'Space' && jnrRunning) {
+                    e.preventDefault();
+                    jnrJump();
+                }
+            };
+            drawJnRIdle();
+        }
+
+        function drawJnRIdle() {
+            if (!jnrCtx) return;
+            jnrCtx.clearRect(0, 0, jnrCanvas.width, jnrCanvas.height);
+            
+            // Boden
+            jnrCtx.fillStyle = '#2d3436';
+            jnrCtx.fillRect(0, 120, jnrCanvas.width, 30);
+            jnrCtx.fillStyle = '#10ac84';
+            jnrCtx.fillRect(0, 120, jnrCanvas.width, 4);
+
+            // Spieler
+            jnrCtx.font = '26px sans-serif';
+            jnrCtx.fillText('🕺', 50, 118);
+
+            // Text
+            jnrCtx.fillStyle = '#ffffff';
+            jnrCtx.font = 'bold 16px Verdana';
+            jnrCtx.textAlign = 'center';
+            jnrCtx.fillText('Klicke "Spiel Starten" zum Loslegen!', jnrCanvas.width / 2, 65);
+        }
+
+        function startJnRGame() {
+            if (jnrAnimationId) cancelAnimationFrame(jnrAnimationId);
+            jnrScore = 0;
+            jnrFrame = 0;
+            jnrObstacles = [];
+            jnrPlayer.y = 95;
+            jnrPlayer.vy = 0;
+            jnrPlayer.grounded = true;
+            jnrRunning = true;
+            jnrLoop();
+        }
+
+        function jnrJump() {
+            if (!jnrRunning) return;
+            if (jnrPlayer.grounded) {
+                jnrPlayer.vy = jnrPlayer.jumpForce;
+                jnrPlayer.grounded = false;
+            }
+        }
+
+        function jnrLoop() {
+            if (!jnrRunning) return;
+
+            jnrFrame++;
+            jnrScore = Math.floor(jnrFrame / 5);
+            if (jnrScore > jnrHighscore) jnrHighscore = jnrScore;
+
+            const statsEl = document.getElementById('jnr-stats');
+            if (statsEl) statsEl.innerText = `Score: ${jnrScore} | Highscore: ${jnrHighscore}`;
+
+            // Physik
+            jnrPlayer.vy += jnrPlayer.gravity;
+            jnrPlayer.y += jnrPlayer.vy;
+
+            if (jnrPlayer.y >= 95) {
+                jnrPlayer.y = 95;
+                jnrPlayer.vy = 0;
+                jnrPlayer.grounded = true;
+            }
+
+            // Hindernisse generieren
+            if (jnrFrame % 85 === 0) {
+                const types = ['🧱', '📦', '📻', '🚧'];
+                const obstacleEmoji = types[Math.floor(Math.random() * types.length)];
+                jnrObstacles.push({
+                    x: jnrCanvas.width,
+                    y: 95,
+                    emoji: obstacleEmoji,
+                    speed: 4.5 + Math.min(Math.floor(jnrScore / 100), 5)
+                });
+            }
+
+            // Hintergrund zeichnen
+            jnrCtx.clearRect(0, 0, jnrCanvas.width, jnrCanvas.height);
+            jnrCtx.fillStyle = '#2d3436';
+            jnrCtx.fillRect(0, 120, jnrCanvas.width, 30);
+            jnrCtx.fillStyle = '#10ac84';
+            jnrCtx.fillRect(0, 120, jnrCanvas.width, 4);
+
+            // Spieler zeichnen
+            jnrCtx.font = '26px sans-serif';
+            jnrCtx.textAlign = 'left';
+            jnrCtx.fillText('🕺', jnrPlayer.x, jnrPlayer.y + 23);
+
+            // Hindernisse bewegen & Kollision
+            for (let i = jnrObstacles.length - 1; i >= 0; i--) {
+                let obs = jnrObstacles[i];
+                obs.x -= obs.speed;
+
+                jnrCtx.font = '22px sans-serif';
+                jnrCtx.fillText(obs.emoji, obs.x, obs.y + 20);
+
+                // Kollisionsprüfung (Box Intersect)
+                if (
+                    jnrPlayer.x + 18 > obs.x &&
+                    jnrPlayer.x < obs.x + 20 &&
+                    jnrPlayer.y + 20 > obs.y
+                ) {
+                    jnrRunning = false;
+                    jnrCtx.fillStyle = '#ee5253';
+                    jnrCtx.font = 'bold 22px Verdana';
+                    jnrCtx.textAlign = 'center';
+                    jnrCtx.fillText('GAME OVER! 💥', jnrCanvas.width / 2, 55);
+                    jnrCtx.fillStyle = '#ffffff';
+                    jnrCtx.font = '14px Verdana';
+                    jnrCtx.fillText(`Endstand: ${jnrScore} Punkte`, jnrCanvas.width / 2, 85);
+                    return;
+                }
+
+                if (obs.x < -30) {
+                    jnrObstacles.splice(i, 1);
+                }
+            }
+
+            jnrAnimationId = requestAnimationFrame(jnrLoop);
         }
 
         // INITIALIZATION

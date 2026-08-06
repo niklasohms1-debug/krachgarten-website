@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wartungsarbeiten | krachgarten </title>
+    <title>Wartungsarbeiten | krachgarten</title>
     <style>
         * {
             box-sizing: border-box;
@@ -231,7 +231,7 @@
             Unsere Webseite wird aktuell überarbeitet. Der Radio-Stream läuft natürlich ohne Unterbrechung weiter – schalt einfach ein:
         </p>
 
-        <!-- EINFACher RADIOPLAYER -->
+        <!-- RADIOPLAYER CARD -->
         <div class="player-card">
             <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
                 <div class="badge-live">
@@ -280,7 +280,7 @@
         const titleEl = document.getElementById('song-title');
         const artistEl = document.getElementById('song-artist');
         const showEl = document.getElementById('show-title');
-        const coverImg = document.getElementById('player-cover-img') || document.getElementById('cover-img');
+        const coverImg = document.getElementById('cover-img');
 
         let lastSongKey = "";
 
@@ -306,7 +306,7 @@
 
         // ITUNES COVER FINDER
         async function fetchItunesCover(artist, title) {
-            if (!artist || !title || artist === 'xoticradio') return null;
+            if (!artist || !title || artist === 'krachgarten' || artist === 'xoticradio') return null;
             try {
                 const query = encodeURIComponent(`${artist} ${title}`);
                 const res = await fetch(`https://itunes.apple.com/search?term=${query}&entity=song&limit=1`);
@@ -320,7 +320,7 @@
             return null;
         }
 
-        // PRÄZISER METADATEN-ABFRAGE-CODE
+        // ECHTZEIT-METADATEN MIT ENDS_AT TIMESTAMP VERIFIZIERUNG
         async function fetchSongInfo() {
             if (coverImg) {
                 coverImg.onerror = function() {
@@ -329,9 +329,12 @@
                 };
             }
 
+            // Strikter Cache-Buster
+            const cb = '?r=' + Math.random().toString(36).substring(7) + '&_t=' + Date.now();
+
             try {
                 // 1. Sendungstitel auslesen
-                fetch('https://api.laut.fm/station/xoticradio?_t=' + Date.now(), { cache: 'no-store' })
+                fetch('https://api.laut.fm/station/xoticradio' + cb, { cache: 'no-store' })
                     .then(r => r.ok ? r.json() : null)
                     .then(station => {
                         if (station) {
@@ -343,61 +346,85 @@
                         }
                     }).catch(() => {});
 
-                // 2. Aktuellen Song auslesen
-                const res = await fetch('https://api.laut.fm/station/xoticradio/current_song?_t=' + Date.now(), { 
-                    cache: 'no-store' 
+                // 2. Aktuellen Song holen
+                let song = null;
+                const res = await fetch('https://api.laut.fm/station/xoticradio/current_song' + cb, { 
+                    cache: 'no-store',
+                    headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
                 });
 
                 if (res.ok) {
-                    const song = await res.json();
-                    if (song && (song.title || song.artist)) {
-                        const title = song.title || 'Live Stream';
-                        let artist = 'xoticradio';
+                    song = await res.json();
+                }
 
-                        if (song.artist) {
-                            artist = (typeof song.artist === 'object' && song.artist.name) ? song.artist.name : song.artist;
-                        }
-
-                        titleEl.innerText = title;
-                        artistEl.innerText = artist;
-
-                        const currentSongKey = `${artist} - ${title}`;
-
-                        // Cover nur bei Songwechsel neu laden
-                        if (currentSongKey !== lastSongKey) {
-                            lastSongKey = currentSongKey;
-
-                            let imgUrl = "";
-                            if (song.images) {
-                                if (song.images.cover_200) imgUrl = song.images.cover_200;
-                                else if (song.images.cover) imgUrl = song.images.cover;
-                            }
-
-                            if (imgUrl && !imgUrl.includes('default_cover')) {
-                                if (imgUrl.startsWith('http://')) imgUrl = imgUrl.replace('http://', 'https://');
-                                coverImg.src = imgUrl;
-                            } else {
-                                const itunesCover = await fetchItunesCover(artist, title);
-                                coverImg.src = itunesCover ? itunesCover : DEFAULT_SVG_COVER;
-                            }
-                        }
-                        return;
+                // 3. Prüfen, ob der gelieferte Song laut 'ends_at' eigentlich schon abgelaufen ist
+                let isExpired = false;
+                if (song && song.ends_at) {
+                    const endsAtDate = new Date(song.ends_at.replace(' ', 'T'));
+                    if (!isNaN(endsAtDate.getTime()) && Date.now() > endsAtDate.getTime()) {
+                        isExpired = true; // Der von laut.fm gelieferte current_song hängt hinterher!
                     }
+                }
+
+                // 4. Falls abgelaufen oder leer -> Neueren Song aus der Historie laden
+                if (!song || !song.title || isExpired) {
+                    const lastRes = await fetch('https://api.laut.fm/station/xoticradio/last_songs' + cb, { cache: 'no-store' });
+                    if (lastRes.ok) {
+                        const history = await lastRes.json();
+                        if (Array.isArray(history) && history.length > 0) {
+                            song = history[0]; // Das allerneueste Element der Historie nutzen
+                        }
+                    }
+                }
+
+                // 5. Song & Künstler in der UI aktualisieren
+                if (song && (song.title || song.artist)) {
+                    const title = song.title || 'Live Stream';
+                    let artist = 'krachgarten';
+
+                    if (song.artist) {
+                        artist = (typeof song.artist === 'object' && song.artist.name) ? song.artist.name : song.artist;
+                    }
+
+                    titleEl.innerText = title;
+                    artistEl.innerText = artist;
+
+                    const currentSongKey = `${artist} - ${title}`;
+
+                    // Cover nur bei Songwechsel neu laden
+                    if (currentSongKey !== lastSongKey) {
+                        lastSongKey = currentSongKey;
+
+                        let imgUrl = "";
+                        if (song.images) {
+                            if (song.images.cover_200) imgUrl = song.images.cover_200;
+                            else if (song.images.cover) imgUrl = song.images.cover;
+                        }
+
+                        if (imgUrl && !imgUrl.includes('default_cover')) {
+                            if (imgUrl.startsWith('http://')) imgUrl = imgUrl.replace('http://', 'https://');
+                            coverImg.src = imgUrl;
+                        } else {
+                            const itunesCover = await fetchItunesCover(artist, title);
+                            coverImg.src = itunesCover ? itunesCover : DEFAULT_SVG_COVER;
+                        }
+                    }
+                    return;
                 }
             } catch (e) {
                 console.log("Metadaten Hinweis:", e);
             }
 
-            // Standard-Anzeige falls noch keine Daten da sind
-            if (titleEl.innerText === 'Lade Titel...') titleEl.innerText = 'xoticradio Stream';
+            // Fallback
+            if (titleEl.innerText === 'Lade Titel...') titleEl.innerText = 'krachgarten Stream';
             if (artistEl.innerText === 'Lade Künstler...') artistEl.innerText = '🔴 On Air';
-            if (showEl.innerText === 'Lade Sendung...') showEl.innerText = 'xoticradio Radio';
+            if (showEl.innerText === 'Lade Sendung...') showEl.innerText = 'krachgarten Radio';
             if (!coverImg.src || coverImg.src === window.location.href) coverImg.src = DEFAULT_SVG_COVER;
         }
 
-        // START & INTERVALL (alle 5 Sekunden prüfen)
+        // START & INTERVALL (alle 3 Sekunden prüfen für minimale Verzögerung)
         fetchSongInfo();
-        setInterval(fetchSongInfo, 5000);
+        setInterval(fetchSongInfo, 3000);
     </script>
 </body>
 </html>

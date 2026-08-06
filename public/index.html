@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wartungsarbeiten | krachgarten</title>
+    <title>Wartungsarbeiten | xoticradio</title>
     <style>
         * {
             box-sizing: border-box;
@@ -106,14 +106,49 @@
             100% { transform: scale(0.95); opacity: 0.8; }
         }
 
-        .track-info {
+        .show-name {
+            color: #70a1ff;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .player-main-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
             width: 100%;
+            text-align: left;
+            background: #1a1a1e;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #29292e;
+        }
+
+        .cover-box {
+            width: 70px;
+            height: 70px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+            flex-shrink: 0;
+            border: 1px solid #29292e;
+        }
+
+        .cover-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .track-info {
+            flex-grow: 1;
             overflow: hidden;
         }
 
         .track-title {
             color: #ffffff;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: bold;
             white-space: nowrap;
             overflow: hidden;
@@ -122,8 +157,8 @@
 
         .track-artist {
             color: #a8a8b3;
-            font-size: 0.9rem;
-            margin-top: 4px;
+            font-size: 0.85rem;
+            margin-top: 3px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -132,8 +167,8 @@
         .controls {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 20px;
+            justify-content: space-between;
+            gap: 15px;
             width: 100%;
             margin-top: 5px;
             flex-wrap: wrap;
@@ -143,9 +178,9 @@
             background: #ff4757;
             color: #ffffff;
             border: none;
-            padding: 12px 24px;
+            padding: 10px 20px;
             border-radius: 30px;
-            font-size: 1rem;
+            font-size: 0.95rem;
             font-weight: bold;
             cursor: pointer;
             display: inline-flex;
@@ -156,7 +191,7 @@
 
         .play-btn:hover {
             background: #e03e4d;
-            transform: scale(1.05);
+            transform: scale(1.03);
         }
 
         .play-btn.playing {
@@ -193,21 +228,26 @@
         <div class="sub-heading">Wartungsarbeiten aktiv</div>
         
         <p class="description">
-            Unsere Webseite wird aktuell überarbeitet und technisch optimiert. 
-            Wir sind ganz bald mit neuem Design und frischen Features zurück!
-            <br><br>
-            <strong>Der Radio-Stream läuft natürlich weiter – schalt einfach ein:</strong>
+            Unsere Webseite wird aktuell überarbeitet. Der Radio-Stream läuft natürlich ohne Unterbrechung weiter – schalt einfach ein:
         </p>
 
         <!-- EINFACher RADIOPLAYER -->
         <div class="player-card">
-            <div class="badge-live">
-                <span class="dot"></span> LIVE STREAM
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                <div class="badge-live">
+                    <span class="dot"></span> LIVE ON AIR
+                </div>
+                <div id="show-title" class="show-name">Lade Sendung...</div>
             </div>
 
-            <div class="track-info">
-                <div id="song-title" class="track-title">krachgarten Stream</div>
-                <div id="song-artist" class="track-artist">🔴 On Air</div>
+            <div class="player-main-info">
+                <div class="cover-box">
+                    <img id="cover-img" src="" alt="Cover">
+                </div>
+                <div class="track-info">
+                    <div id="song-title" class="track-title">Lade Titel...</div>
+                    <div id="song-artist" class="track-artist">Lade Künstler...</div>
+                </div>
             </div>
 
             <div class="controls">
@@ -226,28 +266,32 @@
         </div>
 
         <footer>
-            &copy; krachgarten – Musik läuft ohne Unterbrechung weiter!
+            &copy; xoticradio – Musik rund um die Uhr
         </footer>
     </div>
 
     <script>
+        const DEFAULT_SVG_COVER = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 24 24' fill='none' stroke='%23ff4757' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' style='background:%2318181b;'><circle cx='12' cy='12' r='10'/><circle cx='12' cy='12' r='3'/><path d='M12 2a10 10 0 0 1 10 10'/></svg>";
+
         const audio = document.getElementById('radio-audio');
         const playBtn = document.getElementById('play-btn');
         const playIcon = document.getElementById('play-icon');
         const playText = document.getElementById('play-text');
         const titleEl = document.getElementById('song-title');
         const artistEl = document.getElementById('song-artist');
+        const showEl = document.getElementById('show-title');
+        const coverImg = document.getElementById('player-cover-img') || document.getElementById('cover-img');
 
-        // STREAM ANHÖREN / PAUSIEREN
+        let lastSongKey = "";
+
+        // STREAM STEUERUNG
         function togglePlay() {
             if (audio.paused) {
                 audio.play().then(() => {
                     playBtn.classList.add('playing');
                     playIcon.innerText = "⏸️";
                     playText.innerText = "Pause";
-                }).catch(err => {
-                    console.error("Audio Play Fehler:", err);
-                });
+                }).catch(err => console.error("Play Fehler:", err));
             } else {
                 audio.pause();
                 playBtn.classList.remove('playing');
@@ -256,42 +300,104 @@
             }
         }
 
-        // LAUTSTÄRKE EINSTELLEN
         function setVolume(val) {
-            if (audio) {
-                audio.volume = parseFloat(val);
-            }
+            if (audio) audio.volume = parseFloat(val);
         }
 
-        // LEICHTE & SICHERE METADATEN-ABFRAGE (OHNE ABSTURZ-RISIKO)
-        async function fetchCurrentSong() {
+        // ITUNES COVER FINDER
+        async function fetchItunesCover(artist, title) {
+            if (!artist || !title || artist === 'xoticradio') return null;
             try {
+                const query = encodeURIComponent(`${artist} ${title}`);
+                const res = await fetch(`https://itunes.apple.com/search?term=${query}&entity=song&limit=1`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.results && data.results.length > 0 && data.results[0].artworkUrl100) {
+                        return data.results[0].artworkUrl100.replace('100x100bb', '300x300bb');
+                    }
+                }
+            } catch (e) {}
+            return null;
+        }
+
+        // PRÄZISER METADATEN-ABFRAGE-CODE
+        async function fetchSongInfo() {
+            if (coverImg) {
+                coverImg.onerror = function() {
+                    this.onerror = null;
+                    this.src = DEFAULT_SVG_COVER;
+                };
+            }
+
+            try {
+                // 1. Sendungstitel auslesen
+                fetch('https://api.laut.fm/station/xoticradio?_t=' + Date.now(), { cache: 'no-store' })
+                    .then(r => r.ok ? r.json() : null)
+                    .then(station => {
+                        if (station) {
+                            if (station.current_playlist && station.current_playlist.name) {
+                                showEl.innerText = station.current_playlist.name;
+                            } else if (station.name) {
+                                showEl.innerText = station.name;
+                            }
+                        }
+                    }).catch(() => {});
+
+                // 2. Aktuellen Song auslesen
                 const res = await fetch('https://api.laut.fm/station/xoticradio/current_song?_t=' + Date.now(), { 
                     cache: 'no-store' 
                 });
 
                 if (res.ok) {
-                    const data = await res.json();
-                    if (data && data.title) {
-                        titleEl.innerText = data.title;
-                        
-                        if (data.artist && data.artist.name) {
-                            artistEl.innerText = data.artist.name;
-                        } else if (typeof data.artist === 'string') {
-                            artistEl.innerText = data.artist;
-                        } else {
-                            artistEl.innerText = "krachgarten";
+                    const song = await res.json();
+                    if (song && (song.title || song.artist)) {
+                        const title = song.title || 'Live Stream';
+                        let artist = 'xoticradio';
+
+                        if (song.artist) {
+                            artist = (typeof song.artist === 'object' && song.artist.name) ? song.artist.name : song.artist;
                         }
+
+                        titleEl.innerText = title;
+                        artistEl.innerText = artist;
+
+                        const currentSongKey = `${artist} - ${title}`;
+
+                        // Cover nur bei Songwechsel neu laden
+                        if (currentSongKey !== lastSongKey) {
+                            lastSongKey = currentSongKey;
+
+                            let imgUrl = "";
+                            if (song.images) {
+                                if (song.images.cover_200) imgUrl = song.images.cover_200;
+                                else if (song.images.cover) imgUrl = song.images.cover;
+                            }
+
+                            if (imgUrl && !imgUrl.includes('default_cover')) {
+                                if (imgUrl.startsWith('http://')) imgUrl = imgUrl.replace('http://', 'https://');
+                                coverImg.src = imgUrl;
+                            } else {
+                                const itunesCover = await fetchItunesCover(artist, title);
+                                coverImg.src = itunesCover ? itunesCover : DEFAULT_SVG_COVER;
+                            }
+                        }
+                        return;
                     }
                 }
             } catch (e) {
-                // Bei Netzwerkfehlern bleibt einfach die vorherige Anzeige stehen
+                console.log("Metadaten Hinweis:", e);
             }
+
+            // Standard-Anzeige falls noch keine Daten da sind
+            if (titleEl.innerText === 'Lade Titel...') titleEl.innerText = 'xoticradio Stream';
+            if (artistEl.innerText === 'Lade Künstler...') artistEl.innerText = '🔴 On Air';
+            if (showEl.innerText === 'Lade Sendung...') showEl.innerText = 'xoticradio Radio';
+            if (!coverImg.src || coverImg.src === window.location.href) coverImg.src = DEFAULT_SVG_COVER;
         }
 
-        // METADATEN INITIAL & ALLE 10 SEKUNDEN ABFRAGEN
-        fetchCurrentSong();
-        setInterval(fetchCurrentSong, 10000);
+        // START & INTERVALL (alle 5 Sekunden prüfen)
+        fetchSongInfo();
+        setInterval(fetchSongInfo, 5000);
     </script>
 </body>
 </html>

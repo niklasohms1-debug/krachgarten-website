@@ -2,1028 +2,296 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Radio Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wartungsarbeiten | xoticradio</title>
     <style>
-        /* FIXIERTER HEADER OBEN (STAY-ON-TOP) */
-        .sticky-header-wrapper {
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            background: #121214;
-            padding-top: 10px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #29292e;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
-        body { font-family: 'Segoe UI', sans-serif; background: #121214; color: #e1e1e6; padding: 0 20px 20px 20px; margin: 0; }
-        .header { display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: auto; padding-bottom: 10px; flex-wrap: wrap; gap: 15px; }
-        .main { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; max-width: 1000px; margin: 20px auto; }
-        .card { background: #202024; padding: 20px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #29292e; }
-
-        /* OVERLAY PLAYER CARD */
-        .custom-player-card {
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            background-color: #121214;
+            color: #e1e1e6;
+            min-height: 100vh;
             display: flex;
             align-items: center;
-            gap: 15px;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
             background: #202024;
             border: 1px solid #29292e;
-            border-radius: 12px;
-            padding: 12px 18px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-            min-width: 340px;
-            max-width: 440px;
-        }
-
-        .player-cover-box {
-            width: 80px;
-            height: 80px;
-            border-radius: 8px;
-            overflow: hidden;
-            background: #121214;
-            flex-shrink: 0;
-            border: 1px solid #29292e;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .player-cover-box img {
+            border-radius: 16px;
+            padding: 40px 30px;
+            max-width: 550px;
             width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: opacity 0.3s ease;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
         }
 
-        .player-info-box {
+        .icon-box {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            animation: bounce 2s infinite ease-in-out;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        h1 {
+            color: #ffffff;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .sub-heading {
+            color: #ff4757;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        p.description {
+            color: #a8a8b3;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 30px;
+        }
+
+        /* RADIOPLAYER CARD */
+        .player-card {
+            background: #121214;
+            border: 1px solid #29292e;
+            border-radius: 12px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            flex-grow: 1;
-            overflow: hidden;
-        }
-
-        .player-title {
-            color: #ffffff;
-            font-weight: bold;
-            font-size: 0.95rem;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .player-artist {
-            color: #a8a8b3;
-            font-size: 0.85rem;
-            margin-top: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .player-controls-row {
-            display: flex;
             align-items: center;
-            gap: 12px;
-            margin-top: 8px;
+            gap: 15px;
         }
 
-        .player-btn {
-            background: #ff4757;
-            color: white;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.2s;
+        .badge-live {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-        }
-
-        .player-btn:hover {
-            background: #e03e4d;
-            transform: scale(1.03);
-        }
-
-        .player-btn.playing {
-            background: #04d361;
-            color: #000;
-        }
-
-        /* LAUTSTÄRKEREGLER */
-        .volume-control-box {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            color: #a8a8b3;
-            font-size: 0.85rem;
-        }
-
-        .volume-slider {
-            width: 70px;
-            height: 4px;
-            accent-color: #ff4757;
-            cursor: pointer;
-        }
-
-        /* NAVIGATIONSTASTEN */
-        .nav-btn {
-            background: none;
-            border: none;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            margin-left: 8px;
-            padding: 6px 12px;
-            border-radius: 4px;
-            transition: all 0.2s;
-        }
-        .nav-btn.active {
+            background: rgba(255, 71, 87, 0.15);
             color: #ff4757;
-            background: #29292e;
-        }
-        .nav-btn.inactive {
-            color: #a8a8b3;
-        }
-
-        .page-section {
-            display: none;
-        }
-        .page-section.active {
-            display: grid;
-        }
-
-        /* STUDIO STATUSANZEIGE */
-        .status-card {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 5px 12px;
+            border: 1px solid #ff4757;
+            padding: 4px 12px;
             border-radius: 20px;
             font-size: 0.8rem;
             font-weight: bold;
-            border: 1px solid #29292e;
-            transition: all 0.3s ease;
         }
-        .status-card.live {
-            background: rgba(255, 71, 87, 0.15);
-            border-color: #ff4757;
-            color: #ff4757;
-        }
-        .status-card.live .status-dot {
+
+        .dot {
             width: 8px;
             height: 8px;
             background-color: #ff4757;
             border-radius: 50%;
             box-shadow: 0 0 8px #ff4757;
-            animation: pulseGlow 1.5s infinite;
-        }
-        .status-card.auto-dj {
-            background: rgba(112, 161, 255, 0.15);
-            border-color: #70a1ff;
-            color: #70a1ff;
-        }
-        .status-card.auto-dj .status-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #70a1ff;
-            border-radius: 50%;
-        }
-        .status-card.offline {
-            background: rgba(168, 168, 179, 0.15);
-            border-color: #a8a8b3;
-            color: #a8a8b3;
-        }
-        .status-card.offline .status-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #a8a8b3;
-            border-radius: 50%;
+            animation: pulse 1.5s infinite;
         }
 
-        .status-info {
-            display: flex;
-            flex-direction: column;
-            text-align: left;
-        }
-        .status-mode-text {
-            font-weight: 800;
-            letter-spacing: 0.5px;
-            line-height: 1.1;
-        }
-        .status-detail-text {
-            color: #a8a8b3;
-            font-size: 0.7rem;
-            font-weight: normal;
-        }
-        @keyframes pulseGlow {
+        @keyframes pulse {
             0% { transform: scale(0.95); opacity: 0.8; }
-            50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 10px #ff4757; }
+            50% { transform: scale(1.2); opacity: 1; }
             100% { transform: scale(0.95); opacity: 0.8; }
         }
 
-        /* EMOJI REAKTIONEN STYLES */
-        .reaction-grid {
-            display: flex;
-            justify-content: space-around;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-top: 10px;
+        .track-info {
+            width: 100%;
+            overflow: hidden;
         }
-        .reaction-btn {
-            background: #121214;
-            border: 1px solid #29292e;
-            color: #fff;
-            padding: 8px 14px;
-            border-radius: 20px;
+
+        .track-title {
+            color: #ffffff;
+            font-size: 1.1rem;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .track-artist {
+            color: #a8a8b3;
+            font-size: 0.9rem;
+            margin-top: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            width: 100%;
+            margin-top: 5px;
+            flex-wrap: wrap;
+        }
+
+        .play-btn {
+            background: #ff4757;
+            color: #ffffff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 30px;
             font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
-            transition: transform 0.1s, background 0.2s;
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            gap: 6px;
-        }
-        .reaction-btn:hover {
-            background: #29292e;
-            transform: scale(1.08);
-        }
-        .reaction-btn:active {
-            transform: scale(0.95);
-        }
-        .floating-emoji {
-            position: fixed;
-            bottom: 20px;
-            font-size: 2.5rem;
-            pointer-events: none;
-            z-index: 3000;
-            animation: floatUp 2s ease-out forwards;
-        }
-        @keyframes floatUp {
-            0% { transform: translateY(0) scale(1); opacity: 1; }
-            50% { transform: translateY(-150px) scale(1.3) rotate(15deg); opacity: 0.8; }
-            100% { transform: translateY(-300px) scale(1) rotate(-15deg); opacity: 0; }
+            gap: 8px;
+            transition: transform 0.2s, background 0.2s;
         }
 
-        /* TEILEN BUTTONS STYLES */
-        .share-btn {
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: opacity 0.2s;
-        }
-        .share-btn:hover {
-            opacity: 0.85;
+        .play-btn:hover {
+            background: #e03e4d;
+            transform: scale(1.05);
         }
 
-        /* PUSH NOTIFICATION BUTTON */
-        .push-btn {
-            background: #202024;
-            border: 1px solid #ff4757;
-            color: #fff;
-            padding: 6px 12px;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .push-btn:hover {
-            background: #ff4757;
+        .play-btn.playing {
+            background: #04d361;
+            color: #000000;
         }
 
-        /* TEAM KATEGORIEN & CARDS */
-        .team-category {
-            margin-bottom: 25px;
-        }
-        .team-category-title {
-            font-size: 1.25rem;
-            font-weight: bold;
-            color: #fff;
-            margin-bottom: 8px;
+        .volume-box {
             display: flex;
             align-items: center;
             gap: 8px;
-            border-bottom: 2px solid #ff4757;
-            padding-bottom: 6px;
-        }
-        .team-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-        .team-card {
-            background: #2a2a30;
-            padding: 20px 15px;
-            border-radius: 10px;
-            border: 1px solid #323238;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        .team-card-name {
-            font-size: 1.1rem;
-            font-weight: bold;
-            color: #ffffff;
-            margin-bottom: 8px;
-        }
-        .team-card-role {
-            background: #ff4757;
-            color: #ffffff;
-            padding: 4px 14px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: bold;
-            display: inline-block;
+            color: #a8a8b3;
+            font-size: 0.9rem;
         }
 
-        /* MODAL POPUP */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-card {
-            background: #202024;
-            border: 1px solid #29292e;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 500px;
-            max-height: 80vh;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-        }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #29292e;
-            padding-bottom: 10px;
-            margin-bottom: 15px;
-        }
-        .modal-close {
-            background: none;
-            border: none;
-            color: #ff4757;
-            font-size: 1.5rem;
-            font-weight: bold;
+        .volume-slider {
+            width: 90px;
+            accent-color: #ff4757;
             cursor: pointer;
         }
-        .track-item {
-            background: #121214;
-            padding: 10px 14px;
-            border-radius: 6px;
-            border: 1px solid #29292e;
-            margin-bottom: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+
+        footer {
+            margin-top: 25px;
+            color: #737380;
+            font-size: 0.8rem;
         }
     </style>
 </head>
 <body>
 
-    <!-- FIXIERTER HEADER-CONTAINER -->
-    <div class="sticky-header-wrapper">
-        <!-- MENÜLEISTE OBEN -->
-        <div style="display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: 0 auto 10px auto; background: #202024; padding: 12px 25px; border-radius: 8px; border: 1px solid #29292e; flex-wrap: wrap; gap: 10px;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <h2 style="margin:0; color:#ff4757; font-size: 1.3rem;">📻 Radio Dashboard</h2>
+    <div class="container">
+        <div class="icon-box">🛠️</div>
+        <h1>Wir bauen für euch um!</h1>
+        <div class="sub-heading">Wartungsarbeiten aktiv</div>
+        
+        <p class="description">
+            Unsere Webseite wird aktuell überarbeitet und technisch optimiert. 
+            Wir sind ganz bald mit neuem Design und frischen Features zurück!
+            <br><br>
+            <strong>Der Radio-Stream läuft natürlich weiter – schalt einfach ein:</strong>
+        </p>
 
-                <!-- STUDIO STATUSANZEIGE -->
-                <div id="studio-status-card" class="status-card auto-dj">
-                    <span class="status-dot"></span>
-                    <div class="status-info">
-                        <span id="status-mode" class="status-mode-text">AUTO-DJ</span>
-                        <small id="status-detail" class="status-detail-text">Automation aktiv</small>
-                    </div>
+        <!-- EINFACher RADIOPLAYER -->
+        <div class="player-card">
+            <div class="badge-live">
+                <span class="dot"></span> LIVE STREAM
+            </div>
+
+            <div class="track-info">
+                <div id="song-title" class="track-title">xoticradio Stream</div>
+                <div id="song-artist" class="track-artist">🔴 On Air</div>
+            </div>
+
+            <div class="controls">
+                <button id="play-btn" class="play-btn" onclick="togglePlay()">
+                    <span id="play-icon">▶️</span> <span id="play-text">Einschalten</span>
+                </button>
+
+                <div class="volume-box">
+                    <span>🔊</span>
+                    <input type="range" id="volume" class="volume-slider" min="0" max="1" step="0.01" value="0.8" oninput="setVolume(this.value)">
                 </div>
             </div>
 
-            <div style="display: flex; align-items: center; flex-wrap: wrap;">
-                <button onclick="showPage('home')" id="btn-home" class="nav-btn active">Startseite</button>
-                <button onclick="openTracklistModal()" id="btn-tracklist" class="nav-btn inactive">🎵 Tracklist</button>
-                <button onclick="showPage('team')" id="btn-team" class="nav-btn inactive">Unser Team</button>
-                <button onclick="openShareModal()" id="btn-share" class="nav-btn inactive">📢 Teilen</button>
-                <button id="push-btn" onclick="togglePushNotifications()" class="push-btn" style="margin-left:8px;">🔔 Live-Alerts</button>
-            </div>
+            <!-- AUDIO STREAM ELEMENT -->
+            <audio id="radio-audio" src="https://stream.laut.fm/xoticradio" preload="none"></audio>
         </div>
 
-        <!-- HEADER MIT STREAM-TITEL, SENDETITEL & OVERLAY PLAYER -->
-        <header class="header">
-            <div>
-                <h1 id="stream-name" style="margin:0;">📻 KRACHGARTEN</h1>
-                <p style="margin: 5px 0 0 0; color: #a8a8b3;">🔴 Live On Air</p>
-                <!-- SENDETITEL ANZEIGE (wird über Admin-/DJ-Panel gesetzt) -->
-                <p style="margin: 8px 0 0 0; font-size: 1.05rem;">
-                    📻 Sendung: <strong id="current-show" style="color: #04d361;">Lade Sendung...</strong>
-                </p>
-            </div>
-
-            <!-- OVERLAY PLAYER CARD MIT LAUTSTÄRKEREGLER -->
-            <div class="custom-player-card">
-                <div class="player-cover-box">
-                    <img id="player-cover-img" src="" alt="Cover">
-                </div>
-                <div class="player-info-box">
-                    <div id="player-song-title" class="player-title">Lade Song...</div>
-                    <div id="player-artist-name" class="player-artist">Lade Künstler...</div>
-
-                    <div class="player-controls-row">
-                        <button id="player-toggle-btn" class="player-btn" onclick="togglePlayStream()">
-                            <span>▶️</span> <span id="player-btn-text">Anhören</span>
-                        </button>
-
-                        <!-- LAUTSTÄRKEREGLER -->
-                        <div class="volume-control-box">
-                            <span>🔊</span>
-                            <input type="range" id="player-volume-slider" class="volume-slider" min="0" max="1" step="0.01" value="0.8" oninput="changeVolume(this.value)">
-                        </div>
-                    </div>
-                </div>
-                <!-- UNSICHTBARES AUDIO ELEMENT -->
-                <audio id="radio-audio-element" src="https://xoticradio.stream.laut.fm/xoticradio" preload="none"></audio>
-            </div>
-        </header>
+        <footer>
+            &copy; xoticradio – Musik läuft ohne Unterbrechung weiter!
+        </footer>
     </div>
 
-    <!-- HAUPTBEREICH / STARTSEITE -->
-    <main id="content-home" class="main page-section active">
-
-        <!-- LINKS: REAKTIONEN & NEWS FEED -->
-        <section>
-            <!-- EMOJI REAKTIONEN CARD -->
-            <div class="card" style="text-align: center;">
-                <h3 style="margin:0 0 5px 0;">🎉 Feierst du die Mucke?</h3>
-                <p style="margin: 0 0 10px 0; font-size:0.85rem; color: #a8a8b3;">Schick dem DJ ein Signal ins Studio!</p>
-                <div class="reaction-grid">
-                    <button onclick="sendReaction('🔥')" class="reaction-btn">🔥 <span id="count-🔥">0</span></button>
-                    <button onclick="sendReaction('💖')" class="reaction-btn">💖 <span id="count-💖">0</span></button>
-                    <button onclick="sendReaction('🎸')" class="reaction-btn">🎸 <span id="count-🎸">0</span></button>
-                    <button onclick="sendReaction('🎉')" class="reaction-btn">🎉 <span id="count-🎉">0</span></button>
-                    <button onclick="sendReaction('🍺')" class="reaction-btn">🍺 <span id="count-🍺">0</span></button>
-                </div>
-            </div>
-
-            <h2>News & Updates</h2>
-            <div id="news-container"></div>
-        </section>
-
-        <!-- RECHTS: SENDEPLAN & GRUß-/WUNSCHBOX -->
-        <aside>
-            <!-- Sendeplan Card -->
-            <div class="card">
-                <h3>📅 Sendeplan</h3>
-                <ul id="schedule-container" style="list-style: none; padding: 0; margin-top: 10px;"></ul>
-            </div>
-
-            <!-- GRUß- & WUNSCHBOX -->
-            <div class="card">
-                <h3>💌 Gruß- & Wunschbox</h3>
-                <p style="font-size: 0.85em; color: #a8a8b3; margin-bottom: 12px;">Sende dem DJ eine Nachricht!</p>
-
-                <div id="wish-form">
-                    <select id="w-type" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box; background: #121214; border: 1px solid #29292e; color: #fff; border-radius: 4px;">
-                        <option value="Musikwunsch">🎵 Musikwunsch</option>
-                        <option value="Gruß">💌 Gruß</option>
-                        <option value="Gruß & Wunsch">🎉 Gruß & Musikwunsch</option>
-                    </select>
-
-                    <input type="text" id="w-name" placeholder="Dein Name" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box; background: #121214; border: 1px solid #29292e; color: #fff; border-radius: 4px;">
-                    <input type="text" id="w-song" placeholder="Songwunsch (optional bei reiner Grußbotschaft)" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box; background: #121214; border: 1px solid #29292e; color: #fff; border-radius: 4px;">
-                    <textarea id="w-msg" placeholder="Deine Grußnachricht..." rows="3" style="width: 100%; padding: 8px; margin-bottom: 8px; box-sizing: border-box; background: #121214; border: 1px solid #29292e; color: #fff; border-radius: 4px; resize: vertical;"></textarea>
-
-                    <button onclick="sendWish()" style="width: 100%; padding: 10px; background: #ff4757; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: pointer;">Absenden 🚀</button>
-                </div>
-            </div>
-        </aside>
-
-    </main>
-
-    <!-- UNSER TEAM BEREICH -->
-    <div id="content-team" class="page-section" style="max-width: 1000px; margin: 20px auto;">
-        <div style="width: 100%;">
-            <h2 style="font-size: 1.8rem; margin-top: 0; margin-bottom: 20px;">👥 Unser Team</h2>
-            <div id="team-page-list">
-                <p style="color:#a8a8b3;">Lade Teammitglieder...</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- TRACKLIST MODAL POPUP -->
-    <div id="modal-tracklist" class="modal-overlay">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h3 style="margin: 0; color: #ff4757;">🎵 Zuletzt gespielte Songs</h3>
-                <button class="modal-close" onclick="closeTracklistModal()">&times;</button>
-            </div>
-            <div id="tracklist-container" style="overflow-y: auto; flex-grow: 1;">
-                <p style="color:#a8a8b3;">Lade Song-Historie...</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- TEILEN MODAL POPUP -->
-    <div id="modal-share" class="modal-overlay">
-        <div class="modal-card">
-            <div class="modal-header">
-                <h3 style="margin: 0; color: #ff4757;">📢 Sender teilen</h3>
-                <button class="modal-close" onclick="closeShareModal()">&times;</button>
-            </div>
-
-            <p style="font-size: 0.9rem; color: #a8a8b3; margin-top:0;">Pass den Text bei Bedarf an und wähle deine Plattform:</p>
-
-            <textarea id="share-text-input" rows="3" style="width: 100%; padding: 10px; box-sizing: border-box; background: #121214; border: 1px solid #29292e; color: #fff; border-radius: 6px; resize: vertical; margin-bottom: 15px;"></textarea>
-
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                <button onclick="shareTo('whatsapp')" class="share-btn" style="background: #25D366;">WhatsApp</button>
-                <button onclick="shareTo('x')" class="share-btn" style="background: #000000; border: 1px solid #333;">X (Twitter)</button>
-                <button onclick="shareTo('facebook')" class="share-btn" style="background: #1877F2;">Facebook</button>
-                <button onclick="shareTo('youtube')" class="share-btn" style="background: #FF0000;">YouTube Post</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- JAVASCRIPT GANZ UNTEN -->
     <script>
-        // AUSFALLSICHERES DUNKLES VINYL PLATZHALTER-BILD
-        const DEFAULT_SVG_COVER = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 24 24' fill='none' stroke='%23ff4757' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' style='background:%2318181b;'><circle cx='12' cy='12' r='10'/><circle cx='12' cy='12' r='3'/><path d='M12 2a10 10 0 0 1 10 10'/></svg>";
+        const audio = document.getElementById('radio-audio');
+        const playBtn = document.getElementById('play-btn');
+        const playIcon = document.getElementById('play-icon');
+        const playText = document.getElementById('play-text');
+        const titleEl = document.getElementById('song-title');
+        const artistEl = document.getElementById('song-artist');
 
-        let lastTrackKey = ""; // Merkt sich den aktuell geladenen Song für Cover-Checks
-
-        function showPage(page) {
-            const homeSection = document.getElementById('content-home');
-            const teamSection = document.getElementById('content-team');
-            const btnHome = document.getElementById('btn-home');
-            const btnTeam = document.getElementById('btn-team');
-
-            if (page === 'home') {
-                homeSection.style.display = 'grid';
-                teamSection.style.display = 'none';
-
-                btnHome.className = 'nav-btn active';
-                btnTeam.className = 'nav-btn inactive';
-            } else if (page === 'team') {
-                homeSection.style.display = 'none';
-                teamSection.style.display = 'block';
-
-                btnHome.className = 'nav-btn inactive';
-                btnTeam.className = 'nav-btn active';
-            }
-        }
-
-        // PLAYER PLAY/PAUSE LOGIK
-        function togglePlayStream() {
-            const audio = document.getElementById('radio-audio-element');
-            const btn = document.getElementById('player-toggle-btn');
-            const btnText = document.getElementById('player-btn-text');
-
+        // STREAM ANHÖREN / PAUSIEREN
+        function togglePlay() {
             if (audio.paused) {
                 audio.play().then(() => {
-                    btn.className = "player-btn playing";
-                    btn.querySelector('span').innerText = "⏸️";
-                    btnText.innerText = "Pause";
-                }).catch(e => console.error("Play-Fehler:", e));
+                    playBtn.classList.add('playing');
+                    playIcon.innerText = "⏸️";
+                    playText.innerText = "Pause";
+                }).catch(err => {
+                    console.error("Audio Play Fehler:", err);
+                });
             } else {
                 audio.pause();
-                btn.className = "player-btn";
-                btn.querySelector('span').innerText = "▶️";
-                btnText.innerText = "Anhören";
+                playBtn.classList.remove('playing');
+                playIcon.innerText = "▶️";
+                playText.innerText = "Einschalten";
             }
         }
 
-        // LAUTSTÄRKE ÄNDERN
-        function changeVolume(val) {
-            const audio = document.getElementById('radio-audio-element');
+        // LAUTSTÄRKE EINSTELLEN
+        function setVolume(val) {
             if (audio) {
                 audio.volume = parseFloat(val);
             }
         }
 
-        // METADATEN (SONG + KÜNSTLER + COVER) VOM EIGENEN SERVER-PROXY HOLEN
-        async function fetchLautFmMetadata() {
-            const titleEl = document.getElementById('player-song-title');
-            const artistEl = document.getElementById('player-artist-name');
-            const coverImg = document.getElementById('player-cover-img');
-
-            if (coverImg) {
-                coverImg.onerror = function() {
-                    this.onerror = null;
-                    this.src = DEFAULT_SVG_COVER;
-                };
-            }
-
+        // LEICHTE & SICHERE METADATEN-ABFRAGE (OHNE ABSTURZ-RISIKO)
+        async function fetchCurrentSong() {
             try {
-                let song = null;
-
-                // 1. Eigener Server-Proxy (vermeidet CORS-/Adblocker-Probleme)
-                const res = await fetch('/api/lautfm/current?_t=' + Date.now(), { cache: 'no-store' }).catch(() => null);
-                if (res && res.ok) {
-                    song = await res.json();
-                }
-
-                // 2. Fallback: direkt bei laut.fm anfragen
-                if (!song || !song.title) {
-                    const directRes = await fetch('https://api.laut.fm/station/xoticradio/current_song?_t=' + Date.now(), { cache: 'no-store' }).catch(() => null);
-                    if (directRes && directRes.ok) {
-                        song = await directRes.json();
-                    }
-                }
-
-                if (song && (song.title || song.artist)) {
-
-                    // WICHTIG: Während einer Live-Sendung (song.live === true) kennt laut.fm
-                    // den tatsächlich gespielten Song nicht (keine Automation meldet Titel).
-                    // Die zurückgegebenen Daten sind dann veraltet/unzuverlässig -> nicht anzeigen.
-                    if (song.live === true) {
-                        const djNameEl = document.getElementById('current-show');
-                        const djLabel = djNameEl ? djNameEl.innerText : '';
-                        if (titleEl) titleEl.innerText = '🔴 Live-Sendung';
-                        if (artistEl) artistEl.innerText = djLabel || 'DJ live im Studio';
-                        if (coverImg && lastTrackKey !== '__LIVE__') {
-                            lastTrackKey = '__LIVE__';
-                            coverImg.src = DEFAULT_SVG_COVER;
-                        }
-                        return;
-                    }
-
-                    const title = song.title || 'Unbekannter Titel';
-                    let artist = 'Unbekannter Künstler';
-
-                    if (song.artist) {
-                        artist = (typeof song.artist === 'object' && song.artist.name) ? song.artist.name : song.artist;
-                    }
-
-                    if (titleEl) titleEl.innerText = title;
-                    if (artistEl) artistEl.innerText = artist;
-
-                    const currentTrackKey = `${artist} - ${title}`;
-
-                    // Nur wenn sich der Song geändert hat, neues Cover laden
-                    if (currentTrackKey !== lastTrackKey) {
-                        lastTrackKey = currentTrackKey;
-
-                        // laut.fm liefert das Künstlerbild unter artist.image / artist.thumb
-                        let coverUrl = "";
-                        if (song.artist && typeof song.artist === 'object') {
-                            coverUrl = song.artist.image || song.artist.thumb || "";
-                        }
-
-                        coverImg.src = coverUrl || DEFAULT_SVG_COVER;
-                    }
-                    return;
-                }
-            } catch (e) {
-                console.error("Metadaten Abruf-Fehler:", e);
-            }
-
-            // FALLBACK BEI FEHLER ODER SOLANGE KEINE DATEN VORLIEGEN
-            if (titleEl && titleEl.innerText === 'Lade Song...') titleEl.innerText = 'KrachGarten Stream';
-            if (artistEl && artistEl.innerText === 'Lade Künstler...') artistEl.innerText = '🔴 On Air';
-            if (coverImg && !coverImg.src) coverImg.src = DEFAULT_SVG_COVER;
-        }
-
-        // SONG-HISTORIE FÜR DAS TRACKLIST MODAL (ÜBER EIGENEN SERVER-PROXY)
-        async function fetchLautFmHistory() {
-            const tracklistUI = document.getElementById('tracklist-container');
-            try {
-                let history = null;
-
-                const res = await fetch('/api/lautfm/history?_t=' + Date.now(), { cache: 'no-store' }).catch(() => null);
-                if (res && res.ok) {
-                    history = await res.json();
-                }
-
-                if (!Array.isArray(history)) {
-                    const directRes = await fetch('https://api.laut.fm/station/xoticradio/last_songs?_t=' + Date.now(), { cache: 'no-store' }).catch(() => null);
-                    if (directRes && directRes.ok) {
-                        history = await directRes.json();
-                    }
-                }
-
-                if (tracklistUI && Array.isArray(history) && history.length > 0) {
-                    tracklistUI.innerHTML = history.map(item => {
-                        const title = item.title || 'Unbekannter Song';
-                        const artist = item.artist ? (item.artist.name || item.artist) : '';
-                        return `
-                            <div class="track-item">
-                                <div>
-                                    <strong style="color: #ffffff;">${artist ? artist + ' - ' : ''}${title}</strong>
-                                </div>
-                                <small style="color: #ff4757; font-weight: bold;">🎵</small>
-                            </div>
-                        `;
-                    }).join('');
-                    return;
-                }
-
-                if (tracklistUI) {
-                    tracklistUI.innerHTML = '<p style="color:#a8a8b3;">Aktuell keine Song-Historie verfügbar.</p>';
-                }
-            } catch (err) {
-                console.error("Fehler beim Abrufen der Song-Historie:", err);
-                if (tracklistUI) {
-                    tracklistUI.innerHTML = '<p style="color:#a8a8b3;">Aktuell keine Song-Historie verfügbar.</p>';
-                }
-            }
-        }
-
-        // TRACKLIST MODAL STEUERUNG
-        function openTracklistModal() {
-            document.getElementById('modal-tracklist').style.display = 'flex';
-            fetchLautFmHistory();
-        }
-
-        function closeTracklistModal() {
-            document.getElementById('modal-tracklist').style.display = 'none';
-        }
-
-        // TEILEN MODAL STEUERUNG
-        function openShareModal() {
-            const currentShow = document.getElementById('current-show')?.innerText || 'KrachGarten Show';
-            const currentTrack = `${document.getElementById('player-artist-name')?.innerText || ''} - ${document.getElementById('player-song-title')?.innerText || ''}`;
-            const siteUrl = window.location.origin || window.location.href;
-            const defaultText = `Ich höre gerade "${currentShow}" (${currentTrack}) auf KrachGarten! 🎧 Hört mal rein: ${siteUrl}`;
-
-            document.getElementById('share-text-input').value = defaultText;
-            document.getElementById('modal-share').style.display = 'flex';
-        }
-
-        function closeShareModal() {
-            document.getElementById('modal-share').style.display = 'none';
-        }
-
-        function shareTo(platform) {
-            const text = encodeURIComponent(document.getElementById('share-text-input').value);
-            const url = encodeURIComponent(window.location.origin || window.location.href);
-            let shareUrl = '';
-
-            switch(platform) {
-                case 'whatsapp':
-                    shareUrl = `https://api.whatsapp.com/send?text=${text}`;
-                    break;
-                case 'x':
-                    shareUrl = `https://x.com/intent/tweet?text=${text}`;
-                    break;
-                case 'facebook':
-                    shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${url}&quote=${text}`;
-                    break;
-                case 'youtube':
-                    shareUrl = `https://www.youtube.com/posts?create_post=1`;
-                    navigator.clipboard.writeText(decodeURIComponent(text));
-                    alert("Der Text wurde in deine Zwischenablage kopiert! Füge ihn einfach in deinen YouTube-Community-Post ein. 📋");
-                    break;
-            }
-
-            if (shareUrl) {
-                window.open(shareUrl, '_blank');
-            }
-        }
-
-        // EMOJI REAKTIONEN STEUERUNG
-        async function sendReaction(emoji) {
-            createFloatingEmoji(emoji);
-
-            try {
-                const res = await fetch('/api/reactions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ emoji })
+                const res = await fetch('https://api.laut.fm/station/xoticradio/current_song?_t=' + Date.now(), { 
+                    cache: 'no-store' 
                 });
+
                 if (res.ok) {
-                    const result = await res.json();
-                    updateReactionUI(result.reactions);
+                    const data = await res.json();
+                    if (data && data.title) {
+                        titleEl.innerText = data.title;
+                        
+                        if (data.artist && data.artist.name) {
+                            artistEl.innerText = data.artist.name;
+                        } else if (typeof data.artist === 'string') {
+                            artistEl.innerText = data.artist;
+                        } else {
+                            artistEl.innerText = "xoticradio";
+                        }
+                    }
                 }
             } catch (e) {
-                console.error("Fehler beim Senden der Reaktion:", e);
+                // Bei Netzwerkfehlern bleibt einfach die vorherige Anzeige stehen
             }
         }
 
-        function updateReactionUI(reactions) {
-            if (!reactions) return;
-            for (const [emoji, count] of Object.entries(reactions)) {
-                const el = document.getElementById(`count-${emoji}`);
-                if (el) el.innerText = count;
-            }
-        }
-
-        function createFloatingEmoji(emoji) {
-            const el = document.createElement('div');
-            el.className = 'floating-emoji';
-            el.innerText = emoji;
-            const randomX = Math.random() * (window.innerWidth - 80) + 40;
-            el.style.left = `${randomX}px`;
-
-            document.body.appendChild(el);
-            setTimeout(() => { el.remove(); }, 2000);
-        }
-
-        // STUDIO STATUSANZEIGE AKTUALISIEREN
-        function updateStudioStatus(isLive, isAutoDj, djName) {
-            const card = document.getElementById('studio-status-card');
-            const modeText = document.getElementById('status-mode');
-            const detailText = document.getElementById('status-detail');
-
-            if (!card || !modeText || !detailText) return;
-
-            if (isLive) {
-                card.className = "status-card live";
-                modeText.innerText = "🔴 LIVE";
-                detailText.innerText = djName ? `🎙️ ${djName}` : "Studio Live";
-            } else if (isAutoDj) {
-                card.className = "status-card auto-dj";
-                modeText.innerText = "🤖 AUTO-DJ";
-                detailText.innerText = "Automation aktiv";
-            } else {
-                card.className = "status-card offline";
-                modeText.innerText = "⚪ OFFLINE";
-                detailText.innerText = "Sendepause";
-            }
-        }
-
-        // WEB PUSH BENACHRICHTIGUNGEN
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-            navigator.serviceWorker.register('/sw.js').then(() => {
-                checkPushStatus();
-            }).catch(err => console.log('ServiceWorker Hinweis:', err));
-        }
-
-        async function checkPushStatus() {
-            if (!('serviceWorker' in navigator)) return;
-            try {
-                const reg = await navigator.serviceWorker.ready;
-                const sub = await reg.pushManager.getSubscription();
-                const btn = document.getElementById('push-btn');
-
-                if (btn) {
-                    if (sub) {
-                        btn.innerHTML = '🔕 Alerts an';
-                        btn.style.borderColor = '#04d361';
-                    } else {
-                        btn.innerHTML = '🔔 Live-Alerts';
-                        btn.style.borderColor = '#ff4757';
-                    }
-                }
-            } catch(e) {}
-        }
-
-        async function togglePushNotifications() {
-            if (!('serviceWorker' in navigator)) return alert("Dein Browser unterstützt leider keine Push-Alerts.");
-
-            const reg = await navigator.serviceWorker.ready;
-            const sub = await reg.pushManager.getSubscription();
-
-            if (sub) {
-                await sub.unsubscribe();
-                alert("Live-Alerts deaktiviert.");
-                checkPushStatus();
-            } else {
-                const permission = await Notification.requestPermission();
-                if (permission === 'granted') {
-                    alert("Super! Du wirst benachrichtigt, wenn ein DJ live geht! 🎙️");
-                    checkPushStatus();
-                } else {
-                    alert("Benachrichtigungen wurden im Browser nicht zugelassen.");
-                }
-            }
-        }
-
-        async function loadHomepageData() {
-            try {
-                const res = await fetch('/api/data?_t=' + Date.now(), { cache: 'no-store' });
-                const data = await res.json();
-
-                document.getElementById('stream-name').innerText = "📻 " + (data.streamName || "Radio");
-
-                // SENDETITEL: kommt ausschließlich aus deinen eigenen Daten,
-                // wird über Admin- bzw. DJ-Panel gesetzt (Feld: currentTitle)
-                const showEl = document.getElementById('current-show');
-                if (showEl) showEl.innerText = data.currentTitle || "Kein Sendetitel gesetzt";
-
-                // STUDIO STATUS UPDATEN
-                const isLive = !!data.isLive;
-                const isAutoDj = data.isAutoDj !== false;
-                updateStudioStatus(isLive, isAutoDj, data.djName || data.currentDJ || "");
-
-                // EMOJI REAKTIONEN ANZEIGEN
-                if (data.reactions) {
-                    updateReactionUI(data.reactions);
-                }
-
-                const scheduleUI = document.getElementById('schedule-container');
-                if (data.schedule && data.schedule.length > 0) {
-                    scheduleUI.innerHTML = data.schedule.map(item => `
-                        <li style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px dashed #29292e;">
-                            <span style="color:#ff4757; font-weight:bold;">
-                                ${item.day ? item.day + ' | ' : ''}${item.time || ''}${item.endTime ? ' bis ' + item.endTime : ''} Uhr
-                            </span><br>
-                            <span style="color:#fff; font-weight:600;">🎙️ ${item.dj || item.name || 'DJ'}</span>
-                            <span style="color:#a8a8b3;">- ${item.title || item.show || 'Show'}</span>
-                        </li>
-                    `).join('');
-                } else {
-                    scheduleUI.innerHTML = '<li style="color:#a8a8b3;">Aktuell keine Sendungen eingetragen.</li>';
-                }
-
-                const newsUI = document.getElementById('news-container');
-                if (data.news) {
-                    newsUI.innerHTML = data.news.map(art => `
-                        <div class="card">
-                            <small style="color: #ff4757;">${art.date}</small>
-                            <h3 style="margin: 5px 0;">${art.title}</h3>
-                            <p style="color: #a8a8b3;">${art.text}</p>
-                        </div>
-                    `).join('');
-                }
-
-                const teamUI = document.getElementById('team-page-list');
-                if (data.team && data.team.length > 0) {
-                    const groupedTeam = {};
-                    data.team.forEach(m => {
-                        const dept = m.department || 'Allgemein';
-                        if (!groupedTeam[dept]) groupedTeam[dept] = [];
-                        groupedTeam[dept].push(m);
-                    });
-
-                    const icons = {
-                        'Admins': '🛡️',
-                        'Administration': '🛡️',
-                        'DJs': '🎧',
-                        'DJs & Moderatoren': '🎧',
-                        'Redakteure': '✍️'
-                    };
-
-                    let html = '';
-                    for (const [dept, members] of Object.entries(groupedTeam)) {
-                        const icon = icons[dept] || '👤';
-                        html += `
-                            <div class="team-category">
-                                <div class="team-category-title">${icon} ${dept}</div>
-                                <div class="team-grid">
-                                    ${members.map(m => `
-                                        <div class="team-card">
-                                            <div class="team-card-name">${m.name}</div>
-                                            <div class="team-card-role">${m.role}</div>
-                                        </div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        `;
-                    }
-                    teamUI.innerHTML = html;
-                } else {
-                    teamUI.innerHTML = '<p style="color:#a8a8b3;">Noch keine Teammitglieder eingetragen.</p>';
-                }
-
-            } catch (err) {
-                console.error("Fehler beim Laden der Daten:", err);
-            }
-        }
-
-        async function sendWish() {
-            const type = document.getElementById('w-type').value;
-            const name = document.getElementById('w-name').value;
-            const song = document.getElementById('w-song').value;
-            const message = document.getElementById('w-msg').value;
-
-            if (!name) return alert("Bitte gib deinen Namen an!");
-            if (type !== "Gruß" && !song) return alert("Bitte trage deinen Songwunsch ein!");
-
-            const res = await fetch('/api/wish', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type, name, song, message })
-            });
-
-            if (res.ok) {
-                alert("Danke! Deine Nachricht wurde direkt ins DJ-Studio gesendet! 🎧");
-                document.getElementById('w-name').value = '';
-                document.getElementById('w-song').value = '';
-                document.getElementById('w-msg').value = '';
-            }
-        }
-
-        // INITIALISIERUNG & INTERVALLE (ALLE 5 SEKUNDEN)
-        loadHomepageData();
-        fetchLautFmMetadata();
-
-        setInterval(loadHomepageData, 5000);
-        setInterval(fetchLautFmMetadata, 5000);
+        // METADATEN INITIAL & ALLE 10 SEKUNDEN ABFRAGEN
+        fetchCurrentSong();
+        setInterval(fetchCurrentSong, 10000);
     </script>
 </body>
 </html>

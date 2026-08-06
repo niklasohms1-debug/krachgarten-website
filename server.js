@@ -6,18 +6,104 @@ const path = require('path');
 const https = require('https');
 const fs = require('fs');
 const multer = require('multer');
-const cookieParser = require('cookie-parser'); // NEU: Für den Admin-Login Schutz
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// UPLOADS ORDNER AUTOMATISCH ERSTELLEN
-const uploadsDir = path.join(__dirname, 'public', 'uploads');
+// ==========================================
+// ORDNER & DATEIEN AUTOMATISCH PRÜFEN / ERSTELLEN
+// ==========================================
+const publicDir = path.join(__dirname, 'public');
+const uploadsDir = path.join(publicDir, 'uploads');
+
+if (!fs.existsSync(publicDir)) {
+    fs.mkdirSync(publicDir, { recursive: true });
+}
 if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+// 1. AUTOMATISCH index_neu.html ERSTELLEN (FALLS AUF RENDER FEHLT)
+const indexNeuPath = path.join(publicDir, 'index_neu.html');
+if (!fs.existsSync(indexNeuPath)) {
+    fs.writeFileSync(indexNeuPath, `<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Krachgarten V2 (Entwicklungs-Vorschau)</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', sans-serif; background: #121214; color: #fff; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .card { background: #202024; border: 1px solid #29292e; border-radius: 12px; padding: 25px; margin-top: 20px; text-align: center; }
+        .badge { background: #ff9f43; color: #000; font-size: 0.8rem; font-weight: bold; padding: 4px 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <span class="badge">🚧 V2 Vorschauseite</span>
+        <div class="card">
+            <h1>Willkommen auf index_neu.html! 🚀</h1>
+            <p style="color: #a8a8b3; margin-top: 10px;">
+                Der geschützte Umbau-Bereich steht. Hier kannst du ab jetzt in Ruhe deine neue Seite aufbauen!
+            </p>
+        </div>
+    </div>
+</body>
+</html>`);
+    console.log("🛠️ index_neu.html wurde automatisch in /public erstellt.");
+}
+
+// 2. AUTOMATISCH login.html ERSTELLEN (FALLS FEHLT)
+const loginHtmlPath = path.join(publicDir, 'login.html');
+if (!fs.existsSync(loginHtmlPath)) {
+    fs.writeFileSync(loginHtmlPath, `<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | krachgarten</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #121214; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: #202024; padding: 30px; border-radius: 12px; border: 1px solid #29292e; text-align: center; max-width: 350px; width: 100%; }
+        input { width: 100%; padding: 10px; margin: 15px 0; background: #121214; border: 1px solid #29292e; color: #fff; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #ff4757; border: none; color: #fff; font-weight: bold; border-radius: 6px; cursor: pointer; }
+        button:hover { background: #e03e4d; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>🔒 Admin Login</h2>
+        <p style="color: #a8a8b3; font-size: 0.85rem; margin-top: 5px;">Zugang zu index_neu.html</p>
+        <input type="password" id="password" placeholder="Admin-Passwort">
+        <button onclick="login()">Einloggen 🚀</button>
+        <p id="err" style="color:#ff4757; display:none; margin-top:10px; font-size:0.85rem;">Passwort falsch!</p>
+    </div>
+    <script>
+        async function login(){
+            const password = document.getElementById('password').value;
+            const res = await fetch('/api/dev-login', { 
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }, 
+                body: JSON.stringify({ password }) 
+            });
+            if(res.ok) { 
+                window.location.href = '/index_neu.html'; 
+            } else { 
+                document.getElementById('err').style.display = 'block'; 
+            }
+        }
+    </script>
+</body>
+</html>`);
+    console.log("🛠️ login.html wurde automatisch in /public erstellt.");
+}
+
+// ==========================================
 // MULTER SPEICHER-KONFIGURATION
+// ==========================================
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, uploadsDir);
@@ -33,10 +119,12 @@ const upload = multer({
     limits: { fileSize: 500 * 1024 * 1024 } // 500 MB Max
 });
 
-// Middleware
+// ==========================================
+// MIDDLEWARES
+// ==========================================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser()); // NEU: Middleware für Cookies
+app.use(cookieParser());
 
 app.use('/uploads', express.static(uploadsDir)); // DIRECT STREAM ROUTE
 
@@ -44,7 +132,7 @@ app.use('/uploads', express.static(uploadsDir)); // DIRECT STREAM ROUTE
 // SCHUTZ FÜR DIE NEUE BAUSTELLE (index_neu.html)
 // ==========================================
 
-// 1. Login-Endpunkt für den Umbau-Bereich
+// 1. Dev-Login API
 app.post('/api/dev-login', async (req, res) => {
     try {
         const { password } = req.body;
@@ -52,7 +140,6 @@ app.post('/api/dev-login', async (req, res) => {
         const adminPass = data.passwords?.admin || "admin123";
 
         if (password === adminPass) {
-            // Setzt ein sicheres Auth-Cookie für 7 Tage
             res.cookie('dev_auth', 'authenticated_admin', {
                 maxAge: 7 * 24 * 60 * 60 * 1000,
                 httpOnly: true,
@@ -66,27 +153,26 @@ app.post('/api/dev-login', async (req, res) => {
     }
 });
 
-// 2. Türsteher-Route: Prüft, ob der Admin eingeloggt ist, BEVOR die Datei ausgeliefert wird
+// 2. Türsteher-Route: Prüft Auth vor Auslieferung von index_neu.html
 app.get(['/index_neu', '/index_neu.html'], (req, res) => {
     if (req.cookies && req.cookies.dev_auth === 'authenticated_admin') {
-        return res.sendFile(path.join(__dirname, 'public', 'index_neu.html'));
+        return res.sendFile(path.join(publicDir, 'index_neu.html'));
     }
-    // Nicht eingeloggt -> Umleitung auf Login-Seite
     res.redirect('/login.html');
 });
 
-// Statische Ordner-Freigabe erst NACH der geschützten Route platzieren!
-app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
+// Statische Ordner-Freigabe (NACH der Geschützten Route!)
+app.use(express.static(publicDir, { extensions: ['html'] }));
 
-// MONGO_URI
+// ==========================================
+// MONGO DB & SCHEMAS
+// ==========================================
 const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://niklasohms1_db_user:DEIN_PASSWORT@cluster0.gesrdze.mongodb.net/?appName=Cluster0";
 
-// VERBINDUNG
 mongoose.connect(MONGO_URI)
     .then(() => console.log("✅ Erfolgreich mit MongoDB verbunden!"))
     .catch(err => console.error("❌ MongoDB Verbindungsfehler:", err));
 
-// SCHEMA DEFINIEREN
 const radioSchema = new mongoose.Schema({
     streamName: { type: String, default: "KrachGarten" },
     currentTitle: { type: String, default: "DJ AIR - 24/7 NON STOP" },
@@ -110,14 +196,15 @@ const radioSchema = new mongoose.Schema({
 
 const RadioData = mongoose.model('RadioData', radioSchema);
 
-// PUSH SUBSCRIPTION SCHEMA DEFINIEREN
 const pushSubSchema = new mongoose.Schema({
     endpoint: String,
     keys: Object
 });
 const PushSub = mongoose.model('PushSub', pushSubSchema);
 
-// HILFSFUNKTION: DATEN HOLEN ODER ERSTELLEN
+// ==========================================
+// HILFSFUNKTIONEN
+// ==========================================
 async function getOrInitData() {
     let data = await RadioData.findOne();
     if (!data) {
@@ -139,7 +226,6 @@ async function getOrInitData() {
     return data;
 }
 
-// HILFSFUNKTION: DEUTSCHE UHRZEIT & DATUM ERSTELLEN
 function getGermanDateTime() {
     const now = new Date();
     const germanTime = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Berlin" }));
@@ -151,9 +237,8 @@ function getGermanDateTime() {
 }
 
 // ==========================================
-// LOGIN ROUTEN
+// LOGIN ROUTEN (ADMIN, DJ, EDITOR)
 // ==========================================
-
 app.post('/api/admin/login', async (req, res) => {
     const { username, password } = req.body;
     const data = await getOrInitData();
@@ -190,7 +275,6 @@ app.post('/api/editor/login', async (req, res) => {
 // ==========================================
 // ALLGEMEINE ROUTEN & ADMIN-ROUTEN
 // ==========================================
-
 app.get(['/api/data', '/api/admin/data'], async (req, res) => {
     try {
         const data = await getOrInitData();
@@ -219,9 +303,8 @@ app.post(['/api/data', '/api/admin/data', '/api/settings', '/api/dj/title'], asy
 });
 
 // ==========================================
-// PRIVATER BEREICH (DATEI-UPLOAD MIT MULTER)
+// PRIVATER BEREICH (UPLOAD & DELETE)
 // ==========================================
-
 app.post('/api/admin/private/upload', upload.single('file'), async (req, res) => {
     try {
         if (!req.file) {
@@ -263,7 +346,7 @@ app.delete('/api/admin/private/:id', async (req, res) => {
         if (Array.isArray(data.privateMedia)) {
             const itemToDelete = data.privateMedia.find(m => String(m.id) === String(mediaId));
             if (itemToDelete && itemToDelete.url && itemToDelete.url.startsWith('/uploads/')) {
-                const localPath = path.join(__dirname, 'public', itemToDelete.url);
+                const localPath = path.join(publicDir, itemToDelete.url);
                 if (fs.existsSync(localPath)) {
                     fs.unlinkSync(localPath);
                 }
@@ -283,7 +366,6 @@ app.delete('/api/admin/private/:id', async (req, res) => {
 // ==========================================
 // EMOJI REAKTIONEN ROUTE
 // ==========================================
-
 app.post('/api/reactions', async (req, res) => {
     try {
         const { emoji } = req.body;
@@ -308,7 +390,6 @@ app.post('/api/reactions', async (req, res) => {
 // ==========================================
 // PUSH NOTIFICATION ROUTEN
 // ==========================================
-
 app.post('/api/push/subscribe', async (req, res) => {
     try {
         const subscription = req.body;
@@ -327,7 +408,6 @@ app.post('/api/push/subscribe', async (req, res) => {
 // ==========================================
 // TEAM ROUTEN
 // ==========================================
-
 app.get(['/api/team', '/api/admin/team'], async (req, res) => {
     try {
         const data = await getOrInitData();
@@ -369,7 +449,6 @@ app.delete('/api/admin/team/:id', async (req, res) => {
 // ==========================================
 // NEWS ROUTEN
 // ==========================================
-
 app.get(['/api/news', '/api/admin/news'], async (req, res) => {
     try {
         const data = await getOrInitData();
@@ -424,9 +503,8 @@ app.delete(['/api/news/:id', '/api/admin/news/:id'], async (req, res) => {
 });
 
 // ==========================================
-// SENDEPLAN ROUTEN
+// SENDEPLAN ROUTEN & AUTO-CLEANUP
 // ==========================================
-
 const schedulePaths = [
     '/api/schedule', '/api/admin/schedule', '/api/dj/schedule',
     '/api/sendeplan', '/api/admin/sendeplan', '/api/dj/sendeplan',
@@ -555,7 +633,6 @@ app.delete(schedulePaths.map(p => `${p}/:id`), async (req, res) => {
 // ==========================================
 // WÜNSCHE ROUTEN
 // ==========================================
-
 app.get(['/api/wishes', '/api/admin/wishes', '/api/wish', '/api/admin/wish'], async (req, res) => {
     try {
         const data = await getOrInitData();
@@ -614,7 +691,6 @@ app.delete(['/api/wishes/:id', '/api/admin/wishes/:id', '/api/wish/:id', '/api/a
 // ==========================================
 // LAUT.FM API PROXY (AKTUELLER SONG & HISTORIE)
 // ==========================================
-
 const LAUTFM_STATION = 'xoticradio';
 
 function fetchLautFmJson(pathSuffix, res, errorMsg) {

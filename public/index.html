@@ -646,6 +646,22 @@
                 }
 
                 if (song && (song.title || song.artist)) {
+
+                    // WICHTIG: Während einer Live-Sendung (song.live === true) kennt laut.fm
+                    // den tatsächlich gespielten Song nicht (keine Automation meldet Titel).
+                    // Die zurückgegebenen Daten sind dann veraltet/unzuverlässig -> nicht anzeigen.
+                    if (song.live === true) {
+                        const djNameEl = document.getElementById('current-show');
+                        const djLabel = djNameEl ? djNameEl.innerText : '';
+                        if (titleEl) titleEl.innerText = '🔴 Live-Sendung';
+                        if (artistEl) artistEl.innerText = djLabel || 'DJ live im Studio';
+                        if (coverImg && lastTrackKey !== '__LIVE__') {
+                            lastTrackKey = '__LIVE__';
+                            coverImg.src = DEFAULT_SVG_COVER;
+                        }
+                        return;
+                    }
+
                     const title = song.title || 'Unbekannter Titel';
                     let artist = 'Unbekannter Künstler';
 

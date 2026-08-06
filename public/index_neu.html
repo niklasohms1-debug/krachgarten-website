@@ -94,6 +94,7 @@
             gap: 4px;
             padding: 4px 6px 0 6px;
             box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            flex-wrap: wrap;
         }
 
         .nav-tab {
@@ -102,7 +103,7 @@
             text-decoration: none;
             font-size: 0.85rem;
             font-weight: bold;
-            padding: 8px 18px;
+            padding: 8px 16px;
             border-radius: 6px 6px 0 0;
             border: 1px solid rgba(255,255,255,0.3);
             border-bottom: none;
@@ -216,7 +217,7 @@
             cursor: pointer;
         }
 
-        /* CONTENT GRID LAYOUT (MAIN 70% / SIDEBAR 30%) */
+        /* CONTENT GRID LAYOUT */
         .content-grid {
             display: grid;
             grid-template-columns: 1fr 310px;
@@ -373,6 +374,7 @@
             <button id="nav-team" class="nav-tab" onclick="switchTab('team')">Team</button>
             <button id="nav-radio" class="nav-tab" onclick="switchTab('radio')">Radio / Historie</button>
             <button id="nav-community" class="nav-tab" onclick="switchTab('community')">Community</button>
+            <button id="nav-anubis" class="nav-tab" onclick="switchTab('anubis')">👁️ Anubis Geheimnis</button>
         </nav>
 
         <!-- CONSOLE METALLIC PLAYER -->
@@ -404,9 +406,7 @@
              =================================================== -->
         <div id="tab-startseite" class="tab-content active">
             <div class="content-grid">
-                <!-- MAIN COLUMN -->
                 <div>
-                    <!-- WELCOME BANNER -->
                     <div class="welcome-banner">
                         <div style="font-size: 2.5rem;">🎉</div>
                         <div>
@@ -415,7 +415,6 @@
                         </div>
                     </div>
 
-                    <!-- WILLKOMMEN CARD -->
                     <div class="habbo-card">
                         <div class="card-header">
                             <span>📌 Willkommen bei Krachgarten</span>
@@ -428,7 +427,6 @@
                         </div>
                     </div>
 
-                    <!-- DYNAMISCHE NEWS CARD -->
                     <div class="habbo-card">
                         <div class="card-header">
                             <span>📰 Aktuelle News & Mitteilungen</span>
@@ -442,9 +440,7 @@
                     </div>
                 </div>
 
-                <!-- SIDEBAR -->
                 <div>
-                    <!-- WUNSCHBOX -->
                     <div class="habbo-card">
                         <div class="dj-post-header">
                             ✉️ DJ POST / WUNSCHBOX
@@ -468,7 +464,6 @@
                         </div>
                     </div>
 
-                    <!-- STREAM STATUS CARD -->
                     <div class="habbo-card">
                         <div class="card-header">
                             <span>🎧 Status & Studio</span>
@@ -537,7 +532,7 @@
              =================================================== -->
         <div id="tab-community" class="tab-content">
             
-            <!-- GAME 3: HABBO JUMP N RUN (OBEN VOLLBREITE) -->
+            <!-- GAME: HABBO JUMP N RUN -->
             <div class="habbo-card">
                 <div class="card-header">
                     <span>🏃 Habbo Jump 'n' Run</span>
@@ -562,8 +557,6 @@
 
             <!-- UNTEN: MEMORY & QUIZ GRID -->
             <div class="content-grid">
-                
-                <!-- GAME 1: MEMORY -->
                 <div>
                     <div class="habbo-card">
                         <div class="card-header">
@@ -575,7 +568,6 @@
                                 Finde alle zusammengehörenden Radio-Symbole!
                             </p>
 
-                            <!-- MEMORY SPIELFELD -->
                             <div id="memory-board" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 360px; margin: 0 auto;">
                                 <!-- Dynamisch per JS -->
                             </div>
@@ -587,7 +579,6 @@
                     </div>
                 </div>
 
-                <!-- GAME 2: RADIO QUIZ -->
                 <div>
                     <div class="habbo-card">
                         <div class="card-header">
@@ -607,6 +598,96 @@
                     </div>
                 </div>
 
+            </div>
+        </div>
+
+        <!-- ===================================================
+             TAB 6: ANUBIS GEHEIMNIS (QUESTS)
+             =================================================== -->
+        <div id="tab-anubis" class="tab-content">
+            
+            <!-- ANUBIS HEADER CARD -->
+            <div class="habbo-card" style="border-color: #2c2c54;">
+                <div class="card-header" style="background: linear-gradient(180deg, #474787 0%, #2c2c54 100%); border-bottom-color: #227093;">
+                    <span>🔮 Das Haus Anubis – Das Rätsel der alten Weide</span>
+                    <span id="anubis-progress" style="font-size: 0.8rem; background: #ffb142; color: #000; padding: 2px 8px; border-radius: 4px; font-weight: bold;">Gelieste Quests: 0 / 3</span>
+                </div>
+                <div class="card-body" style="background: #f1f2f6;">
+                    <div style="background: #2c2c54; color: #f7b731; padding: 15px; border-radius: 6px; margin-bottom: 15px; border-left: 5px solid #f7b731;">
+                        <h2 style="font-size: 1.1rem; margin-bottom: 5px;">👁️ Willkommen im Internat "Haus Anubis"</h2>
+                        <p style="font-size: 0.85rem; color: #dcdde1; line-height: 1.4;">
+                            Auf dem Dachboden wurden altes Pergament, Hieroglyphen und verschlossene Truhen gefunden! Victor wacht über das Haus, aber wenn du alle 3 Quests löst, wirst du offizielles Mitglied im <strong>Club der alten Weide</strong>!
+                        </p>
+                    </div>
+
+                    <!-- QUEST 1 -->
+                    <div class="habbo-card" style="margin-bottom: 15px; border-color: #dcdde1;">
+                        <div class="card-header" style="background: linear-gradient(180deg, #ff9f43 0%, #ee5253 100%); font-size:0.88rem;">
+                            <span>📜 Quest 1: Das geheime Losungswort</span>
+                            <span id="q1-status">🔒 Offen</span>
+                        </div>
+                        <div class="card-body">
+                            <p style="margin-bottom: 10px;">
+                                Wie heißt der geheime Schutzbund, den Nina, Daniel, Luzy und Delia auf dem Dachboden gegründet haben? 
+                                <em>(Rechte Hand über das rechte Auge halten!)</em>
+                            </p>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="q1-input" class="form-control" placeholder="Losungswort eingeben..." style="text-transform: uppercase;">
+                                <button onclick="checkQuest1()" class="btn-submit" style="width: auto; padding: 0 20px;">Prüfen</button>
+                            </div>
+                            <p id="q1-msg" style="font-weight: bold; margin-top: 8px; font-size: 0.82rem;"></p>
+                        </div>
+                    </div>
+
+                    <!-- QUEST 2 -->
+                    <div class="habbo-card" style="margin-bottom: 15px; border-color: #dcdde1;">
+                        <div class="card-header" style="background: linear-gradient(180deg, #ff9f43 0%, #ee5253 100%); font-size:0.88rem;">
+                            <span>🧮 Quest 2: Victors Zahlen-Hieroglyphen</span>
+                            <span id="q2-status">🔒 Offen</span>
+                        </div>
+                        <div class="card-body">
+                            <p style="margin-bottom: 10px;">
+                                Victor hat folgendes Rätsel auf einem Pergament hinterlassen:<br>
+                                <strong>"Wenn 1 Anubis-Statue = 5 Punkte zählt und 1 Sarkophag = 10 Punkte: Wie viel ergibt [2 Sarkophage] + [3 Statuen] MINUS 7 Punkte?"</strong>
+                            </p>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="number" id="q2-input" class="form-control" placeholder="Ergebnis als Zahl...">
+                                <button onclick="checkQuest2()" class="btn-submit" style="width: auto; padding: 0 20px;">Prüfen</button>
+                            </div>
+                            <p id="q2-msg" style="font-weight: bold; margin-top: 8px; font-size: 0.82rem;"></p>
+                        </div>
+                    </div>
+
+                    <!-- QUEST 3 -->
+                    <div class="habbo-card" style="margin-bottom: 15px; border-color: #dcdde1;">
+                        <div class="card-header" style="background: linear-gradient(180deg, #ff9f43 0%, #ee5253 100%); font-size:0.88rem;">
+                            <span>🗝️ Quest 3: Der Schlüssel zum Geheimgang</span>
+                            <span id="q3-status">🔒 Offen</span>
+                        </div>
+                        <div class="card-body">
+                            <p style="margin-bottom: 10px;">
+                                Wo befindet sich im Haus Anubis der geheime Zugang zu den Rätselräumen auf dem Dachboden?
+                            </p>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <button onclick="checkQuest3(1)" class="form-control" style="text-align: left; cursor: pointer; font-weight: bold;">A) Hinter dem ausgestopften Raben im Flur</button>
+                                <button onclick="checkQuest3(2)" class="form-control" style="text-align: left; cursor: pointer; font-weight: bold;">B) Hinter dem Kleiderschrank / Wandteppich im Dachboden</button>
+                                <button onclick="checkQuest3(3)" class="form-control" style="text-align: left; cursor: pointer; font-weight: bold;">C) Im Keller hinter dem alten Ofen</button>
+                            </div>
+                            <p id="q3-msg" style="font-weight: bold; margin-top: 8px; font-size: 0.82rem;"></p>
+                        </div>
+                    </div>
+
+                    <!-- REWARD BOX (ANFANGS VERSTECKT) -->
+                    <div id="anubis-reward" style="display: none; background: linear-gradient(135deg, #10ac84 0%, #1dd1a1 100%); color: #000; padding: 20px; border-radius: 8px; text-align: center; font-weight: bold; border: 2px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
+                        <div style="font-size: 2.5rem; margin-bottom: 8px;">🏆 👁️ 📜</div>
+                        <div style="font-size: 1.2rem; color: #fff; text-shadow: 1px 1px 2px #000;">GRATULATION! Du hast das Geheimnis gelüftet!</div>
+                        <p style="margin-top: 8px; font-size: 0.9rem; color: #2d3436;">
+                            Du bist nun ein hochoffizielles Mitglied im <strong>Club der alten Weide</strong>!<br>
+                            Halte deine rechte Hand über dein rechtes Auge... <em>Sibuna!</em>
+                        </p>
+                    </div>
+
+                </div>
             </div>
         </div>
 
@@ -646,6 +727,9 @@
                 initMemory();
                 initQuiz();
                 initJnR();
+            }
+            if (tabName === 'anubis') {
+                initAnubis();
             }
             if (tabName === 'startseite') loadNews();
         }
@@ -790,7 +874,7 @@
             }
         }
 
-        // SONG HISTORIE LADEN (NUN MIT GENAUER UHRZEIT!)
+        // SONG HISTORIE LADEN
         async function loadRadioHistory() {
             try {
                 const res = await fetch('/api/lautfm/history');
@@ -859,10 +943,10 @@
         }
 
         // ==========================================
-        // MINIGAMES LOGIK (MEMORY, QUIZ & JUMP N RUN)
+        // COMMUNITY MINIGAMES (MEMORY & QUIZ & JNR)
         // ==========================================
 
-        // --- 1. MEMORY GAME ---
+        // --- MEMORY ---
         const memoryIcons = ['📻', '🎧', '🎸', '🎤', '🎵', '🍺'];
         let memoryCards = [];
         let flippedCards = [];
@@ -932,224 +1016,199 @@
             }
         }
 
-        // --- 2. QUIZ GAME ---
+        // --- QUIZ ---
         const quizQuestions = [
-            {
-                q: "Wofür steht die Abkürzung 'DJ'?",
-                answers: ["Disc Jockey", "Digital Jukebox", "Direct Jammer", "Dance Joiner"],
-                correct: 0
-            },
-            {
-                q: "Auf welcher Plattform streamt Krachgarten Radio?",
-                answers: ["Spotify", "Laut.fm", "Soundcloud", "Twitch"],
-                correct: 1
-            },
-            {
-                q: "Welche Farbe hat der Hintergrund im Habbo-Design?",
-                answers: ["Neongelb", "Ozeanblau", "Schwarz", "Grün"],
-                correct: 1
-            },
-            {
-                q: "Welches Symbol steht für den Play-Button?",
-                answers: ["⏸️", "⏹️", "▶️", "🔄"],
-                correct: 2
-            }
+            { q: "Wofür steht die Abkürzung 'DJ'?", answers: ["Disc Jockey", "Digital Jukebox", "Direct Jammer", "Dance Joiner"], correct: 0 },
+            { q: "Auf welcher Plattform streamt Krachgarten Radio?", answers: ["Spotify", "Laut.fm", "Soundcloud", "Twitch"], correct: 1 },
+            { q: "Welche Farbe hat der Hintergrund im Habbo-Design?", answers: ["Neongelb", "Ozeanblau", "Schwarz", "Grün"], correct: 1 },
+            { q: "Welches Symbol steht für den Play-Button?", answers: ["⏸️", "⏹️", "▶️", "🔄"], correct: 2 }
         ];
+        let currentQuizIdx = 0, quizScore = 0;
 
-        let currentQuizIdx = 0;
-        let quizScore = 0;
-
-        function initQuiz() {
-            currentQuizIdx = 0;
-            quizScore = 0;
-            showQuizQuestion();
-        }
-
+        function initQuiz() { currentQuizIdx = 0; quizScore = 0; showQuizQuestion(); }
         function showQuizQuestion() {
             const scoreEl = document.getElementById('quiz-score');
             const questionEl = document.getElementById('quiz-question');
             const optionsEl = document.getElementById('quiz-options');
-
             if (!questionEl || !optionsEl) return;
-
             if (scoreEl) scoreEl.innerText = `Punkte: ${quizScore}`;
-
             if (currentQuizIdx >= quizQuestions.length) {
                 questionEl.innerHTML = `🎉 Quiz beendet! Du hast <strong>${quizScore} von ${quizQuestions.length}</strong> Punkten erreicht!`;
                 optionsEl.innerHTML = `<button onclick="initQuiz()" class="btn-submit">Erneut spielen 🔄</button>`;
                 return;
             }
-
             const q = quizQuestions[currentQuizIdx];
             questionEl.innerText = `${currentQuizIdx + 1}. ${q.q}`;
-
             optionsEl.innerHTML = q.answers.map((ans, idx) => `
-                <button onclick="checkAnswer(${idx})" class="form-control" style="
-                    text-align: left; cursor: pointer; font-weight: bold; padding: 10px; transition: background 0.15s;
-                " onmouseover="this.style.background='#ffeaa7'" onmouseout="this.style.background='#f5f6fa'">
+                <button onclick="checkAnswer(${idx})" class="form-control" style="text-align: left; cursor: pointer; font-weight: bold; padding: 10px; transition: background 0.15s;" onmouseover="this.style.background='#ffeaa7'" onmouseout="this.style.background='#f5f6fa'">
                     ${String.fromCharCode(65 + idx)}) ${escapeHtml(ans)}
                 </button>
             `).join('');
         }
-
         function checkAnswer(chosenIdx) {
-            if (chosenIdx === quizQuestions[currentQuizIdx].correct) {
-                quizScore++;
-            }
+            if (chosenIdx === quizQuestions[currentQuizIdx].correct) quizScore++;
             currentQuizIdx++;
             showQuizQuestion();
         }
 
-        // --- 3. HABBO JUMP N RUN GAME ---
-        let jnrCanvas, jnrCtx;
-        let jnrAnimationId = null;
-        let jnrScore = 0;
-        let jnrHighscore = 0;
-        let jnrRunning = false;
-        let jnrFrame = 0;
-
-        let jnrPlayer = {
-            x: 50,
-            y: 95,
-            vy: 0,
-            gravity: 0.65,
-            jumpForce: -11.5,
-            grounded: false
-        };
-
+        // --- JUMP N RUN ---
+        let jnrCanvas, jnrCtx, jnrAnimationId = null, jnrScore = 0, jnrHighscore = 0, jnrRunning = false, jnrFrame = 0;
+        let jnrPlayer = { x: 50, y: 95, vy: 0, gravity: 0.65, jumpForce: -11.5, grounded: false };
         let jnrObstacles = [];
 
         function initJnR() {
             jnrCanvas = document.getElementById('jnr-canvas');
             if (!jnrCanvas) return;
             jnrCtx = jnrCanvas.getContext('2d');
-
             jnrCanvas.onclick = jnrJump;
-            window.onkeydown = function(e) {
-                if (e.code === 'Space' && jnrRunning) {
-                    e.preventDefault();
-                    jnrJump();
-                }
-            };
+            window.onkeydown = function(e) { if (e.code === 'Space' && jnrRunning) { e.preventDefault(); jnrJump(); } };
             drawJnRIdle();
         }
 
         function drawJnRIdle() {
             if (!jnrCtx) return;
             jnrCtx.clearRect(0, 0, jnrCanvas.width, jnrCanvas.height);
-            
-            // Boden
-            jnrCtx.fillStyle = '#2d3436';
-            jnrCtx.fillRect(0, 120, jnrCanvas.width, 30);
-            jnrCtx.fillStyle = '#10ac84';
-            jnrCtx.fillRect(0, 120, jnrCanvas.width, 4);
-
-            // Spieler
-            jnrCtx.font = '26px sans-serif';
-            jnrCtx.fillText('🕺', 50, 118);
-
-            // Text
-            jnrCtx.fillStyle = '#ffffff';
-            jnrCtx.font = 'bold 16px Verdana';
-            jnrCtx.textAlign = 'center';
+            jnrCtx.fillStyle = '#2d3436'; jnrCtx.fillRect(0, 120, jnrCanvas.width, 30);
+            jnrCtx.fillStyle = '#10ac84'; jnrCtx.fillRect(0, 120, jnrCanvas.width, 4);
+            jnrCtx.font = '26px sans-serif'; jnrCtx.fillText('🕺', 50, 118);
+            jnrCtx.fillStyle = '#ffffff'; jnrCtx.font = 'bold 16px Verdana'; jnrCtx.textAlign = 'center';
             jnrCtx.fillText('Klicke "Spiel Starten" zum Loslegen!', jnrCanvas.width / 2, 65);
         }
 
         function startJnRGame() {
             if (jnrAnimationId) cancelAnimationFrame(jnrAnimationId);
-            jnrScore = 0;
-            jnrFrame = 0;
-            jnrObstacles = [];
-            jnrPlayer.y = 95;
-            jnrPlayer.vy = 0;
-            jnrPlayer.grounded = true;
-            jnrRunning = true;
+            jnrScore = 0; jnrFrame = 0; jnrObstacles = []; jnrPlayer.y = 95; jnrPlayer.vy = 0; jnrPlayer.grounded = true; jnrRunning = true;
             jnrLoop();
         }
 
-        function jnrJump() {
-            if (!jnrRunning) return;
-            if (jnrPlayer.grounded) {
-                jnrPlayer.vy = jnrPlayer.jumpForce;
-                jnrPlayer.grounded = false;
-            }
-        }
+        function jnrJump() { if (jnrRunning && jnrPlayer.grounded) { jnrPlayer.vy = jnrPlayer.jumpForce; jnrPlayer.grounded = false; } }
 
         function jnrLoop() {
             if (!jnrRunning) return;
-
-            jnrFrame++;
-            jnrScore = Math.floor(jnrFrame / 5);
+            jnrFrame++; jnrScore = Math.floor(jnrFrame / 5);
             if (jnrScore > jnrHighscore) jnrHighscore = jnrScore;
-
             const statsEl = document.getElementById('jnr-stats');
             if (statsEl) statsEl.innerText = `Score: ${jnrScore} | Highscore: ${jnrHighscore}`;
 
-            // Physik
-            jnrPlayer.vy += jnrPlayer.gravity;
-            jnrPlayer.y += jnrPlayer.vy;
+            jnrPlayer.vy += jnrPlayer.gravity; jnrPlayer.y += jnrPlayer.vy;
+            if (jnrPlayer.y >= 95) { jnrPlayer.y = 95; jnrPlayer.vy = 0; jnrPlayer.grounded = true; }
 
-            if (jnrPlayer.y >= 95) {
-                jnrPlayer.y = 95;
-                jnrPlayer.vy = 0;
-                jnrPlayer.grounded = true;
-            }
-
-            // Hindernisse generieren
             if (jnrFrame % 85 === 0) {
                 const types = ['🧱', '📦', '📻', '🚧'];
-                const obstacleEmoji = types[Math.floor(Math.random() * types.length)];
-                jnrObstacles.push({
-                    x: jnrCanvas.width,
-                    y: 95,
-                    emoji: obstacleEmoji,
-                    speed: 4.5 + Math.min(Math.floor(jnrScore / 100), 5)
-                });
+                jnrObstacles.push({ x: jnrCanvas.width, y: 95, emoji: types[Math.floor(Math.random() * types.length)], speed: 4.5 + Math.min(Math.floor(jnrScore / 100), 5) });
             }
 
-            // Hintergrund zeichnen
             jnrCtx.clearRect(0, 0, jnrCanvas.width, jnrCanvas.height);
-            jnrCtx.fillStyle = '#2d3436';
-            jnrCtx.fillRect(0, 120, jnrCanvas.width, 30);
-            jnrCtx.fillStyle = '#10ac84';
-            jnrCtx.fillRect(0, 120, jnrCanvas.width, 4);
+            jnrCtx.fillStyle = '#2d3436'; jnrCtx.fillRect(0, 120, jnrCanvas.width, 30);
+            jnrCtx.fillStyle = '#10ac84'; jnrCtx.fillRect(0, 120, jnrCanvas.width, 4);
+            jnrCtx.font = '26px sans-serif'; jnrCtx.textAlign = 'left'; jnrCtx.fillText('🕺', jnrPlayer.x, jnrPlayer.y + 23);
 
-            // Spieler zeichnen
-            jnrCtx.font = '26px sans-serif';
-            jnrCtx.textAlign = 'left';
-            jnrCtx.fillText('🕺', jnrPlayer.x, jnrPlayer.y + 23);
-
-            // Hindernisse bewegen & Kollision
             for (let i = jnrObstacles.length - 1; i >= 0; i--) {
-                let obs = jnrObstacles[i];
-                obs.x -= obs.speed;
+                let obs = jnrObstacles[i]; obs.x -= obs.speed;
+                jnrCtx.font = '22px sans-serif'; jnrCtx.fillText(obs.emoji, obs.x, obs.y + 20);
 
-                jnrCtx.font = '22px sans-serif';
-                jnrCtx.fillText(obs.emoji, obs.x, obs.y + 20);
-
-                // Kollisionsprüfung (Box Intersect)
-                if (
-                    jnrPlayer.x + 18 > obs.x &&
-                    jnrPlayer.x < obs.x + 20 &&
-                    jnrPlayer.y + 20 > obs.y
-                ) {
-                    jnrRunning = false;
-                    jnrCtx.fillStyle = '#ee5253';
-                    jnrCtx.font = 'bold 22px Verdana';
-                    jnrCtx.textAlign = 'center';
+                if (jnrPlayer.x + 18 > obs.x && jnrPlayer.x < obs.x + 20 && jnrPlayer.y + 20 > obs.y) {
+                    jnrRunning = false; jnrCtx.fillStyle = '#ee5253'; jnrCtx.font = 'bold 22px Verdana'; jnrCtx.textAlign = 'center';
                     jnrCtx.fillText('GAME OVER! 💥', jnrCanvas.width / 2, 55);
-                    jnrCtx.fillStyle = '#ffffff';
-                    jnrCtx.font = '14px Verdana';
-                    jnrCtx.fillText(`Endstand: ${jnrScore} Punkte`, jnrCanvas.width / 2, 85);
+                    jnrCtx.fillStyle = '#ffffff'; jnrCtx.font = '14px Verdana'; jnrCtx.fillText(`Endstand: ${jnrScore} Punkte`, jnrCanvas.width / 2, 85);
                     return;
                 }
+                if (obs.x < -30) jnrObstacles.splice(i, 1);
+            }
+            jnrAnimationId = requestAnimationFrame(jnrLoop);
+        }
 
-                if (obs.x < -30) {
-                    jnrObstacles.splice(i, 1);
-                }
+        // ==========================================
+        // ANUBIS GEHEIMNIS QUEST LOGIK
+        // ==========================================
+        let anubisQuests = { q1: false, q2: false, q3: false };
+
+        function initAnubis() {
+            const saved = localStorage.getItem('anubis_quests');
+            if (saved) {
+                try { anubisQuests = JSON.parse(saved); } catch(e){}
+            }
+            updateAnubisUI();
+        }
+
+        function saveAnubisState() {
+            localStorage.setItem('anubis_quests', JSON.stringify(anubisQuests));
+            updateAnubisUI();
+        }
+
+        function updateAnubisUI() {
+            const count = (anubisQuests.q1 ? 1 : 0) + (anubisQuests.q2 ? 1 : 0) + (anubisQuests.q3 ? 1 : 0);
+            const progressEl = document.getElementById('anubis-progress');
+            if (progressEl) progressEl.innerText = `Gelöste Quests: ${count} / 3`;
+
+            // Quest 1 Status
+            if (anubisQuests.q1) {
+                document.getElementById('q1-status').innerText = '✅ Gelöst';
+                document.getElementById('q1-msg').innerText = '✨ Richtig! SIBUNA – Schutzbund der alten Weide!';
+                document.getElementById('q1-msg').style.color = '#10ac84';
             }
 
-            jnrAnimationId = requestAnimationFrame(jnrLoop);
+            // Quest 2 Status
+            if (anubisQuests.q2) {
+                document.getElementById('q2-status').innerText = '✅ Gelöst';
+                document.getElementById('q2-msg').innerText = '✨ Richtig! (2x10) + (3x5) - 7 = 28!';
+                document.getElementById('q2-msg').style.color = '#10ac84';
+            }
+
+            // Quest 3 Status
+            if (anubisQuests.q3) {
+                document.getElementById('q3-status').innerText = '✅ Gelöst';
+                document.getElementById('q3-msg').innerText = '✨ Richtig! Der Schrank auf dem Dachboden birgt den Geheimgang!';
+                document.getElementById('q3-msg').style.color = '#10ac84';
+            }
+
+            // Belohnung anzeigen wenn alle 3 gelöst
+            if (count === 3) {
+                const rewardBox = document.getElementById('anubis-reward');
+                if (rewardBox) rewardBox.style.display = 'block';
+            }
+        }
+
+        function checkQuest1() {
+            if (anubisQuests.q1) return;
+            const input = document.getElementById('q1-input').value.trim().toUpperCase();
+            const msg = document.getElementById('q1-msg');
+
+            if (input === 'SIBUNA') {
+                anubisQuests.q1 = true;
+                saveAnubisState();
+            } else {
+                msg.innerText = '❌ Falsch! Das Losungswort beginnt mit S...';
+                msg.style.color = '#ee5253';
+            }
+        }
+
+        function checkQuest2() {
+            if (anubisQuests.q2) return;
+            const input = parseInt(document.getElementById('q2-input').value, 10);
+            const msg = document.getElementById('q2-msg');
+
+            // 2 Sarkophage (20) + 3 Statuen (15) - 7 = 28
+            if (input === 28) {
+                anubisQuests.q2 = true;
+                saveAnubisState();
+            } else {
+                msg.innerText = '❌ Falsch berechnet! Tipp: 2x10 + 3x5 = 35... davon 7 abziehen!';
+                msg.style.color = '#ee5253';
+            }
+        }
+
+        function checkQuest3(choice) {
+            if (anubisQuests.q3) return;
+            const msg = document.getElementById('q3-msg');
+
+            if (choice === 2) { // Dachboden Schrank
+                anubisQuests.q3 = true;
+                saveAnubisState();
+            } else {
+                msg.innerText = '❌ Leider falsch! Schau lieber nochmal genauer auf den Dachboden.';
+                msg.style.color = '#ee5253';
+            }
         }
 
         // INITIALIZATION

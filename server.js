@@ -689,53 +689,90 @@ app.delete(['/api/wishes/:id', '/api/admin/wishes/:id', '/api/wish/:id', '/api/a
 });
 
 // ==========================================
-// LAUT.FM API PROXY (AKTUELLER SONG & HISTORIE)
+// LAUT.FM API PROXY (MIT INTELLIGENTEM FASTDETECT-FALLBACK)
 // ==========================================
 const LAUTFM_STATION = 'xoticradio';
 
-function fetchLautFmJson(pathSuffix, res, errorMsg) {
-    const options = {
-        hostname: 'api.laut.fm',
-        path: `/station/${LAUTFM_STATION}${pathSuffix}`,
-        method: 'GET',
-        headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'application/json',
-            'Cache-Control': 'no-cache'
-        }
-    };
+function getLautFmPromise(pathSuffix) {
+    return new Promise((resolve) => {
+        const cleanSuffix = pathSuffix.startsWith('/') ? pathSuffix : '/' + pathSuffix;
+        const separator = cleanSuffix.includes('?') ? '&' : '?';
+        const finalPath = `/station/${LAUTFM_STATION}${cleanSuffix}${separator}r=${Math.random().toString(36).substring(7)}&_t=${Date.now()}`;
 
+        const options = {
+            hostname: 'api.laut.fm',
+            path: finalPath,
+            method: 'GET',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'application/json',
+                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                'Pragma': 'no-cache'
+            }
+        };
+
+        https.get(options, (apiRes) => {
+            let body = '';
+            apiRes.on('data', chunk => body += chunk);
+            apiRes.on('end', () => {
+                try {
+                    resolve(JSON.parse(body));
+                } catch (e) {
+                    resolve(null);
+                }
+            });
+        }).on('error', (err) => resolve(null));
+    });
+}
+
+app.get('/api/lautfm/current', async (req, res) => {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
 
-    https.get(options, (apiRes) => {
-        let body = '';
-        apiRes.on('data', chunk => body += chunk);
-        apiRes.on('end', () => {
-            try {
-                const data = JSON.parse(body);
-                res.json(data);
-            } catch (e) {
-                res.status(500).json({ error: "Parse Fehler" });
+    try {
+        // 1. Primären Song versuchen
+        let song = await getLautFmPromise('/current_song');
+
+        // 2. Prüfen, ob der gelieferte Song laut 'ends_at' abgelaufen ist
+        let isExpired = false;
+        if (song && song.ends_at) {
+            const endsAtDate = new Date(song.ends_at.replace(' ', 'T'));
+            if (!isNaN(endsAtDate.getTime()) && Date.now() > endsAtDate.getTime()) {
+                isExpired = true; // Laut.fm-CDN hängt fest!
             }
-        });
-    }).on('error', (err) => {
-        console.error("laut.fm Fehler:", err);
-        res.status(500).json({ error: errorMsg });
-    });
-}
+        }
 
-app.get('/api/lautfm/current', (req, res) => {
-    fetchLautFmJson('/current_song', res, "Fehler beim Laden des aktuellen Songs");
+        // 3. Falls abgelaufen oder leer -> sofort neusten Song aus der Historie wählen
+        if (!song || !song.title || isExpired) {
+            const history = await getLautFmPromise('/last_songs');
+            if (Array.isArray(history) && history.length > 0) {
+                song = history[0];
+            }
+        }
+
+        res.json(song || {});
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Laden des Songs" });
+    }
 });
 
-app.get('/api/lautfm/history', (req, res) => {
-    fetchLautFmJson('/last_songs', res, "Fehler beim Laden der Song-Historie");
+app.get('/api/lautfm/history', async (req, res) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+
+    const history = await getLautFmPromise('/last_songs');
+    res.json(history || []);
 });
 
-app.get('/api/lautfm/station', (req, res) => {
-    fetchLautFmJson('', res, "Fehler beim Laden der Sender-Infos");
+app.get('/api/lautfm/station', async (req, res) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+
+    const station = await getLautFmPromise('');
+    res.json(station || {});
 });
 
 // SERVER START

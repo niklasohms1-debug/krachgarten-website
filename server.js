@@ -689,19 +689,16 @@ app.delete(['/api/wishes/:id', '/api/admin/wishes/:id', '/api/wish/:id', '/api/a
 });
 
 // ==========================================
-// LAUT.FM API PROXY (MIT INTELLIGENTEM FASTDETECT-FALLBACK)
+// LAUT.FM API PROXY (FEHLERFREI & ROBUST)
 // ==========================================
 const LAUTFM_STATION = 'xoticradio';
 
-function getLautFmPromise(pathSuffix) {
+function fetchLautFm(pathSuffix) {
     return new Promise((resolve) => {
         const cleanSuffix = pathSuffix.startsWith('/') ? pathSuffix : '/' + pathSuffix;
-        const separator = cleanSuffix.includes('?') ? '&' : '?';
-        const finalPath = `/station/${LAUTFM_STATION}${cleanSuffix}${separator}r=${Math.random().toString(36).substring(7)}&_t=${Date.now()}`;
-
         const options = {
             hostname: 'api.laut.fm',
-            path: finalPath,
+            path: `/station/${LAUTFM_STATION}${cleanSuffix}`,
             method: 'GET',
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36',
@@ -716,12 +713,20 @@ function getLautFmPromise(pathSuffix) {
             apiRes.on('data', chunk => body += chunk);
             apiRes.on('end', () => {
                 try {
-                    resolve(JSON.parse(body));
+                    if (apiRes.statusCode === 200) {
+                        resolve(JSON.parse(body));
+                    } else {
+                        console.error(`Laut.fm HTTP Status ${apiRes.statusCode} für ${cleanSuffix}`);
+                        resolve(null);
+                    }
                 } catch (e) {
                     resolve(null);
                 }
             });
-        }).on('error', (err) => resolve(null));
+        }).on('error', (err) => {
+            console.error("Laut.fm Verbindungsfehler:", err.message);
+            resolve(null);
+        });
     });
 }
 
@@ -731,21 +736,21 @@ app.get('/api/lautfm/current', async (req, res) => {
     res.set('Expires', '0');
 
     try {
-        // 1. Primären Song versuchen
-        let song = await getLautFmPromise('/current_song');
+        // 1. Primären Song abfragen
+        let song = await fetchLautFm('/current_song');
 
-        // 2. Prüfen, ob der gelieferte Song laut 'ends_at' abgelaufen ist
+        // 2. Prüfen, ob der gelieferte Song abgelaufen ist
         let isExpired = false;
         if (song && song.ends_at) {
-            const endsAtDate = new Date(song.ends_at.replace(' ', 'T'));
-            if (!isNaN(endsAtDate.getTime()) && Date.now() > endsAtDate.getTime()) {
-                isExpired = true; // Laut.fm-CDN hängt fest!
+            const endsAtMs = Date.parse(song.ends_at);
+            if (!isNaN(endsAtMs) && Date.now() > endsAtMs + 3000) {
+                isExpired = true;
             }
         }
 
-        // 3. Falls abgelaufen oder leer -> sofort neusten Song aus der Historie wählen
+        // 3. Falls leer oder abgelaufen -> aus Historie nachladen
         if (!song || !song.title || isExpired) {
-            const history = await getLautFmPromise('/last_songs');
+            const history = await fetchLautFm('/last_songs');
             if (Array.isArray(history) && history.length > 0) {
                 song = history[0];
             }
@@ -762,7 +767,7 @@ app.get('/api/lautfm/history', async (req, res) => {
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
 
-    const history = await getLautFmPromise('/last_songs');
+    const history = await fetchLautFm('/last_songs');
     res.json(history || []);
 });
 
@@ -771,7 +776,7 @@ app.get('/api/lautfm/station', async (req, res) => {
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
 
-    const station = await getLautFmPromise('');
+    const station = await fetchLautFm('');
     res.json(station || {});
 });
 

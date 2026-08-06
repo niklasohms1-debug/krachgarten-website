@@ -533,23 +533,55 @@
         </div>
 
         <!-- ===================================================
-             TAB 5: COMMUNITY
+             TAB 5: COMMUNITY (MINIGAMES ARCADE)
              =================================================== -->
         <div id="tab-community" class="tab-content">
-            <div class="habbo-card">
-                <div class="card-header">
-                    <span>🎉 Interaktive Reaktionen</span>
-                </div>
-                <div class="card-body" style="text-align: center;">
-                    <p style="margin-bottom: 15px; font-weight: bold;">Wie gefällt dir der aktuelle Stream?</p>
-                    <div style="display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;" id="reactions-box">
-                        <button onclick="sendReaction('🔥')" style="background:#f5f6fa; border:1px solid #dcdde1; padding:10px 15px; border-radius:8px; cursor:pointer; font-size:1.2rem;">🔥 <span id="react-🔥">0</span></button>
-                        <button onclick="sendReaction('💖')" style="background:#f5f6fa; border:1px solid #dcdde1; padding:10px 15px; border-radius:8px; cursor:pointer; font-size:1.2rem;">💖 <span id="react-💖">0</span></button>
-                        <button onclick="sendReaction('🎸')" style="background:#f5f6fa; border:1px solid #dcdde1; padding:10px 15px; border-radius:8px; cursor:pointer; font-size:1.2rem;">🎸 <span id="react-🎸">0</span></button>
-                        <button onclick="sendReaction('🎉')" style="background:#f5f6fa; border:1px solid #dcdde1; padding:10px 15px; border-radius:8px; cursor:pointer; font-size:1.2rem;">🎉 <span id="react-🎉">0</span></button>
-                        <button onclick="sendReaction('🍺')" style="background:#f5f6fa; border:1px solid #dcdde1; padding:10px 15px; border-radius:8px; cursor:pointer; font-size:1.2rem;">🍺 <span id="react-🍺">0</span></button>
+            <div class="content-grid">
+                
+                <!-- GAME 1: MEMORY -->
+                <div>
+                    <div class="habbo-card">
+                        <div class="card-header">
+                            <span>🧠 Krachgarten Memory</span>
+                            <span id="memory-stats" style="font-size: 0.8rem; font-weight: normal;">Versuche: 0 | Paare: 0/6</span>
+                        </div>
+                        <div class="card-body" style="text-align: center;">
+                            <p style="font-size: 0.85rem; margin-bottom: 12px; color: #7f8c8d;">
+                                Finde alle zusammengehörenden Radio-Symbole!
+                            </p>
+
+                            <!-- MEMORY SPIELFELD -->
+                            <div id="memory-board" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 360px; margin: 0 auto;">
+                                <!-- Dynamisch per JS -->
+                            </div>
+
+                            <button onclick="initMemory()" class="btn-submit" style="margin-top: 15px; width: auto; padding: 8px 20px;">
+                                🔄 Spiel neu starten
+                            </button>
+                        </div>
                     </div>
                 </div>
+
+                <!-- GAME 2: RADIO QUIZ -->
+                <div>
+                    <div class="habbo-card">
+                        <div class="card-header">
+                            <span>❓ Radio & Musik Quiz</span>
+                            <span id="quiz-score" style="font-size: 0.8rem; font-weight: normal;">Punkte: 0</span>
+                        </div>
+                        <div class="card-body">
+                            <div id="quiz-box">
+                                <p id="quiz-question" style="font-weight: bold; font-size: 0.95rem; margin-bottom: 15px; color: #2f3640;">
+                                    Lade Quiz...
+                                </p>
+                                <div id="quiz-options" style="display: flex; flex-direction: column; gap: 8px;">
+                                    <!-- Optionen dynamisch per JS -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -585,7 +617,10 @@
             if (tabName === 'sendeplan') loadSchedule();
             if (tabName === 'team') loadTeam();
             if (tabName === 'radio') loadRadioHistory();
-            if (tabName === 'community') loadReactions();
+            if (tabName === 'community') {
+                initMemory();
+                initQuiz();
+            }
             if (tabName === 'startseite') loadNews();
         }
 
@@ -755,38 +790,6 @@
             }
         }
 
-        // EMOJI REAKTIONEN
-        async function loadReactions() {
-            try {
-                const res = await fetch('/api/data');
-                if (!res.ok) return;
-                const data = await res.json();
-                if (data.reactions) {
-                    for (const [emoji, count] of Object.entries(data.reactions)) {
-                        const el = document.getElementById('react-' + emoji);
-                        if (el) el.innerText = count;
-                    }
-                }
-            } catch (e) {}
-        }
-
-        async function sendReaction(emoji) {
-            try {
-                const res = await fetch('/api/reactions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ emoji })
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.reactions && data.reactions[emoji] !== undefined) {
-                        const el = document.getElementById('react-' + emoji);
-                        if (el) el.innerText = data.reactions[emoji];
-                    }
-                }
-            } catch (e) {}
-        }
-
         // WUNSCHBOX SENDEN
         async function sendWish(e) {
             e.preventDefault();
@@ -811,6 +814,148 @@
             } catch (err) {
                 alert('Netzwerkfehler beim Senden.');
             }
+        }
+
+        // ==========================================
+        // MINIGAMES LOGIK (MEMORY & QUIZ)
+        // ==========================================
+
+        // --- 1. MEMORY GAME ---
+        const memoryIcons = ['📻', '🎧', '🎸', '🎤', '🎵', '🍺'];
+        let memoryCards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let memoryAttempts = 0;
+        let canFlip = true;
+
+        function initMemory() {
+            const board = document.getElementById('memory-board');
+            if (!board) return;
+
+            memoryCards = [...memoryIcons, ...memoryIcons].sort(() => Math.random() - 0.5);
+            flippedCards = [];
+            matchedPairs = 0;
+            memoryAttempts = 0;
+            canFlip = true;
+
+            const statsEl = document.getElementById('memory-stats');
+            if (statsEl) statsEl.innerText = `Versuche: 0 | Paare: 0/${memoryIcons.length}`;
+
+            board.innerHTML = memoryCards.map((icon, idx) => `
+                <div onclick="flipMemoryCard(${idx})" id="m-card-${idx}" style="
+                    height: 65px; background: #0b4975; color: #fff; border: 2px solid #083b60; 
+                    border-radius: 6px; display: flex; align-items: center; justify-content: center; 
+                    font-size: 1.8rem; cursor: pointer; user-select: none; transition: transform 0.2s;
+                ">
+                    ❓
+                </div>
+            `).join('');
+        }
+
+        function flipMemoryCard(idx) {
+            if (!canFlip) return;
+            const cardEl = document.getElementById(`m-card-${idx}`);
+            if (flippedCards.includes(idx) || cardEl.innerText !== '❓') return;
+
+            cardEl.innerText = memoryCards[idx];
+            cardEl.style.background = '#ffffff';
+            cardEl.style.color = '#000';
+            flippedCards.push(idx);
+
+            if (flippedCards.length === 2) {
+                memoryAttempts++;
+                canFlip = false;
+                const [first, second] = flippedCards;
+
+                if (memoryCards[first] === memoryCards[second]) {
+                    matchedPairs++;
+                    flippedCards = [];
+                    canFlip = true;
+                    if (matchedPairs === memoryIcons.length) {
+                        setTimeout(() => alert(`🎉 Gewonnen! Du hast alle Paare in ${memoryAttempts} Versuchen gefunden!`), 200);
+                    }
+                } else {
+                    setTimeout(() => {
+                        const c1 = document.getElementById(`m-card-${first}`);
+                        const c2 = document.getElementById(`m-card-${second}`);
+                        if (c1) { c1.innerText = '❓'; c1.style.background = '#0b4975'; }
+                        if (c2) { c2.innerText = '❓'; c2.style.background = '#0b4975'; }
+                        flippedCards = [];
+                        canFlip = true;
+                    }, 900);
+                }
+
+                const statsEl = document.getElementById('memory-stats');
+                if (statsEl) statsEl.innerText = `Versuche: ${memoryAttempts} | Paare: ${matchedPairs}/${memoryIcons.length}`;
+            }
+        }
+
+        // --- 2. QUIZ GAME ---
+        const quizQuestions = [
+            {
+                q: "Wofür steht die Abkürzung 'DJ'?",
+                answers: ["Disc Jockey", "Digital Jukebox", "Direct Jammer", "Dance Joiner"],
+                correct: 0
+            },
+            {
+                q: "Auf welcher Plattform streamt Krachgarten Radio?",
+                answers: ["Spotify", "Laut.fm", "Soundcloud", "Twitch"],
+                correct: 1
+            },
+            {
+                q: "Welche Farbe hat der Hintergrund im Habbo-Design?",
+                answers: ["Neongelb", "Ozeanblau", "Schwarz", "Grün"],
+                correct: 1
+            },
+            {
+                q: "Welches Symbol steht für den Play-Button?",
+                answers: ["⏸️", "⏹️", "▶️", "🔄"],
+                correct: 2
+            }
+        ];
+
+        let currentQuizIdx = 0;
+        let quizScore = 0;
+
+        function initQuiz() {
+            currentQuizIdx = 0;
+            quizScore = 0;
+            showQuizQuestion();
+        }
+
+        function showQuizQuestion() {
+            const scoreEl = document.getElementById('quiz-score');
+            const questionEl = document.getElementById('quiz-question');
+            const optionsEl = document.getElementById('quiz-options');
+
+            if (!questionEl || !optionsEl) return;
+
+            if (scoreEl) scoreEl.innerText = `Punkte: ${quizScore}`;
+
+            if (currentQuizIdx >= quizQuestions.length) {
+                questionEl.innerHTML = `🎉 Quiz beendet! Du hast <strong>${quizScore} von ${quizQuestions.length}</strong> Punkten erreicht!`;
+                optionsEl.innerHTML = `<button onclick="initQuiz()" class="btn-submit">Erneut spielen 🔄</button>`;
+                return;
+            }
+
+            const q = quizQuestions[currentQuizIdx];
+            questionEl.innerText = `${currentQuizIdx + 1}. ${q.q}`;
+
+            optionsEl.innerHTML = q.answers.map((ans, idx) => `
+                <button onclick="checkAnswer(${idx})" class="form-control" style="
+                    text-align: left; cursor: pointer; font-weight: bold; padding: 10px; transition: background 0.15s;
+                " onmouseover="this.style.background='#ffeaa7'" onmouseout="this.style.background='#f5f6fa'">
+                    ${String.fromCharCode(65 + idx)}) ${escapeHtml(ans)}
+                </button>
+            `).join('');
+        }
+
+        function checkAnswer(chosenIdx) {
+            if (chosenIdx === quizQuestions[currentQuizIdx].correct) {
+                quizScore++;
+            }
+            currentQuizIdx++;
+            showQuizQuestion();
         }
 
         // INITIALIZATION

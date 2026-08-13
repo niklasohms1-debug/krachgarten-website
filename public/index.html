@@ -2,19 +2,247 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Ende.</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Krachgarten Radio | Countdown</title>
     <style>
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: #121214; 
-            color: #e1e1e6; 
-            padding: 20px; 
+        * {
+            box-sizing: border-box;
             margin: 0;
+            padding: 0;
         }
 
-        
-            `).join('');
+        body {
+            font-family: 'Verdana', sans-serif;
+            background: #0b4975 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" opacity="0.12"><circle cx="20" cy="20" r="1.5" fill="%23fff"/><circle cx="80" cy="50" r="2" fill="%23fff"/><circle cx="40" cy="80" r="1" fill="%23fff"/></svg>') repeat;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            padding: 20px;
         }
-    </script>
-</body>
-</html>
+
+        .countdown-box {
+            background: #17191e;
+            border: 3px solid #ff6b35;
+            border-radius: 12px;
+            padding: 40px 25px;
+            max-width: 550px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: #ffffff;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            text-shadow: 2px 2px 0px #000;
+        }
+
+        .sub-heading {
+            color: #ff9f43;
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 25px;
+        }
+
+        .timer-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .timer-unit {
+            background: #202024;
+            border: 1px solid #29292e;
+            padding: 15px 8px;
+            border-radius: 8px;
+        }
+
+        .timer-number {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #1dd1a1;
+        }
+
+        .timer-label {
+            font-size: 0.72rem;
+            color: #a4b0be;
+            text-transform: uppercase;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
+        .status-text {
+            font-size: 0.9rem;
+            color: #dcdde1;
+            line-height: 1.5;
+        }
+
+        @media (max-width: 480px) {
+            .timer-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            h1 { font-size: 1.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="countdown-box">
+        <h1>📻 Krachgarten Radio</h1>
+        <p class="sub-heading">🚀 Wir starten morgen um 18:00 Uhr!</p>
+
+        <div class="timer-grid">
+            <div class="timer-unit">
+                <div id="days" class="timer-number">00</div>
+                <div class="timer-label">Tage</div>
+            </div>
+            <div class="timer-unit">
+                <div id="hours" class="timer-number">00</div>
+                <div class="timer-label">Stunden</div>
+            </div>
+            <div class="timer-unit">
+                <div id="minutes" class="timer-number">00</div>
+                <div class="timer-label">Minuten</div>
+            </div>
+            <div class="timer-unit">
+                <div id="seconds" class="timer-number">00</div>
+                <div class="timer-label">Sekunden</div>
+            </div>
+        </div>
+
+        <p class="status-text">Mache dich bereit für Musikwünsche, Krachies, Minigames & den Song der Woche!</p>
+    </div>
+
+    <script>
+        // Automatische Berechnung: Morgen um 18:00 Uhr
+        const targetDate = new Date();
+        targetDate.setDate(targetDate.getDate() + 1);
+        targetDate.setHours(18, 0, 0, 0);
+
+        // HINWEIS: Falls du ein ganz bestimmtes Datum festlegen willst, 
+        // kannst du oben auskommentieren und stattdessen diese Zeile nutzen:
+        // const targetDate = new Date('2026-08-14T18:00:00');
+
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = targetDate.getTime() - now;
+
+            if (distance <= 0) {
+                document.querySelector('.countdown-box').innerHTML = `
+                    <h1>🎉 WIR SIND ON AIR!</h1>
+                    <p class="sub-heading">Lade die Seite neu, um das Dashboard zu öffnen!</p>
+                    <button onclick="location.reload()" style="background:linear-gradient(180deg, #ff9f43 0%, #ee5253 100%); border:none; color:#fff; font-weight:bold; padding:12px 24px; border-radius:6px; cursor:pointer; font-size:1rem; margin-top:10px;">Jetzt Reinhören 📻</button>
+                `;
+                return;
+            }
+
+            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1Hier ist eine schicke, moderne **Countdown-Seite**, die du direkt als `index_neu.html` (oder `index.html`) in deinen `public/`-Ordner legen kannst. 
+
+Sie zeigt einen großen Timer bis morgen um **18:00 Uhr** und schaltet automatisch eine Nachricht ("Wir sind On Air!") frei, wenn die Zeit abgelaufen ist.
+
+---
+
+### 1. `public/index_neu.html` (Countdown-Seite)
+
+Erstelle oder ersetze die Datei `public/index_neu.html` mit folgendem Code:
+
+```html
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Krachgarten Radio | Countdown</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Verdana', sans-serif;
+            background: #0b4975 url('data:image/svg+xml;utf8,<svg xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" width="100" height="100" opacity="0.12"><circle cx="20" cy="20" r="1.5" fill="%23fff"/><circle cx="80" cy="50" r="2" fill="%23fff"/><circle cx="40" cy="80" r="1" fill="%23fff"/></svg>') repeat;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .countdown-card {
+            background: #17191e;
+            border: 3px solid #ff6b35;
+            border-radius: 12px;
+            padding: 40px 30px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+        }
+
+        .logo-title {
+            font-size: 2.2rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            color: #ffffff;
+            text-shadow: 2px 2px 0px #000, -1px -1px 0 #000, 1px -1px 0 #000;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #ff9f43;
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .timer-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .timer-box {
+            background: #202024;
+            border: 1px solid #29292e;
+            border-radius: 8px;
+            padding: 15px 5px;
+        }
+
+        .timer-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #1dd1a1;
+            font-family: 'Courier New', monospace;
+        }
+
+        .timer-label {
+            font-size: 0.75rem;
+            color: #a4b0be;
+            text-transform: uppercase;
+            margin-top: 5px;
+        }
+
+        .status-msg {
+            font-size: 0.95rem;
+            color: #dcdde1;
+            line-height: 1.5;
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 6px;
+            border-left: 4px solid #ff9f43;
+        }
+
+        @media (max-width: 480px) {
+            .timer-number { font-size:

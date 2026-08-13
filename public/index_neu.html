@@ -6,7 +6,7 @@
     <title>Krachgarten Radio | Dashboard V2</title>
     <style>
         /* ========================================== */
-        /* MODAL OVERLAYS (TEILEN, NEWS, VERIFY)      */
+        /* MODAL OVERLAYS (TEILEN, NEWS)             */
         /* ========================================== */
         .modal-overlay {
             display: none;
@@ -777,15 +777,12 @@
                         <button onclick="logoutUser()" style="background:#ee5253; border:none; color:#fff; font-size:0.75rem; font-weight:bold; padding:2px 8px; border-radius:4px; cursor:pointer;">Abmelden 🚪</button>
                     </div>
                     <div class="card-body">
-                        <div id="email-verify-status-banner" style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; display: flex; align-items: center; justify-content: space-between;"></div>
-
                         <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap; background: #f5f6fa; padding: 15px; border-radius: 6px; border: 1px solid #dcdde1; margin-bottom: 20px;">
                             <div id="profile-avatar-display" style="width: 75px; height: 75px; background: #0b4975; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; border: 3px solid #ff9f43; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
                                 🕺
                             </div>
                             <div>
                                 <h2 id="profile-username-display" style="color: #2f3640; font-size: 1.4rem;">Unbekannt</h2>
-                                <p id="profile-email-display" style="color: #7f8c8d; font-size: 0.85rem;">email@beispiel.de</p>
                                 <div style="margin-top: 6px;">
                                     <span class="krachies-badge" style="font-size: 0.9rem;">🪙 <span id="profile-krachies-display">0</span> Krachies</span>
                                     <span id="admin-status-badge" style="display:none; background:#8e44ad; color:#fff; font-weight:bold; padding:2px 8px; border-radius:10px; font-size:0.78rem; margin-left:6px;">⚡ ADMIN</span>
@@ -931,7 +928,6 @@
                                 <div class="form-group">
                                     <label for="reg-username">Benutzername:</label>
                                     <input type="text" id="reg-username" class="form-control" placeholder="Wähle deinen Namen" required>
-    
                                 </div>
                                 <div class="form-group">
                                     <label for="reg-pass1">Passwort:</label>
@@ -1052,7 +1048,6 @@
         </div>
     </div>
 
-    
     <!-- MODAL: TEILEN -->
     <div id="share-modal" class="modal-overlay">
         <div class="modal-box" style="max-width: 450px;">
@@ -1138,7 +1133,6 @@
             const authView = document.getElementById('profile-auth-view');
             const adminTab = document.getElementById('nav-admin');
             const nameDisplay = document.getElementById('profile-username-display');
-          
 
             if (currentUser) {
                 const isAdmin = currentUser.isAdmin || currentUser.username.toLowerCase() === 'admin' || currentUser.username.toLowerCase() === 'niklas';
@@ -1153,7 +1147,6 @@
                 if (loggedInView) loggedInView.style.display = 'block';
                 if (authView) authView.style.display = 'none';
 
-                // GOLDNAME FIX: Nur gold färben wenn gekauft!
                 if (nameDisplay) {
                     nameDisplay.innerText = currentUser.username;
                     if (currentUser.inventory && currentUser.inventory.hasGoldName === true) {
@@ -1164,19 +1157,7 @@
                         nameDisplay.style.textShadow = 'none';
                     }
                 }
-                       
-                    } else {
-                        verifyBanner.style.background = '#fef9e7';
-                        verifyBanner.style.border = '1px solid #f39c12';
-                        verifyBanner.style.color = '#d35400';
-                        verifyBanner.innerHTML = `
-                            <span>⚠️ E-Mail Adresse unbestätigt (+50 Krachies Belohnung).</span>
-                            <button onclick="openVerifyModal()" style="background:#f39c12; border:none; color:#fff; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">Code eingeben ✉️</button>
-                        `;
-                    }
-                }
 
-              
                 document.getElementById('profile-krachies-display').innerText = currentUser.krachies || 0;
                 document.getElementById('profile-avatar-display').innerText = currentUser.avatar || '🕺';
                 document.getElementById('profile-status-input').value = currentUser.status || '';
@@ -1221,57 +1202,37 @@
             alert(`🪙 +${amount} Krachies gutgeschrieben! (${reason})`);
         }
 
-       async function handleRegister(e) {
-    e.preventDefault();
-    const username = document.getElementById('reg-username').value.trim();
-    const pass1 = document.getElementById('reg-pass1').value;
-    const pass2 = document.getElementById('reg-pass2').value;
+        async function handleRegister(e) {
+            e.preventDefault();
+            const username = document.getElementById('reg-username').value.trim();
+            const pass1 = document.getElementById('reg-pass1').value;
+            const pass2 = document.getElementById('reg-pass2').value;
 
-    if (pass1 !== pass2) { alert('❌ Die Passwörter stimmen nicht überein!'); return; }
+            if (pass1 !== pass2) { alert('❌ Die Passwörter stimmen nicht überein!'); return; }
 
-    const isAdmin = username.toLowerCase() === 'admin' || username.toLowerCase() === 'niklas';
+            const isAdmin = username.toLowerCase() === 'admin' || username.toLowerCase() === 'niklas';
 
-    currentUser = {
-        username: username,
-        email: '',
-        krachies: 50, // Gibt direkt die 50 Start-Krachies
-        avatar: isAdmin ? '👑' : '🕺',
-        isAdmin: isAdmin,
-        isVerified: true,
-        inventory: { hasGoldName: false }
-    };
+            currentUser = {
+                username: username,
+                email: '',
+                krachies: 50,
+                avatar: isAdmin ? '👑' : '🕺',
+                isAdmin: isAdmin,
+                isVerified: true,
+                inventory: { hasGoldName: false }
+            };
 
-    try {
-        await fetch('/api/auth/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password: pass1 })
-        });
-    } catch(err) {}
+            try {
+                await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password: pass1 })
+                });
+            } catch(err) {}
 
-    localStorage.setItem('krachgarten_user', JSON.stringify(currentUser));
-    updateUserUI();
-    alert('🎉 Account erfolgreich erstellt!');
-}
-        
-
-
-            if (currentUser) {
-                currentUser.isVerified = true;
-                currentUser.krachies = (currentUser.krachies || 0) + 50;
-                localStorage.setItem('krachgarten_user', JSON.stringify(currentUser));
-
-                try {
-                    await fetch('/api/auth/verify', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ username: currentUser.username, code: inputCode })
-                    });
-                } catch(e){}
-
-                updateUserUI();
-               
-            }
+            localStorage.setItem('krachgarten_user', JSON.stringify(currentUser));
+            updateUserUI();
+            alert('🎉 Account erfolgreich erstellt!');
         }
 
         async function handleLogin(e) {

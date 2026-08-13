@@ -78,7 +78,7 @@ mongoose.connect(MONGO_URI)
 // 1. USER SCHEMA
 const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
-    email: { type: String, required: true },
+    email: { type: String, default: '' },
     password: { type: String, required: true },
     krachies: { type: Number, default: 0 },
     avatar: { type: String, default: '🕺' },
@@ -304,14 +304,10 @@ app.post('/api/auth/register', async (req, res) => {
         const userPass = password || pass1;
         const verifyCode = code || Math.floor(100000 + Math.random() * 900000).toString();
 
-        if (!username || !userMail || !userPass) {
+       if (!username || !userPass) {
             return res.status(400).json({ error: "Bitte alle Felder ausfüllen." });
         }
-
-        const existingUser = await User.findOne({
-            $or: [
-                { username: new RegExp('^' + username.trim() + '$', 'i') },
-                { email: userMail }
+const existingUser = await User.findOne({ username: new RegExp('^' + username.trim() + '$', 'i') });
             ]
         });
 
@@ -323,7 +319,7 @@ app.post('/api/auth/register', async (req, res) => {
 
         const newUser = await User.create({
             username: username.trim(),
-            email: userMail,
+            email: userMail || '',
             password: userPass,
             krachies: 0,
             avatar: isAdmin ? '👑' : '🕺',

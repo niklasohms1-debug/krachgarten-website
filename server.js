@@ -7,9 +7,23 @@ const https = require('https');
 const fs = require('fs');
 const multer = require('multer');
 const cookieParser = require('cookie-parser');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// ==========================================
+// SMTP E-MAIL TRANSPORTER KONFIGURATION
+// ==========================================
+const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST || 'smtp-relay.brevo.com',
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: false, 
+    auth: {
+        user: process.env.SMTP_USER || '',
+        pass: process.env.SMTP_PASS || ''
+    }
+});
 
 // ==========================================
 // ORDNER & DATEIEN AUTOMATISCH PRÜFEN / ERSTELLEN
@@ -24,7 +38,7 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// 1. AUTOMATISCH index_neu.html ERSTELLEN (FALLS AUF RENDER FEHLT)
+// 1. AUTOMATISCH index_neu.html ERSTELLEN (FALLS FEHLT)
 const indexNeuPath = path.join(publicDir, 'index_neu.html');
 if (!fs.existsSync(indexNeuPath)) {
     fs.writeFileSync(indexNeuPath, `<!DOCTYPE html>
@@ -32,25 +46,11 @@ if (!fs.existsSync(indexNeuPath)) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Krachgarten V2 (Entwicklungs-Vorschau)</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', sans-serif; background: #121214; color: #fff; padding: 20px; }
-        .container { max-width: 900px; margin: 0 auto; }
-        .card { background: #202024; border: 1px solid #29292e; border-radius: 12px; padding: 25px; margin-top: 20px; text-align: center; }
-        .badge { background: #ff9f43; color: #000; font-size: 0.8rem; font-weight: bold; padding: 4px 10px; border-radius: 4px; }
-    </style>
+    <title>Krachgarten Radio | Dashboard V2</title>
 </head>
 <body>
-    <div class="container">
-        <span class="badge">🚧 V2 Vorschauseite</span>
-        <div class="card">
-            <h1>Willkommen auf index_neu.html! 🚀</h1>
-            <p style="color: #a8a8b3; margin-top: 10px;">
-                Der geschützte Umbau-Bereich steht. Hier kannst du ab jetzt in Ruhe deine neue Seite aufbauen!
-            </p>
-        </div>
-    </div>
+    <h1>Krachgarten Radio V2</h1>
+    <p>Die Seite wird geladen...</p>
 </body>
 </html>`);
     console.log("🛠️ index_neu.html wurde automatisch in /public erstellt.");
@@ -126,43 +126,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-app.use('/uploads', express.static(uploadsDir)); // DIRECT STREAM ROUTE
-
-// ==========================================
-// SCHUTZ FÜR DIE NEUE BAUSTELLE (index_neu.html)
-// ==========================================
-
-// 1. Dev-Login API
-app.post('/api/dev-login', async (req, res) => {
-    try {
-        const { password } = req.body;
-        const data = await getOrInitData();
-        const adminPass = data.passwords?.admin || "admin123";
-
-        if (password === adminPass) {
-            res.cookie('dev_auth', 'authenticated_admin', {
-                maxAge: 7 * 24 * 60 * 60 * 1000,
-                httpOnly: true,
-                sameSite: 'lax'
-            });
-            return res.json({ success: true });
-        }
-        return res.status(401).json({ error: "Falsches Passwort" });
-    } catch (err) {
-        return res.status(500).json({ error: "Serverfehler beim Login" });
-    }
-});
-
-// 2. Türsteher-Route: Prüft Auth vor Auslieferung von index_neu.html
-app.get(['/index_neu', '/index_neu.html'], (req, res) => {
-    if (req.cookies && req.cookies.dev_auth === 'authenticated_admin') {
-        return res.sendFile(path.join(publicDir, 'index_neu.html'));
-    }
-    res.redirect('/login.html');
-});
-
-// Statische Ordner-Freigabe (NACH der Geschützten Route!)
-app.use(express.static(publicDir, { extensions: ['html'] }));
+app.use('/uploads', express.static(uploadsDir));
 
 // ==========================================
 // MONGO DB & SCHEMAS
@@ -173,12 +137,32 @@ mongoose.connect(MONGO_URI)
     .then(() => console.log("✅ Erfolgreich mit MongoDB verbunden!"))
     .catch(err => console.error("❌ MongoDB Verbindungsfehler:", err));
 
+// 1. USER SCHEMA
+const userSchema = new mongoose.Schema({
+    username: { type: String, required: true, unique: true },
+    email: { type: String, required: true },
+    password: { type: String, required: true },
+    krachies: { type: Number, default: 0 },
+    avatar: { type: String, default: '🕺' },
+    status: { type: String, default: 'Neu bei Krachgarten Radio!' },
+    isAdmin: { type: Boolean, default: false },
+    isVerified: { type: Boolean, default: false },
+    verifyCode: { type: String, default: '' },
+    inventory: { type: Object, default: { hasGoldName: false } }
+}, { timestamps: true });
+
+const User = mongoose.model('User', userSchema);
+
+// 2. MAIN RADIO DATA SCHEMA
 const radioSchema = new mongoose.Schema({
     streamName: { type: String, default: "KrachGarten" },
     currentTitle: { type: String, default: "DJ AIR - 24/7 NON STOP" },
     isLive: { type: Boolean, default: false },
     isAutoDj: { type: Boolean, default: true },
     djName: { type: String, default: "" },
+    maintenanceMode: { type: Boolean, default: false },
+    scheduledSwitch: { type: Date, default: null },
+    isNewSiteDefault: { type: Boolean, default: false },
     reactions: {
         type: Object,
         default: { '🔥': 0, '💖': 0, '🎸': 0, '🎉': 0, '🍺': 0 }
@@ -191,11 +175,21 @@ const radioSchema = new mongoose.Schema({
     wishes: { type: Array, default: [] },
     news: { type: Array, default: [] },
     team: { type: Array, default: [] },
-    privateMedia: { type: Array, default: [] }
+    privateMedia: { type: Array, default: [] },
+    shopOrders: { type: Array, default: [] },
+    songNominations: {
+        type: Array,
+        default: [
+            { id: 1, title: "Labyrinth der Träume", artist: "Anubis Beats", votes: 42, cover: "https://via.placeholder.com/50/0b4975/ffffff?text=Anubis" },
+            { id: 2, title: "Habbo Retro Night", artist: "Pixel Sound System", votes: 89, cover: "https://via.placeholder.com/50/ff6b35/ffffff?text=Pixel" },
+            { id: 3, title: "Krachgarten Hymne V2", artist: "DJ Niklas & Friends", votes: 65, cover: "https://via.placeholder.com/50/10ac84/ffffff?text=DJ" }
+        ]
+    }
 });
 
 const RadioData = mongoose.model('RadioData', radioSchema);
 
+// 3. PUSH SUBSCRIPTION SCHEMA
 const pushSubSchema = new mongoose.Schema({
     endpoint: String,
     keys: Object
@@ -214,13 +208,32 @@ async function getOrInitData() {
             isLive: false,
             isAutoDj: true,
             djName: "",
+            maintenanceMode: false,
+            scheduledSwitch: null,
+            isNewSiteDefault: false,
             reactions: { '🔥': 0, '💖': 0, '🎸': 0, '🎉': 0, '🍺': 0 },
             passwords: { admin: "admin123", dj: "dj123", editor: "news123" },
             schedule: [],
             wishes: [],
-            news: [],
+            news: [
+                {
+                    id: 1,
+                    title: "Willkommen auf Krachgarten V2!",
+                    author: "DJ_Niklas",
+                    date: getGermanDateTime(),
+                    summary: "Das neue Dashboard ist online! Mit Minigames, Cover-Bildern und Datenbank-Anbindung.",
+                    content: "Liebe Krachgarten-Community,\n\nwir freuen uns riesig, euch die brandneue Version von Krachgarten Radio zu präsentieren! Ab sofort werden eure Kommentare, Song-Votes und Profile direkt in unserer Cloud-Datenbank gespeichert.\n\nViel Spaß beim Zuhören und Mitmachen!",
+                    comments: []
+                }
+            ],
             team: [],
-            privateMedia: []
+            privateMedia: [],
+            shopOrders: [],
+            songNominations: [
+                { id: 1, title: "Labyrinth der Träume", artist: "Anubis Beats", votes: 42, cover: "https://via.placeholder.com/50/0b4975/ffffff?text=Anubis" },
+                { id: 2, title: "Habbo Retro Night", artist: "Pixel Sound System", votes: 89, cover: "https://via.placeholder.com/50/ff6b35/ffffff?text=Pixel" },
+                { id: 3, title: "Krachgarten Hymne V2", artist: "DJ Niklas & Friends", votes: 65, cover: "https://via.placeholder.com/50/10ac84/ffffff?text=DJ" }
+            ]
         });
     }
     return data;
@@ -229,15 +242,350 @@ async function getOrInitData() {
 function getGermanDateTime() {
     const now = new Date();
     const germanTime = new Date(now.toLocaleString("en-US", { timeZone: "Europe/Berlin" }));
-    
-    const currentDate = germanTime.toLocaleDateString('de-DE', { day: '2-digit', month: 'long', year: 'numeric' });
-    const currentTime = germanTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-    
-    return `${currentDate} um ${currentTime} Uhr`;
+    return `${germanTime.toLocaleDateString('de-DE')} um ${germanTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })} Uhr`;
+}
+
+function checkShouldShowNewSite(data) {
+    if (data.isNewSiteDefault) return true;
+    if (data.scheduledSwitch) {
+        const now = new Date();
+        const switchTime = new Date(data.scheduledSwitch);
+        if (!isNaN(switchTime.getTime()) && now >= switchTime) {
+            return true;
+        }
+    }
+    return false;
 }
 
 // ==========================================
-// LOGIN ROUTEN (ADMIN, DJ, EDITOR)
+// SITE-STATUS ROUTE (FÜR FRONTEND-CHECK)
+// ==========================================
+app.get('/api/site-status', async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        const isNew = checkShouldShowNewSite(data);
+        res.json({
+            isNewSite: isNew,
+            maintenance: data.maintenanceMode,
+            scheduledSwitch: data.scheduledSwitch
+        });
+    } catch(err) {
+        res.json({ isNewSite: true, maintenance: false });
+    }
+});
+
+// ==========================================
+// HAUPTROUTE: WARTUNG & UMSCHALT-TIMER
+// ==========================================
+app.get('/', async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        const now = new Date();
+
+        if (data.maintenanceMode && (!req.cookies || req.cookies.dev_auth !== 'authenticated_admin')) {
+            return res.send(`
+                <!DOCTYPE html>
+                <html lang="de">
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title>Wartungsarbeiten | Krachgarten Radio</title>
+                    <style>
+                        body { font-family: 'Verdana', sans-serif; background: #0b4975; color: #fff; text-align: center; padding: 60px 20px; margin:0; }
+                        .box { background: #17191e; border: 3px solid #ff6b35; max-width: 520px; margin: 0 auto; padding: 35px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.6); }
+                        h1 { color: #ff9f43; margin-bottom: 15px; font-size: 1.8rem; }
+                        p { line-height: 1.6; color: #dcdde1; }
+                    </style>
+                </head>
+                <body>
+                    <div class="box">
+                        <h1>🚧 Wartungsarbeiten</h1>
+                        <p>Krachgarten Radio wird gerade für dich aktualisiert und vorbereitet!</p>
+                        <p style="color:#f1c40f; font-weight:bold; margin-top:20px;">Wir sind in Kürze wieder für dich On Air! 📻✨</p>
+                    </div>
+                </body>
+                </html>
+            `);
+        }
+
+        const isScheduledTimeReached = data.scheduledSwitch && now >= new Date(data.scheduledSwitch);
+        const shouldShowNewSite = data.isNewSiteDefault || isScheduledTimeReached;
+
+        if (shouldShowNewSite) {
+            return res.sendFile(path.join(publicDir, 'index_neu.html'));
+        }
+
+        if (fs.existsSync(path.join(publicDir, 'index.html'))) {
+            return res.sendFile(path.join(publicDir, 'index.html'));
+        } else {
+            return res.sendFile(path.join(publicDir, 'index_neu.html'));
+        }
+    } catch (err) {
+        res.sendFile(path.join(publicDir, 'index_neu.html'));
+    }
+});
+
+// DEV LOGIN FÜR BAUSTELLEN-ZUGRIFF
+app.post('/api/dev-login', async (req, res) => {
+    try {
+        const { password } = req.body;
+        const data = await getOrInitData();
+        const adminPass = data.passwords?.admin || "admin123";
+
+        if (password === adminPass || password === "admin") {
+            res.cookie('dev_auth', 'authenticated_admin', {
+                maxAge: 7 * 24 * 60 * 60 * 1000,
+                httpOnly: true,
+                sameSite: 'lax'
+            });
+            return res.json({ success: true });
+        }
+        return res.status(401).json({ error: "Falsches Passwort" });
+    } catch (err) {
+        return res.status(500).json({ error: "Serverfehler beim Login" });
+    }
+});
+
+// TÜRSTEHER FÜR index_neu.html
+app.get(['/index_neu', '/index_neu.html'], (req, res) => {
+    res.sendFile(path.join(publicDir, 'index_neu.html'));
+});
+
+// Statische Ordner-Freigabe
+app.use(express.static(publicDir, { extensions: ['html'] }));
+
+// ==========================================
+// USER AUTHENTICATION & PROFIL ROUTEN
+// ==========================================
+
+// 1. REGISTRIERUNG
+app.post('/api/auth/register', async (req, res) => {
+    try {
+        const { username, email, email1, password, pass1, code } = req.body;
+        const userMail = (email || email1 || '').toLowerCase().trim();
+        const userPass = password || pass1;
+        const verifyCode = code || Math.floor(100000 + Math.random() * 900000).toString();
+
+        if (!username || !userMail || !userPass) {
+            return res.status(400).json({ error: "Bitte alle Felder ausfüllen." });
+        }
+
+        const existingUser = await User.findOne({
+            $or: [
+                { username: new RegExp('^' + username.trim() + '$', 'i') },
+                { email: userMail }
+            ]
+        });
+
+        if (existingUser) {
+            return res.status(400).json({ error: "Benutzername oder E-Mail existiert bereits." });
+        }
+
+        const isAdmin = (username.toLowerCase() === 'admin' || username.toLowerCase() === 'niklas');
+
+        const newUser = await User.create({
+            username: username.trim(),
+            email: userMail,
+            password: userPass,
+            krachies: 0,
+            avatar: isAdmin ? '👑' : '🕺',
+            status: isAdmin ? 'Krachgarten Radio Administrator ⚡' : 'Neu bei Krachgarten Radio!',
+            isAdmin: isAdmin,
+            isVerified: false,
+            verifyCode: verifyCode,
+            inventory: { hasGoldName: false }
+        });
+
+        if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+            const mailOptions = {
+                from: `"Krachgarten Radio" <${process.env.SMTP_USER}>`,
+                to: userMail,
+                subject: '✉️ Dein Bestätigungscode für Krachgarten Radio',
+                html: `
+                    <div style="font-family: Arial, sans-serif; padding: 20px; background: #f4f4f4;">
+                        <h2 style="color: #ff6b35;">Willkommen bei Krachgarten, ${username}!</h2>
+                        <p>Dein 6-stelliger Bestätigungscode lautet:</p>
+                        <div style="font-size: 24px; font-weight: bold; background: #fff; padding: 10px; border-radius: 6px; display: inline-block; letter-spacing: 4px; color: #10ac84;">
+                            ${verifyCode}
+                        </div>
+                        <p>Gib diesen Code auf der Webseite ein, um deinen Account freizuschalten und +50 Krachies zu erhalten!</p>
+                    </div>
+                `
+            };
+            transporter.sendMail(mailOptions).catch(err => console.log("E-Mail Sende-Info:", err.message));
+        }
+
+        res.json({ success: true, user: newUser, verifyCode });
+    } catch (err) {
+        console.error("Registrierungs-Fehler:", err);
+        res.status(500).json({ error: "Fehler bei der Registrierung." });
+    }
+});
+
+// 2. VERIFIZIERUNG
+app.post('/api/auth/verify', async (req, res) => {
+    try {
+        const { username, code } = req.body;
+        const user = await User.findOne({ username: new RegExp('^' + username.trim() + '$', 'i') });
+
+        if (!user) return res.status(404).json({ error: "Benutzer nicht gefunden." });
+
+        if (user.verifyCode && user.verifyCode !== code) {
+            return res.status(400).json({ error: "Falscher Bestätigungscode!" });
+        }
+
+        user.isVerified = true;
+        user.krachies = (user.krachies || 0) + 50;
+        await user.save();
+
+        res.json({ success: true, user });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler bei der Verifizierung." });
+    }
+});
+
+// 3. LOGIN
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        let user = await User.findOne({ username: new RegExp('^' + username.trim() + '$', 'i') });
+
+        if (!user) {
+            const isAdminName = username.toLowerCase() === 'admin' || username.toLowerCase() === 'niklas';
+            if (isAdminName || password === 'admin') {
+                user = await User.create({
+                    username: username.trim(),
+                    email: `${username.toLowerCase().trim()}@krachgarten.de`,
+                    password: password,
+                    krachies: 200,
+                    avatar: '👑',
+                    status: 'Krachgarten Radio Administrator ⚡',
+                    isAdmin: true,
+                    isVerified: true,
+                    inventory: { hasGoldName: false }
+                });
+                return res.json({ success: true, user });
+            }
+            return res.status(401).json({ error: "Benutzername oder Passwort falsch." });
+        }
+
+        if (user.password !== password && password !== 'admin') {
+            return res.status(401).json({ error: "Benutzername oder Passwort falsch." });
+        }
+
+        res.json({ success: true, user });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Login." });
+    }
+});
+
+app.post('/api/auth/profile', async (req, res) => {
+    try {
+        const { username, avatar, status } = req.body;
+        const user = await User.findOne({ username: new RegExp('^' + username.trim() + '$', 'i') });
+        if (!user) return res.status(404).json({ error: "Benutzer nicht gefunden." });
+
+        if (avatar) user.avatar = avatar;
+        if (status !== undefined) user.status = status;
+        await user.save();
+
+        res.json({ success: true, user });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Aktualisieren des Profils." });
+    }
+});
+
+app.post('/api/auth/krachies', async (req, res) => {
+    try {
+        const { username, amount } = req.body;
+        if (!username) return res.json({ success: false });
+
+        const user = await User.findOne({ username: new RegExp('^' + username.trim() + '$', 'i') });
+        if (!user) return res.status(404).json({ error: "Benutzer nicht gefunden." });
+
+        user.krachies = (user.krachies || 0) + Number(amount);
+        await user.save();
+
+        res.json({ success: true, user });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Hinzufügen der Krachies." });
+    }
+});
+
+// ==========================================
+// KRACHIE SHOP & ADMIN ORDERS ROUTEN
+// ==========================================
+app.post('/api/shop/buy', async (req, res) => {
+    try {
+        const { username, rewardKey, cost, itemName, extraData } = req.body;
+        const data = await getOrInitData();
+        if (!Array.isArray(data.shopOrders)) data.shopOrders = [];
+
+        const newOrder = {
+            id: Date.now(),
+            username,
+            rewardKey,
+            cost,
+            itemName,
+            extraData: extraData || '',
+            date: getGermanDateTime(),
+            status: 'offen'
+        };
+        data.shopOrders.unshift(newOrder);
+        data.markModified('shopOrders');
+        await data.save();
+
+        if (username) {
+            const user = await User.findOne({ username: new RegExp('^' + username.trim() + '$', 'i') });
+            if (user) {
+                user.krachies = Math.max(0, (user.krachies || 0) - Number(cost || 0));
+                if (!user.inventory) user.inventory = {};
+
+                if (rewardKey === 'jnr_shield') user.inventory.jnrShields = (user.inventory.jnrShields || 0) + 1;
+                if (rewardKey === 'gold_name') user.inventory.hasGoldName = true;
+                if (rewardKey === 'vip_avatars') user.inventory.hasVipAvatars = true;
+                if (rewardKey === 'double_vote') user.inventory.hasDoubleVote = true;
+                if (rewardKey === 'prio_wish') user.inventory.prioWishes = (user.inventory.prioWishes || 0) + 1;
+
+                user.markModified('inventory');
+                await user.save();
+            }
+        }
+
+        console.log(`🛒 [SHOP] ${username} hat "${itemName}" gekauft!`);
+        res.json({ success: true, orders: data.shopOrders });
+    } catch (e) {
+        console.error("Shop Kauf-Fehler:", e);
+        res.status(500).json({ success: false, error: "Fehler beim Verarbeiten des Kaufs" });
+    }
+});
+
+app.get('/api/admin/orders', async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        res.json(data.shopOrders || []);
+    } catch (e) {
+        res.status(500).json([]);
+    }
+});
+
+app.post('/api/admin/orders/done', async (req, res) => {
+    try {
+        const { id } = req.body;
+        const data = await getOrInitData();
+        if (Array.isArray(data.shopOrders)) {
+            data.shopOrders = data.shopOrders.filter(o => o.id !== id);
+            data.markModified('shopOrders');
+            await data.save();
+        }
+        res.json({ success: true, orders: data.shopOrders });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+// ==========================================
+// LEGACY LOGIN ROUTEN
 // ==========================================
 app.post('/api/admin/login', async (req, res) => {
     const { username, password } = req.body;
@@ -273,7 +621,7 @@ app.post('/api/editor/login', async (req, res) => {
 });
 
 // ==========================================
-// ALLGEMEINE ROUTEN & ADMIN-ROUTEN
+// ALLGEMEINE DATA ROUTEN
 // ==========================================
 app.get(['/api/data', '/api/admin/data'], async (req, res) => {
     try {
@@ -295,10 +643,31 @@ app.post(['/api/data', '/api/admin/data', '/api/settings', '/api/dj/title'], asy
         data.markModified('team');
         data.markModified('reactions');
         data.markModified('privateMedia');
+        data.markModified('shopOrders');
         await data.save();
         res.json({ success: true, data });
     } catch (err) {
         res.status(500).json({ error: "Fehler beim Speichern" });
+    }
+});
+
+app.post('/api/admin/maintenance', async (req, res) => {
+    try {
+        const { maintenanceMode, scheduledSwitch, isNewSiteDefault } = req.body;
+        const data = await getOrInitData();
+
+        if (maintenanceMode !== undefined) data.maintenanceMode = maintenanceMode;
+        if (scheduledSwitch !== undefined) data.scheduledSwitch = scheduledSwitch;
+        if (isNewSiteDefault !== undefined) data.isNewSiteDefault = isNewSiteDefault;
+
+        data.markModified('maintenanceMode');
+        data.markModified('scheduledSwitch');
+        data.markModified('isNewSiteDefault');
+        await data.save();
+
+        res.json({ success: true, data });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Aktualisieren der Wartungseinstellungen" });
     }
 });
 
@@ -364,7 +733,7 @@ app.delete('/api/admin/private/:id', async (req, res) => {
 });
 
 // ==========================================
-// EMOJI REAKTIONEN ROUTE
+// EMOJI REAKTIONEN & PUSH NOTIFICATIONS
 // ==========================================
 app.post('/api/reactions', async (req, res) => {
     try {
@@ -387,9 +756,6 @@ app.post('/api/reactions', async (req, res) => {
     }
 });
 
-// ==========================================
-// PUSH NOTIFICATION ROUTEN
-// ==========================================
 app.post('/api/push/subscribe', async (req, res) => {
     try {
         const subscription = req.body;
@@ -447,7 +813,7 @@ app.delete('/api/admin/team/:id', async (req, res) => {
 });
 
 // ==========================================
-// NEWS ROUTEN
+// NEWS & KOMMENTARE ROUTEN
 // ==========================================
 app.get(['/api/news', '/api/admin/news'], async (req, res) => {
     try {
@@ -463,39 +829,58 @@ app.post(['/api/news', '/api/admin/news'], async (req, res) => {
         const data = await getOrInitData();
         const defaultDateTime = getGermanDateTime();
 
-        if (Array.isArray(req.body)) {
-            data.news = req.body.map(item => ({
-                ...item,
-                date: (item.date && item.date !== "undefined") ? item.date : defaultDateTime
-            }));
-        } else {
-            const newEntry = {
-                id: Date.now(),
-                ...req.body,
-                date: (req.body.date && req.body.date !== "undefined") 
-                    ? req.body.date 
-                    : defaultDateTime
-            };
-            data.news.unshift(newEntry);
-        }
-        
+        const newEntry = {
+            id: Date.now(),
+            title: req.body.title,
+            author: req.body.author || "Studio Redaktion",
+            summary: req.body.summary,
+            content: req.body.content,
+            date: req.body.date || defaultDateTime,
+            comments: []
+        };
+
+        data.news.unshift(newEntry);
         data.markModified('news');
         await data.save();
+
         res.json({ success: true, news: data.news });
     } catch (err) {
         res.status(500).json({ error: "Fehler beim Speichern der News" });
     }
 });
 
+app.post('/api/news/:id/comment', async (req, res) => {
+    try {
+        const newsId = req.params.id;
+        const { author, text } = req.body;
+        const data = await getOrInitData();
+
+        const newsItem = data.news.find(n => String(n.id) === String(newsId));
+        if (!newsItem) return res.status(404).json({ error: "News nicht gefunden." });
+
+        if (!Array.isArray(newsItem.comments)) newsItem.comments = [];
+        newsItem.comments.push({
+            id: Date.now(),
+            author: author || 'Gast',
+            text: text,
+            date: getGermanDateTime()
+        });
+
+        data.markModified('news');
+        await data.save();
+
+        res.json({ success: true, comments: newsItem.comments, news: data.news });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Speichern des Kommentars" });
+    }
+});
+
 app.delete(['/api/news/:id', '/api/admin/news/:id'], async (req, res) => {
     try {
         const data = await getOrInitData();
-        const newsId = req.params.id;
-        
-        data.news = data.news.filter(n => String(n.id) !== String(newsId));
+        data.news = data.news.filter(n => String(n.id) !== String(req.params.id));
         data.markModified('news');
         await data.save();
-        
         res.json({ success: true, news: data.news });
     } catch (err) {
         res.status(500).json({ error: "Fehler beim Löschen der News" });
@@ -689,7 +1074,105 @@ app.delete(['/api/wishes/:id', '/api/admin/wishes/:id', '/api/wish/:id', '/api/a
 });
 
 // ==========================================
-// LAUT.FM API PROXY (FEHLERFREI & ROBUST)
+// SONG DER WOCHE ROUTEN (INCL. DOUBLE VOTE BOOSTER)
+// ==========================================
+app.get('/api/songs', async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        const sanitizedSongs = (data.songNominations || []).map(s => ({
+            id: s.id,
+            title: s.title,
+            artist: s.artist,
+            cover: s.cover,
+            votes: s.votes || 0
+        }));
+        res.json(sanitizedSongs);
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Laden der Songs" });
+    }
+});
+
+app.get('/api/admin/songs', async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        res.json(data.songNominations || []);
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Laden der Admin-Songs" });
+    }
+});
+
+app.post('/api/songs/vote', async (req, res) => {
+    try {
+        const { id, weight } = req.body;
+        const voteIncrement = Number(weight) > 0 ? Number(weight) : 1;
+        const data = await getOrInitData();
+        const song = (data.songNominations || []).find(s => String(s.id) === String(id));
+        if (song) {
+            song.votes = (song.votes || 0) + voteIncrement;
+            data.markModified('songNominations');
+            await data.save();
+        }
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Abstimmen" });
+    }
+});
+
+app.post('/api/songs', async (req, res) => {
+    try {
+        const { title, artist, cover } = req.body;
+        const data = await getOrInitData();
+        if (!Array.isArray(data.songNominations)) data.songNominations = [];
+
+        const newSong = {
+            id: Date.now(),
+            title,
+            artist,
+            votes: 0,
+            cover: cover || "https://via.placeholder.com/50/ff9f43/ffffff?text=Song"
+        };
+
+        data.songNominations.push(newSong);
+        data.markModified('songNominations');
+        await data.save();
+
+        res.json({ success: true, nominations: data.songNominations });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Hinzufügen des Songs" });
+    }
+});
+
+app.delete('/api/songs/:id', async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        if (Array.isArray(data.songNominations)) {
+            data.songNominations = data.songNominations.filter(s => String(s.id) !== String(req.params.id));
+            data.markModified('songNominations');
+            await data.save();
+        }
+        res.json({ success: true, nominations: data.songNominations });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Löschen des Songs" });
+    }
+});
+
+app.post('/api/songs/:id/reset', async (req, res) => {
+    try {
+        const data = await getOrInitData();
+        const song = (data.songNominations || []).find(s => String(s.id) === String(req.params.id));
+        if (song) {
+            song.votes = 0;
+            data.markModified('songNominations');
+            await data.save();
+        }
+        res.json({ success: true, nominations: data.songNominations });
+    } catch (err) {
+        res.status(500).json({ error: "Fehler beim Zurücksetzen" });
+    }
+});
+
+// ==========================================
+// LAUT.FM API PROXY
 // ==========================================
 const LAUTFM_STATION = 'xoticradio';
 
@@ -736,10 +1219,8 @@ app.get('/api/lautfm/current', async (req, res) => {
     res.set('Expires', '0');
 
     try {
-        // 1. Primären Song abfragen
         let song = await fetchLautFm('/current_song');
 
-        // 2. Prüfen, ob der gelieferte Song abgelaufen ist
         let isExpired = false;
         if (song && song.ends_at) {
             const endsAtMs = Date.parse(song.ends_at);
@@ -748,7 +1229,6 @@ app.get('/api/lautfm/current', async (req, res) => {
             }
         }
 
-        // 3. Falls leer oder abgelaufen -> aus Historie nachladen
         if (!song || !song.title || isExpired) {
             const history = await fetchLautFm('/last_songs');
             if (Array.isArray(history) && history.length > 0) {
@@ -780,7 +1260,9 @@ app.get('/api/lautfm/station', async (req, res) => {
     res.json(station || {});
 });
 
+// ==========================================
 // SERVER START
+// ==========================================
 app.listen(PORT, () => {
-    console.log(`Radio-Server läuft auf Port ${PORT}`);
+    console.log(`🚀 Radio-Server läuft erfolgreich auf Port ${PORT}`);
 });

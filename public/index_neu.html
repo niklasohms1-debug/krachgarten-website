@@ -3,8 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wartungsarbeiten | krachgarten</title>
+    <title>Krachgarten Radio | Dashboard V2</title>
     <style>
+        /* ========================================== */
+        /* MODAL OVERLAYS (TEILEN, NEWS, VERIFY)      */
+        /* ========================================== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 99999;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+        .modal-overlay.active {
+            display: flex !important;
+        }
+        .modal-box {
+            background: #1a1a1e;
+            border: 1px solid #29292e;
+            border-radius: 12px;
+            width: 100%;
+            color: #fff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+        .share-option-btn {
+            width: 100%;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            background: #202024;
+            color: #fff;
+            border: 1px solid #29292e;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-align: left;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .share-option-btn:hover {
+            background: #29292e;
+            transform: translateY(-2px);
+        }
+
+        /* ========================================== */
+        /* HABBOFUN DESIGN                            */
+        /* ========================================== */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -12,433 +63,2089 @@
         }
 
         body {
-            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-            background-color: #121214;
-            color: #e1e1e6;
+            font-family: 'Verdana', 'Segoe UI', Tahoma, Geneva, sans-serif;
+            background: #0b4975 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" opacity="0.12"><circle cx="20" cy="20" r="1.5" fill="%23fff"/><circle cx="80" cy="50" r="2" fill="%23fff"/><circle cx="40" cy="80" r="1" fill="%23fff"/></svg>') repeat;
+            color: #222;
             min-height: 100vh;
+            padding-bottom: 40px;
+        }
+
+        .page-wrapper {
+            max-width: 980px;
+            margin: 0 auto;
+            padding: 10px 15px;
+        }
+
+        header {
             display: flex;
             align-items: center;
-            justify-content: center;
-            padding: 20px;
+            justify-content: space-between;
+            padding: 15px 10px;
+            color: #fff;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
-        .container {
-            background: #202024;
-            border: 1px solid #29292e;
-            border-radius: 16px;
-            padding: 40px 30px;
-            max-width: 550px;
-            width: 100%;
-            text-align: center;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
 
-        .icon-box {
-            font-size: 3.5rem;
-            margin-bottom: 15px;
-            animation: bounce 2s infinite ease-in-out;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
-        }
-
-        h1 {
-            color: #ffffff;
-            font-size: 1.8rem;
-            margin-bottom: 10px;
-        }
-
-        .sub-heading {
-            color: #ff4757;
-            font-weight: 600;
-            font-size: 1.1rem;
-            margin-bottom: 15px;
+        .logo-area h1 {
+            font-size: 2.1rem;
+            font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 1px;
+            color: #ffffff;
+            text-shadow: 2px 2px 0px #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 3px 3px 6px rgba(0,0,0,0.6);
         }
 
-        p.description {
-            color: #a8a8b3;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            margin-bottom: 30px;
+        .logo-badge {
+            background: linear-gradient(180deg, #ff9f43 0%, #ff5252 100%);
+            color: #fff;
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #ffffff33;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
-        /* RADIOPLAYER CARD */
-        .player-card {
-            background: #121214;
-            border: 1px solid #29292e;
-            border-radius: 12px;
-            padding: 20px;
+        .user-header-bar {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 6px 14px;
+            border-radius: 20px;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: 15px;
+            gap: 12px;
+            font-size: 0.85rem;
+            color: #fff;
         }
 
-        .badge-live {
+        .krachies-badge {
+            background: linear-gradient(180deg, #f1c40f 0%, #f39c12 100%);
+            color: #000;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            background: rgba(255, 71, 87, 0.15);
-            color: #ff4757;
-            border: 1px solid #ff4757;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
+            gap: 4px;
         }
 
-        .dot {
-            width: 8px;
-            height: 8px;
-            background-color: #ff4757;
-            border-radius: 50%;
-            box-shadow: 0 0 8px #ff4757;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(0.95); opacity: 0.8; }
-            50% { transform: scale(1.2); opacity: 1; }
-            100% { transform: scale(0.95); opacity: 0.8; }
-        }
-
-        .show-name {
-            color: #70a1ff;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-top: 2px;
-        }
-
-        .player-main-info {
+        nav {
+            background: linear-gradient(180deg, #ff6b35 0%, #d63031 100%);
+            border: 2px solid #900c3f;
+            border-radius: 8px 8px 0 0;
             display: flex;
-            align-items: center;
-            gap: 15px;
-            width: 100%;
-            text-align: left;
-            background: #1a1a1e;
-            padding: 12px;
-            border-radius: 10px;
-            border: 1px solid #29292e;
+            gap: 4px;
+            padding: 4px 6px 0 6px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            flex-wrap: wrap;
         }
 
-        .cover-box {
-            width: 70px;
-            height: 70px;
-            border-radius: 8px;
-            overflow: hidden;
-            background: #000;
-            flex-shrink: 0;
-            border: 1px solid #29292e;
-        }
-
-        .cover-box img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .track-info {
-            flex-grow: 1;
-            overflow: hidden;
-        }
-
-        .track-title {
-            color: #ffffff;
-            font-size: 1rem;
-            font-weight: bold;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .track-artist {
-            color: #a8a8b3;
+        .nav-tab {
+            background: linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(0,0,0,0.1) 100%);
+            color: #fff;
+            text-decoration: none;
             font-size: 0.85rem;
-            margin-top: 3px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            font-weight: bold;
+            padding: 8px 14px;
+            border-radius: 6px 6px 0 0;
+            border: 1px solid rgba(255,255,255,0.3);
+            border-bottom: none;
+            cursor: pointer;
+            transition: all 0.15s;
         }
 
-        .controls {
+        .nav-tab:hover, .nav-tab.active {
+            background: #ffffff;
+            color: #d63031;
+            text-shadow: none;
+        }
+
+        .admin-tab {
+            background: linear-gradient(180deg, #9b59b6 0%, #8e44ad 100%) !important;
+            border-color: #d63031 !important;
+        }
+
+        .habbo-player-console {
+            background: linear-gradient(180deg, #434953 0%, #242830 50%, #17191e 100%);
+            border: 3px solid #111317;
+            border-radius: 0 0 8px 8px;
+            padding: 15px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 15px;
-            width: 100%;
-            margin-top: 5px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
             flex-wrap: wrap;
         }
 
-        .play-btn {
-            background: #ff4757;
-            color: #ffffff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-size: 0.95rem;
-            font-weight: bold;
-            cursor: pointer;
-            display: inline-flex;
+        .player-left {
+            display: flex;
             align-items: center;
-            gap: 8px;
-            transition: transform 0.2s, background 0.2s;
+            gap: 12px;
+            flex-grow: 1;
         }
 
-        .play-btn:hover {
-            background: #e03e4d;
+        .player-avatar-box {
+            width: 60px;
+            height: 60px;
+            background: #111317;
+            border: 2px solid #555;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            box-shadow: inset 0 0 8px #000;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .eq-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 18px;
+            margin-left: 6px;
+        }
+
+        .eq-bar {
+            width: 3px;
+            background: #ff9f43;
+            border-radius: 1px;
+            height: 4px;
+        }
+
+        .playing .eq-bar {
+            animation: eqAnim 0.6s infinite alternate ease-in-out;
+        }
+        .playing .eq-bar:nth-child(2) { animation-delay: 0.2s; }
+        .playing .eq-bar:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes eqAnim {
+            0% { height: 3px; background: #ff9f43; }
+            100% { height: 18px; background: #1dd1a1; }
+        }
+
+        .track-details {
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .track-artist {
+            color: #ff9f43;
+            font-size: 1.1rem;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px #000;
+            display: flex;
+            align-items: center;
+        }
+
+        .track-title {
+            color: #dddddd;
+            font-size: 0.95rem;
+        }
+
+        .like-btn, .share-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            border-radius: 4px;
+            padding: 3px 8px;
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-left: 6px;
+        }
+
+        .like-btn:hover { background: #ff7675; }
+        .share-btn:hover { background: #0984e3; }
+
+        .player-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-einschalten {
+            background: linear-gradient(180deg, #ff9f43 0%, #ee5253 100%);
+            border: 2px solid #fff;
+            color: #fff;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: bold;
+            padding: 10px 22px;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+            transition: transform 0.1s, filter 0.2s;
+        }
+
+        .btn-einschalten:hover {
+            filter: brightness(1.1);
             transform: scale(1.03);
         }
 
-        .play-btn.playing {
-            background: #04d361;
-            color: #000000;
+        .btn-einschalten.playing {
+            background: linear-gradient(180deg, #10ac84 0%, #1dd1a1 100%);
+            color: #000;
+            text-shadow: none;
         }
 
-        .volume-box {
+        .volume-container {
             display: flex;
             align-items: center;
-            gap: 8px;
-            color: #a8a8b3;
-            font-size: 0.9rem;
+            gap: 6px;
+            color: #aaa;
+            font-size: 0.85rem;
         }
 
         .volume-slider {
-            width: 90px;
-            accent-color: #ff4757;
+            width: 80px;
+            accent-color: #ff9f43;
             cursor: pointer;
         }
 
-        footer {
-            margin-top: 25px;
-            color: #737380;
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 310px;
+            gap: 20px;
+        }
+
+        @media (max-width: 850px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .habbo-card {
+            background: #ffffff;
+            border: 2px solid #083b60;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
+
+        .card-header {
+            background: linear-gradient(180deg, #ff6b35 0%, #e84118 100%);
+            color: #ffffff;
+            padding: 10px 15px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #c23616;
+        }
+
+        .card-body {
+            padding: 15px;
+            color: #2c3e50;
+            font-size: 0.88rem;
+            line-height: 1.5;
+        }
+
+        .welcome-banner {
+            background: linear-gradient(135deg, #1e3799 0%, #0c2461 100%);
+            color: #fff;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 2px solid #4a69bd;
+        }
+
+        .welcome-banner h2 {
+            font-size: 1.2rem;
+            color: #f6b93b;
+            margin-bottom: 5px;
+        }
+
+        .dj-post-header {
+            background: linear-gradient(180deg, #353b48 0%, #2f3640 100%);
+            color: #fff;
+            padding: 12px;
+            text-align: center;
+            font-weight: 900;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+            border-bottom: 3px solid #ff6b35;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
             font-size: 0.8rem;
+            margin-bottom: 4px;
+            color: #2f3640;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #dcdde1;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            background: #f5f6fa;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #ff6b35;
+            background: #fff;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(180deg, #ff9f43 0%, #ee5253 100%);
+            color: #fff;
+            border: none;
+            padding: 10px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .btn-submit:hover {
+            filter: brightness(1.08);
+        }
+
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+
+        footer {
+            text-align: center;
+            color: #a4b0be;
+            font-size: 0.8rem;
+            margin-top: 30px;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="icon-box">🛠️</div>
-        <h1>Wir bauen für euch um!</h1>
-        <div class="sub-heading">Wartungsarbeiten aktiv</div>
+    <div class="page-wrapper">
         
-        <p class="description">
-            Unsere Webseite wird aktuell überarbeitet. Der Radio-Stream läuft natürlich ohne Unterbrechung weiter – schalt einfach ein:
-        </p>
-
-        <!-- RADIOPLAYER CARD -->
-        <div class="player-card">
-            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
-                <div class="badge-live">
-                    <span class="dot"></span> LIVE ON AIR
-                </div>
-                <div id="show-title" class="show-name">Lade Sendung...</div>
+        <!-- HEADER -->
+        <header>
+            <div class="logo-area">
+                <h1>Krachgarten</h1>
+                <span class="logo-badge">V2 BETA</span>
             </div>
 
-            <div class="player-main-info">
-                <div class="cover-box">
-                    <img id="cover-img" src="" alt="Cover">
+            <div id="user-header-status" class="user-header-bar">
+                <span>Nicht eingeloggt</span>
+                <button onclick="switchTab('profil')" style="background:#ff9f43; border:none; color:#fff; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">Anmelden / Registrieren</button>
+            </div>
+        </header>
+
+        <!-- NAVIGATION TABS -->
+        <nav>
+            <button id="nav-startseite" class="nav-tab active" onclick="switchTab('startseite')">Startseite</button>
+            <button id="nav-sendeplan" class="nav-tab" onclick="switchTab('sendeplan')">Sendeplan</button>
+            <button id="nav-team" class="nav-tab" onclick="switchTab('team')">Team</button>
+            <button id="nav-radio" class="nav-tab" onclick="switchTab('radio')">Radio / Historie</button>
+            <button id="nav-songwoche" class="nav-tab" onclick="switchTab('songwoche')">🎵 Song der Woche</button>
+            <button id="nav-community" class="nav-tab" onclick="switchTab('community')">Community</button>
+            <button id="nav-anubis" class="nav-tab" onclick="switchTab('anubis')">👁️ Anubis</button>
+            <button id="nav-profil" class="nav-tab" onclick="switchTab('profil')">👤 Mein Profil / Login</button>
+            <button id="nav-admin" class="nav-tab admin-tab" onclick="switchTab('admin')" style="display: none;">⚡ Admin Control</button>
+        </nav>
+
+        <!-- PLAYER CONSOLE -->
+        <div id="player-console-box" class="habbo-player-console">
+            <div class="player-left">
+                <div class="player-avatar-box">
+                    <img id="v2-cover-img" src="" alt="Song Cover" style="width:100%; height:100%; object-fit:cover; display:none;">
+                    <span id="v2-cover-fallback">📻</span>
                 </div>
-                <div class="track-info">
-                    <div id="song-title" class="track-title">Lade Titel...</div>
-                    <div id="song-artist" class="track-artist">Lade Künstler...</div>
+                
+                <div class="track-details">
+                    <div id="v2-artist" class="track-artist">
+                        Lade Künstler...
+                        <div class="eq-bars">
+                            <div class="eq-bar"></div>
+                            <div class="eq-bar"></div>
+                            <div class="eq-bar"></div>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center; flex-wrap:wrap; gap:4px;">
+                        <span id="v2-title" class="track-title">Lade Stream...</span>
+                        <button onclick="likeCurrentSong()" class="like-btn" title="Gefällt mir!">❤️ <span id="like-count">0</span></button>
+                        <button onclick="openShareModal()" class="share-btn" title="Radio Teilen (+15 Krachies)">🚀 Teilen</button>
+                    </div>
                 </div>
             </div>
 
-            <div class="controls">
-                <button id="play-btn" class="play-btn" onclick="togglePlay()">
-                    <span id="play-icon">▶️</span> <span id="play-text">Einschalten</span>
-                </button>
-
-                <div class="volume-box">
+            <div class="player-controls">
+                <div class="volume-container">
                     <span>🔊</span>
-                    <input type="range" id="volume" class="volume-slider" min="0" max="1" step="0.01" value="0.8" oninput="setVolume(this.value)">
+                    <input type="range" id="v2-volume" class="volume-slider" min="0" max="1" step="0.01" value="0.8" oninput="setVolume(this.value)">
+                </div>
+
+                <button id="v2-play-btn" class="btn-einschalten" onclick="togglePlay()">
+                    ▶️ Einschalten
+                </button>
+            </div>
+
+            <audio id="v2-audio" src="https://stream.laut.fm/xoticradio" preload="none"></audio>
+        </div>
+
+        <!-- TAB 1: STARTSEITE -->
+        <div id="tab-startseite" class="tab-content active">
+            <div class="content-grid">
+                <div>
+                    <div class="welcome-banner">
+                        <div style="font-size: 2.5rem;">🎉</div>
+                        <div>
+                            <h2>Willkommen auf der neuen krachgarten Webseite!</h2>
+                            <p>Sammle <strong>Krachies 🪙</strong>, stimme für den Song der Woche ab und spiele Retro-Minigames!</p>
+                        </div>
+                    </div>
+
+                    <div class="habbo-card">
+                        <div class="card-header">
+                            <span>📌 Willkommen bei Krachgarten</span>
+                            <span>OFFIZIELLER FANSENDER</span>
+                        </div>
+                        <div class="card-body">
+                            <p>Bei <strong>Krachgarten</strong> bestimmst DU das Programm! Schreibe dem sendenden DJ einfach deine Musikwünsche, Grüße und Feedback über unsere Wunschbox.</p>
+                        </div>
+                    </div>
+
+                    <div class="habbo-card">
+                        <div class="card-header">
+                            <span>📰 Aktuelle News & Mitteilungen</span>
+                            <span style="font-size:0.75rem; font-weight:normal;">Anklicken zum Lesen & Kommentieren</span>
+                        </div>
+                        <div class="card-body">
+                            <div id="news-container">
+                                <p style="color: #7f8c8d; font-style: italic;">Lade News...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="habbo-card">
+                        <div class="dj-post-header">
+                            ✉️ DJ POST / WUNSCHBOX
+                        </div>
+                        <div class="card-body">
+                            <form onsubmit="sendWish(event)">
+                                <div class="form-group">
+                                    <label for="wish-name">Dein Name:</label>
+                                    <input type="text" id="wish-name" class="form-control" placeholder="Z. B. DJ_Fan" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="wish-song">Musikwunsch / Interpret:</label>
+                                    <input type="text" id="wish-song" class="form-control" placeholder="Interpret - Songtitel" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="wish-msg">Grussbotschaft:</label>
+                                    <textarea id="wish-msg" class="form-control" rows="3" placeholder="Deine Nachricht an den DJ..."></textarea>
+                                </div>
+                                <button type="submit" class="btn-submit">Absenden 🚀</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="habbo-card">
+                        <div class="card-header">
+                            <span>🎧 Status & Studio</span>
+                        </div>
+                        <div class="card-body" style="text-align: center;">
+                            <p style="font-weight: bold; color: #10ac84; margin-bottom: 8px;">🟢 Stream ist online</p>
+                            <p style="color: #7f8c8d; font-size: 0.8rem;">24/7 Krachgarten Live-Sendung</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: SENDEPLAN -->
+        <div id="tab-sendeplan" class="tab-content">
+            <div class="habbo-card">
+                <div class="card-header">
+                    <span>📅 Aktueller Sendeplan</span>
+                    <span>WAS LÄUFT WANN?</span>
+                </div>
+                <div class="card-body">
+                    <div id="sendeplan-container">
+                        <p style="color: #7f8c8d; font-style: italic;">Lade Sendeplan...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: TEAM -->
+        <div id="tab-team" class="tab-content">
+            <div class="habbo-card">
+                <div class="card-header">
+                    <span>👥 Unser Radio Team</span>
+                    <span>DIE KÖPFE HINTER KRACHGARTEN</span>
+                </div>
+                <div class="card-body">
+                    <div id="team-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px;">
+                        <p style="color: #7f8c8d; font-style: italic;">Lade Teammitglieder...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: RADIO / HISTORIE -->
+        <div id="tab-radio" class="tab-content">
+            <div class="habbo-card">
+                <div class="card-header">
+                    <span>📜 Zuletzt gespeilte Songs (mit Cover-Bildern)</span>
+                </div>
+                <div class="card-body">
+                    <div id="history-container">
+                        <p style="color: #7f8c8d; font-style: italic;">Lade Song-Historie...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 5: SONG DER WOCHE -->
+        <div id="tab-songwoche" class="tab-content">
+            <div class="habbo-card">
+                <div class="card-header">
+                    <span>🎵 Song der Woche – Voting</span>
+                    <span id="vote-status-badge" style="font-size:0.75rem; padding:2px 8px; border-radius:4px; font-weight:bold; background:#ff9f43; color:#fff;">🟢 VOTING AKTIV</span>
+                </div>
+                <div class="card-body">
+                    <p style="margin-bottom:15px; color:#7f8c8d;">Stimme für deinen Lieblingssong ab! Die Ergebnisse werden live aus unserer Datenbank geladen.</p>
+                    <div id="song-voting-box">
+                        <p style="color: #7f8c8d; font-style: italic;">Lade Nominierungen...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 6: COMMUNITY -->
+        <div id="tab-community" class="tab-content">
+            <div class="habbo-card">
+                <div class="card-header">
+                    <span>🏃 Habbo Jump 'n' Run (Hardcore Edition)</span>
+                    <span id="jnr-stats" style="font-size: 0.8rem; font-weight: normal;">Score: 0 | Highscore: 0</span>
+                </div>
+                <div class="card-body" style="text-align: center;">
+                    <p style="font-size: 0.85rem; margin-bottom: 10px; color: #7f8c8d;">
+                        Klicke ins Spielfeld oder drücke <strong>[LEERTASTE]</strong>! Passt auf fliegende Adler 🦅 auf. (Belohnung: Krachies!)
+                    </p>
+                    
+                    <div style="position: relative; display: inline-block; width: 100%; max-width: 650px;">
+                        <canvas id="jnr-canvas" width="600" height="150" style="background: linear-gradient(180deg, #74b9ff 0%, #0984e3 80%, #2d3436 80%); border: 2px solid #083b60; border-radius: 6px; cursor: pointer; width: 100%; height: auto;"></canvas>
+                    </div>
+
+                    <div style="margin-top: 10px;">
+                        <button onclick="startJnRGame()" class="btn-submit" style="width: auto; padding: 8px 24px;">🎮 Spiel Starten / Neustarten</button>
+                    </div>
                 </div>
             </div>
 
-            <!-- AUDIO STREAM ELEMENT -->
-            <audio id="radio-audio" src="https://stream.laut.fm/xoticradio" preload="none"></audio>
+            <div class="content-grid">
+                <div>
+                    <div class="habbo-card">
+                        <div class="card-header">
+                            <span>🧠 Krachgarten Memory</span>
+                            <span id="memory-stats" style="font-size: 0.8rem; font-weight: normal;">Versuche: 0 | Paare: 0/6</span>
+                        </div>
+                        <div class="card-body" style="text-align: center;">
+                            <p style="font-size: 0.85rem; margin-bottom: 12px; color: #7f8c8d;">Finde alle zusammengehörenden Radio-Symbole!</p>
+                            <div id="memory-board" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 360px; margin: 0 auto;"></div>
+                            <button onclick="initMemory()" class="btn-submit" style="margin-top: 15px; width: auto; padding: 8px 20px;">🔄 Spiel neu starten</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="habbo-card">
+                        <div class="card-header">
+                            <span>❓ Radio & Musik Quiz</span>
+                            <span id="quiz-score" style="font-size: 0.8rem; font-weight: normal;">Punkte: 0</span>
+                        </div>
+                        <div class="card-body">
+                            <div id="quiz-box">
+                                <p id="quiz-question" style="font-weight: bold; font-size: 0.95rem; margin-bottom: 15px; color: #2f3640;">Lade Quiz...</p>
+                                <div id="quiz-options" style="display: flex; flex-direction: column; gap: 8px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 7: ANUBIS -->
+        <div id="tab-anubis" class="tab-content">
+            <div class="habbo-card" style="border-color: #2c2c54;">
+                <div class="card-header" style="background: linear-gradient(180deg, #474787 0%, #2c2c54 100%); border-bottom-color: #227093;">
+                    <span>🔮 Das Haus Anubis – Das Rätsel der alten Weide</span>
+                    <span id="anubis-progress" style="font-size: 0.8rem; background: #ffb142; color: #000; padding: 2px 8px; border-radius: 4px; font-weight: bold;">Gelöste Quests: 0 / 3</span>
+                </div>
+                <div class="card-body" style="background: #f1f2f6;">
+                    <div style="background: #2c2c54; color: #f7b731; padding: 15px; border-radius: 6px; margin-bottom: 15px; border-left: 5px solid #f7b731;">
+                        <h2 style="font-size: 1.1rem; margin-bottom: 5px;">👁️ Willkommen im Internat "Haus Anubis"</h2>
+                        <p style="font-size: 0.85rem; color: #dcdde1; line-height: 1.4;">Löse die 3 Quests und gewinne <strong>+50 Krachies</strong>!</p>
+                    </div>
+
+                    <div class="habbo-card" style="margin-bottom: 15px; border-color: #dcdde1;">
+                        <div class="card-header" style="background: linear-gradient(180deg, #ff9f43 0%, #ee5253 100%); font-size:0.88rem;">
+                            <span>📜 Quest 1: Das geheime Losungswort</span>
+                            <span id="q1-status">🔒 Offen</span>
+                        </div>
+                        <div class="card-body">
+                            <p style="margin-bottom: 10px;">Wie heißt der geheime Schutzbund?</p>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="q1-input" class="form-control" placeholder="Losungswort..." style="text-transform: uppercase;">
+                                <button onclick="checkQuest1()" class="btn-submit" style="width: auto; padding: 0 20px;">Prüfen</button>
+                            </div>
+                            <p id="q1-msg" style="font-weight: bold; margin-top: 8px; font-size: 0.82rem;"></p>
+                        </div>
+                    </div>
+
+                    <div class="habbo-card" style="margin-bottom: 15px; border-color: #dcdde1;">
+                        <div class="card-header" style="background: linear-gradient(180deg, #ff9f43 0%, #ee5253 100%); font-size:0.88rem;">
+                            <span>🧮 Quest 2: Victors Zahlen-Hieroglyphen</span>
+                            <span id="q2-status">🔒 Offen</span>
+                        </div>
+                        <div class="card-body">
+                            <p style="margin-bottom: 10px;">[2 Sarkophage (je 10)] + [3 Statuen (je 5)] - 7 = ?</p>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="number" id="q2-input" class="form-control" placeholder="Ergebnis...">
+                                <button onclick="checkQuest2()" class="btn-submit" style="width: auto; padding: 0 20px;">Prüfen</button>
+                            </div>
+                            <p id="q2-msg" style="font-weight: bold; margin-top: 8px; font-size: 0.82rem;"></p>
+                        </div>
+                    </div>
+
+                    <div class="habbo-card" style="margin-bottom: 15px; border-color: #dcdde1;">
+                        <div class="card-header" style="background: linear-gradient(180deg, #ff9f43 0%, #ee5253 100%); font-size:0.88rem;">
+                            <span>🗝️ Quest 3: Der Schlüssel zum Geheimgang</span>
+                            <span id="q3-status">🔒 Offen</span>
+                        </div>
+                        <div class="card-body">
+                            <p style="margin-bottom: 10px;">Wo befindet sich der geheime Zugang?</p>
+                            <div style="display: flex; flex-direction: column; gap: 8px;">
+                                <button onclick="checkQuest3(1)" class="form-control" style="text-align: left; cursor: pointer; font-weight: bold;">A) Hinter dem ausgestopften Raben im Flur</button>
+                                <button onclick="checkQuest3(2)" class="form-control" style="text-align: left; cursor: pointer; font-weight: bold;">B) Hinter dem Kleiderschrank / Wandteppich im Dachboden</button>
+                                <button onclick="checkQuest3(3)" class="form-control" style="text-align: left; cursor: pointer; font-weight: bold;">C) Im Keller hinter dem alten Ofen</button>
+                            </div>
+                            <p id="q3-msg" style="font-weight: bold; margin-top: 8px; font-size: 0.82rem;"></p>
+                        </div>
+                    </div>
+
+                    <div id="anubis-reward" style="display: none; background: linear-gradient(135deg, #10ac84 0%, #1dd1a1 100%); color: #000; padding: 20px; border-radius: 8px; text-align: center; font-weight: bold; border: 2px solid #fff;">
+                        <div style="font-size: 2.5rem; margin-bottom: 8px;">🏆 👁️ 📜</div>
+                        <div style="font-size: 1.2rem; color: #fff; text-shadow: 1px 1px 2px #000;">GRATULATION! Du bist Mitglied im Club der alten Weide!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 8: PROFIL / REGISTRIERUNG / LOGIN -->
+        <div id="tab-profil" class="tab-content">
+            <div id="profile-logged-in-view" style="display: none;">
+                <div class="habbo-card">
+                    <div class="card-header">
+                        <span>👤 Mein Krachgarten Profil</span>
+                        <button onclick="logoutUser()" style="background:#ee5253; border:none; color:#fff; font-size:0.75rem; font-weight:bold; padding:2px 8px; border-radius:4px; cursor:pointer;">Abmelden 🚪</button>
+                    </div>
+                    <div class="card-body">
+                        <div id="email-verify-status-banner" style="margin-bottom: 15px; padding: 10px 15px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; display: flex; align-items: center; justify-content: space-between;"></div>
+
+                        <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap; background: #f5f6fa; padding: 15px; border-radius: 6px; border: 1px solid #dcdde1; margin-bottom: 20px;">
+                            <div id="profile-avatar-display" style="width: 75px; height: 75px; background: #0b4975; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; border: 3px solid #ff9f43; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+                                🕺
+                            </div>
+                            <div>
+                                <h2 id="profile-username-display" style="color: #2f3640; font-size: 1.4rem;">Unbekannt</h2>
+                                <p id="profile-email-display" style="color: #7f8c8d; font-size: 0.85rem;">email@beispiel.de</p>
+                                <div style="margin-top: 6px;">
+                                    <span class="krachies-badge" style="font-size: 0.9rem;">🪙 <span id="profile-krachies-display">0</span> Krachies</span>
+                                    <span id="admin-status-badge" style="display:none; background:#8e44ad; color:#fff; font-weight:bold; padding:2px 8px; border-radius:10px; font-size:0.78rem; margin-left:6px;">⚡ ADMIN</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="habbo-card" style="border-color: #dcdde1;">
+                            <div class="card-header" style="background: linear-gradient(180deg, #2f3640 0%, #1e272e 100%);">
+                                ⚙️ Profil gestalten & Anpassen
+                            </div>
+                            <div class="card-body">
+                                <form onsubmit="saveProfileSettings(event)">
+                                    <div class="form-group">
+                                        <label>Profil-Avatar auswählen:</label>
+                                        <div style="display: flex; gap: 10px; font-size: 1.8rem; margin-bottom: 10px; cursor: pointer; flex-wrap: wrap;">
+                                            <span onclick="setAvatarEmoji('🕺')" style="padding: 5px; border: 1px solid #ccc; border-radius: 6px;">🕺</span>
+                                            <span onclick="setAvatarEmoji('📻')" style="padding: 5px; border: 1px solid #ccc; border-radius: 6px;">📻</span>
+                                            <span onclick="setAvatarEmoji('🎧')" style="padding: 5px; border: 1px solid #ccc; border-radius: 6px;">🎧</span>
+                                            <span onclick="setAvatarEmoji('👑')" style="padding: 5px; border: 1px solid #ccc; border-radius: 6px;">👑</span>
+                                            <span onclick="setAvatarEmoji('👽')" style="padding: 5px; border: 1px solid #ccc; border-radius: 6px;">👽</span>
+                                            <span onclick="setAvatarEmoji('🔮')" style="padding: 5px; border: 1px solid #ccc; border-radius: 6px;">🔮</span>
+                                            <span onclick="setAvatarEmoji('🚀')" style="padding: 5px; border: 1px solid #ccc; border-radius: 6px;">🚀</span>
+                                            <span onclick="setAvatarEmoji('💎')" style="padding: 5px; border: 1px solid #ccc; border-radius: 6px;">💎</span>
+                                            <span onclick="setAvatarEmoji('🐉')" style="padding: 5px; border: 1px solid #ccc; border-radius: 6px;">🐉</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="profile-status-input">Deine Statusnachricht / Bio:</label>
+                                        <input type="text" id="profile-status-input" class="form-control" placeholder="Z. B. Krachgarten Fan seit 2024!">
+                                    </div>
+                                    <button type="submit" class="btn-submit">Profil Speichern 💾</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- SHOP -->
+                        <div class="habbo-card" style="border-color: #f1c40f; margin-top: 20px;">
+                            <div class="card-header" style="background: linear-gradient(180deg, #f39c12 0%, #d35400 100%);">
+                                <span>🛒 Krachie-Shop & Belohnungen</span>
+                                <span>TAUSCHE DEINE KRACHIES EIN</span>
+                            </div>
+                            <div class="card-body">
+                                <p style="margin-bottom: 15px; font-size: 0.85rem; color: #57606f;">
+                                    Sammle durch Aktivität, Spiele und Voting deine <strong>Krachies 🪙</strong> und löse sie hier gegen exklusive Stream-Vorteile und Profil-Upgrades ein!
+                                </p>
+
+                                <div style="overflow-x: auto;">
+                                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; background: #fff; border: 1px solid #dcdde1; border-radius: 6px; overflow: hidden;">
+                                        <thead>
+                                            <tr style="background: #2f3640; color: #fff; font-size: 0.8rem; text-transform: uppercase;">
+                                                <th style="padding: 10px 12px;">Belohnung</th>
+                                                <th style="padding: 10px 12px;">Kosten</th>
+                                                <th style="padding: 10px 12px;">Kategorie</th>
+                                                <th style="padding: 10px 12px;">Dauer / Typ</th>
+                                                <th style="padding: 10px 12px; text-align: center;">Aktion</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody style="color: #2c3e50;">
+                                            <tr style="border-bottom: 1px solid #f1f2f6;">
+                                                <td style="padding: 10px 12px; font-weight: bold;">🛡️ Jump 'n' Run Schild</td>
+                                                <td style="padding: 10px 12px;"><span class="krachies-badge">🪙 75</span></td>
+                                                <td style="padding: 10px 12px;">Minigames</td>
+                                                <td style="padding: 10px 12px; color: #7f8c8d;">Single-Use</td>
+                                                <td style="padding: 10px 12px; text-align: center;">
+                                                    <button onclick="buyReward('jnr_shield', 75, 'Jump n Run Schild')" class="btn-submit" style="width: auto; padding: 4px 12px; font-size: 0.75rem;">Einlösen</button>
+                                                </td>
+                                            </tr>
+                                            <tr style="border-bottom: 1px solid #f1f2f6; background: #f8f9fa;">
+                                                <td style="padding: 10px 12px; font-weight: bold;">⚡ Prio-Musikwunsch</td>
+                                                <td style="padding: 10px 12px;"><span class="krachies-badge">🪙 150</span></td>
+                                                <td style="padding: 10px 12px;">Radio</td>
+                                                <td style="padding: 10px 12px; color: #7f8c8d;">Einmalig</td>
+                                                <td style="padding: 10px 12px; text-align: center;">
+                                                    <button onclick="buyReward('prio_wish', 150, 'Prio-Musikwunsch')" class="btn-submit" style="width: auto; padding: 4px 12px; font-size: 0.75rem;">Einlösen</button>
+                                                </td>
+                                            </tr>
+                                            <tr style="border-bottom: 1px solid #f1f2f6;">
+                                                <td style="padding: 10px 12px; font-weight: bold;">🎨 Goldene Namensfarbe</td>
+                                                <td style="padding: 10px 12px;"><span class="krachies-badge">🪙 300</span></td>
+                                                <td style="padding: 10px 12px;">Profil</td>
+                                                <td style="padding: 10px 12px; color: #7f8c8d;">Dauerhaft</td>
+                                                <td style="padding: 10px 12px; text-align: center;">
+                                                    <button onclick="buyReward('gold_name', 300, 'Goldene Namensfarbe')" class="btn-submit" style="width: auto; padding: 4px 12px; font-size: 0.75rem;">Freischalten</button>
+                                                </td>
+                                            </tr>
+                                            <tr style="border-bottom: 1px solid #f1f2f6; background: #f8f9fa;">
+                                                <td style="padding: 10px 12px; font-weight: bold;">👑 VIP-Avatar Paket</td>
+                                                <td style="padding: 10px 12px;"><span class="krachies-badge">🪙 500</span></td>
+                                                <td style="padding: 10px 12px;">Profil</td>
+                                                <td style="padding: 10px 12px; color: #7f8c8d;">Dauerhaft</td>
+                                                <td style="padding: 10px 12px; text-align: center;">
+                                                    <button onclick="buyReward('vip_avatars', 500, 'VIP-Avatar Paket')" class="btn-submit" style="width: auto; padding: 4px 12px; font-size: 0.75rem;">Freischalten</button>
+                                                </td>
+                                            </tr>
+                                            <tr style="border-bottom: 1px solid #f1f2f6;">
+                                                <td style="padding: 10px 12px; font-weight: bold;">🔥 Double-Vote Booster</td>
+                                                <td style="padding: 10px 12px;"><span class="krachies-badge">🪙 600</span></td>
+                                                <td style="padding: 10px 12px;">Voting</td>
+                                                <td style="padding: 10px 12px; color: #7f8c8d;">1 Wochenende</td>
+                                                <td style="padding: 10px 12px; text-align: center;">
+                                                    <button onclick="buyReward('double_vote', 600, 'Double-Vote Booster')" class="btn-submit" style="width: auto; padding: 4px 12px; font-size: 0.75rem;">Aktivieren</button>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="profile-auth-view" class="content-grid">
+                <div>
+                    <div class="habbo-card">
+                        <div class="card-header">
+                            <span>🔑 Einloggen</span>
+                        </div>
+                        <div class="card-body">
+                            <form onsubmit="handleLogin(event)">
+                                <div class="form-group">
+                                    <label for="login-username">Benutzername:</label>
+                                    <input type="text" id="login-username" class="form-control" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="login-password">Passwort:</label>
+                                    <input type="password" id="login-password" class="form-control" required>
+                                </div>
+                                <button type="submit" class="btn-submit">Anmelden 🚀</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="habbo-card">
+                        <div class="card-header">
+                            <span>📝 Neuer Account Registrieren</span>
+                        </div>
+                        <div class="card-body">
+                            <form onsubmit="handleRegister(event)">
+                                <div class="form-group">
+                                    <label for="reg-username">Benutzername:</label>
+                                    <input type="text" id="reg-username" class="form-control" placeholder="Wähle deinen Namen" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="reg-email1">E-Mail Adresse:</label>
+                                    <input type="email" id="reg-email1" class="form-control" placeholder="Deine E-Mail" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="reg-email2">E-Mail Wiederholen:</label>
+                                    <input type="email" id="reg-email2" class="form-control" placeholder="E-Mail Bestätigen" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="reg-pass1">Passwort:</label>
+                                    <input type="password" id="reg-pass1" class="form-control" placeholder="Geheimes Passwort" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="reg-pass2">Passwort Wiederholen:</label>
+                                    <input type="password" id="reg-pass2" class="form-control" placeholder="Passwort Bestätigen" required>
+                                </div>
+                                <button type="submit" class="btn-submit" style="background: linear-gradient(180deg, #10ac84 0%, #1dd1a1 100%);">Account Erstellen ✨ (+50 Krachies nach Verifizierung)</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 9: ADMIN CONTROL PANEL -->
+        <div id="tab-admin" class="tab-content">
+            <div class="habbo-card" style="border-color: #8e44ad;">
+                <div class="card-header" style="background: linear-gradient(180deg, #9b59b6 0%, #8e44ad 100%); border-bottom-color: #6c5ce7;">
+                    <span>⚡ Admin Control Panel</span>
+                    <span>ADMINISTRATOR VERWALTUNG</span>
+                </div>
+                <div class="card-body">
+                    <!-- SONG DER WOCHE -->
+                    <div class="habbo-card" style="margin-bottom: 20px;">
+                        <div class="card-header" style="background: linear-gradient(180deg, #3498db 0%, #2980b9 100%);">
+                            <span>🏆 Song der Woche verwalten</span>
+                        </div>
+                        <div class="card-body">
+                            <form onsubmit="addSongNomination(event)">
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 10px;">
+                                    <div class="form-group">
+                                        <label>Songtitel:</label>
+                                        <input type="text" id="admin-song-title" class="form-control" placeholder="Z. B. Summer Beats" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Interpret / Artist:</label>
+                                        <input type="text" id="admin-song-artist" class="form-control" placeholder="Z. B. DJ Niklas" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Cover Bild-URL (optional):</label>
+                                        <input type="text" id="admin-song-cover" class="form-control" placeholder="https://...">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn-submit" style="background: #27ae60;">➕ Song zur Abstimmung hinzufügen</button>
+                            </form>
+                            <hr style="margin: 15px 0; border: none; border-top: 1px dashed #ccc;">
+                            <h4 style="margin-bottom: 10px;">Aktuelle Nominierungen:</h4>
+                            <div id="admin-nominations-list"></div>
+                        </div>
+                    </div>
+
+                    <!-- SHOP BESTELLUNGEN -->
+                    <div class="habbo-card" style="margin-bottom: 20px; border-color: #f39c12;">
+                        <div class="card-header" style="background: linear-gradient(180deg, #f39c12 0%, #e67e22 100%);">
+                            <span>🛒 Einlösungen & DJ-Aufträge (Shop)</span>
+                        </div>
+                        <div class="card-body">
+                            <button onclick="loadAdminOrders()" class="btn-submit" style="background:#27ae60; margin-bottom:10px; width:auto;">🔄 Bestellungen Aktualisieren</button>
+                            <div id="admin-orders-list">
+                                <p style="color:#7f8c8d; font-style:italic;">Keine offenen Bestellungen.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KRACHIES TANKEN -->
+                    <div class="habbo-card" style="margin-bottom: 20px;">
+                        <div class="card-header" style="background: linear-gradient(180deg, #f1c40f 0%, #f39c12 100%); color:#000;">
+                            <span>🪙 Admin-Guthaben aufladen</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Wie viele Krachies möchtest du dir gutschreiben?</label>
+                                <input type="number" id="admin-give-amount" class="form-control" placeholder="Z. B. 1000" value="1000">
+                            </div>
+                            <button onclick="adminGiveSelfKrachies()" class="btn-submit" style="background: #f1c40f; color: #000;">🪙 Krachies aufladen</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <footer>
-            &copy; krachgarten – Musik rund um die Uhr
+            &copy; Krachgarten Radio – Alle Rechte vorbehalten.
         </footer>
+
     </div>
 
+    <!-- MODAL: NEWS VOLLSTÄNDIG -->
+    <div id="news-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="card-header" style="border-radius: 5px 5px 0 0;">
+                <span id="modal-news-title">News Titel</span>
+                <button onclick="closeNewsModal()" style="background:transparent; border:none; color:#fff; font-size:1.2rem; cursor:pointer;">✖</button>
+            </div>
+            <div class="card-body">
+                <div style="font-size:0.8rem; color:#7f8c8d; margin-bottom:12px; display:flex; justify-content:space-between; border-bottom:1px solid #ddd; padding-bottom:6px;">
+                    <span id="modal-news-author">Von: Admin</span>
+                    <span id="modal-news-date">Datum</span>
+                </div>
+                
+                <div id="modal-news-content" style="line-height:1.6; font-size:0.95rem; color:#2c3e50; margin-bottom:20px;"></div>
+
+                <hr style="border:none; border-top:1px dashed #ccc; margin:15px 0;">
+                <h3 style="font-size:1rem; color:#0b4975; margin-bottom:10px;">💬 Kommentare (<span id="modal-comments-count">0</span>)</h3>
+                <div id="modal-comments-list" style="max-height:180px; overflow-y:auto; margin-bottom:15px; background:#f8f9fa; padding:10px; border-radius:6px;"></div>
+
+                <form onsubmit="submitNewsComment(event)">
+                    <div class="form-group">
+                        <label for="comment-text-input">Dein Kommentar (+10 Krachies 🪙):</label>
+                        <input type="text" id="comment-text-input" class="form-control" placeholder="Schreibe eine Antwort..." required>
+                    </div>
+                    <button type="submit" class="btn-submit" style="width:auto; padding:8px 20px;">Kommentar Absenden 💬</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: EMAIL VERIFIZIERUNG -->
+    <div id="verify-modal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 420px;">
+            <div class="card-header" style="border-radius: 5px 5px 0 0; background: linear-gradient(180deg, #10ac84 0%, #1dd1a1 100%);">
+                <span>✉️ E-Mail Adresse Bestätigen</span>
+                <button onclick="closeVerifyModal()" style="background:transparent; border:none; color:#fff; font-size:1.2rem; cursor:pointer;">✖</button>
+            </div>
+            <div class="card-body" style="text-align: center;">
+                <p style="margin-bottom: 12px; font-size: 0.9rem; color: #2c3e50;">
+                    Wir haben einen 6-stelligen Bestätigungscode an deine E-Mail gesendet!
+                </p>
+                <div id="demo-code-box" style="background:#fff8e7; border:1px solid #f39c12; color:#d35400; padding:8px; border-radius:6px; font-size:0.8rem; font-weight:bold; margin-bottom:15px;"></div>
+
+                <div class="form-group" style="text-align: left;">
+                    <label for="verify-code-input">6-stelliger Code:</label>
+                    <input type="text" id="verify-code-input" class="form-control" placeholder="Z. B. 123456" style="text-align: center; font-size: 1.2rem; letter-spacing: 4px; font-weight: bold;" maxlength="6" required>
+                </div>
+
+                <button onclick="submitEmailVerification()" class="btn-submit" style="background: linear-gradient(180deg, #10ac84 0%, #1dd1a1 100%); font-size: 1rem;">
+                    Code Bestätigen & Account Freischalten 🎉
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: TEILEN -->
+    <div id="share-modal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 450px;">
+            <div class="card-header" style="border-radius: 5px 5px 0 0;">
+                <span>🚀 Krachgarten Radio Teilen</span>
+                <button onclick="closeShareModal()" style="background:transparent; border:none; color:#fff; font-size:1.2rem; cursor:pointer;">✖</button>
+            </div>
+            <div class="card-body">
+                <p style="margin-bottom: 15px; color:#2c3e50;">
+                    Teile unser Radio mit deinen Freunden und erhalte <strong>+15 Krachies 🪙</strong> als Belohnung!
+                </p>
+
+                <button onclick="executeShare('whatsapp')" class="share-option-btn" style="border-left: 5px solid #25D366;">
+                    <span>🟢</span> Auf WhatsApp teilen
+                </button>
+                <button onclick="executeShare('twitter')" class="share-option-btn" style="border-left: 5px solid #1DA1F2;">
+                    <span>🐦</span> Auf X (Twitter) teilen
+                </button>
+                <button onclick="executeShare('facebook')" class="share-option-btn" style="border-left: 5px solid #1877F2;">
+                    <span>📘</span> Auf Facebook teilen
+                </button>
+                <button id="native-share-btn" onclick="executeShare('native')" class="share-option-btn" style="display:none; border-left: 5px solid #8e44ad;">
+                    <span>📲</span> Auf deinem Smartphone teilen
+                </button>
+                <button onclick="executeShare('copy')" class="share-option-btn" style="border-left: 5px solid #ff9f43;">
+                    <span>🔗</span> Link in Zwischenablage kopieren
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- KOMPLETTE JAVASCRIPT LOGIK                 -->
+    <!-- ========================================== -->
     <script>
-        const DEFAULT_SVG_COVER = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 24 24' fill='none' stroke='%23ff4757' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' style='background:%2318181b;'><circle cx='12' cy='12' r='10'/><circle cx='12' cy='12' r='3'/><path d='M12 2a10 10 0 0 1 10 10'/></svg>";
+        const audio = document.getElementById('v2-audio');
+        const playBtn = document.getElementById('v2-play-btn');
+        const artistEl = document.getElementById('v2-artist');
+        const titleEl = document.getElementById('v2-title');
+        const playerConsoleBox = document.getElementById('player-console-box');
 
-        const audio = document.getElementById('radio-audio');
-        const playBtn = document.getElementById('play-btn');
-        const playIcon = document.getElementById('play-icon');
-        const playText = document.getElementById('play-text');
-        const titleEl = document.getElementById('song-title');
-        const artistEl = document.getElementById('song-artist');
-        const showEl = document.getElementById('show-title');
-        const coverImg = document.getElementById('cover-img');
+        const STREAM_DELAY_SECONDS = 12;
 
-        let lastSongKey = "";
+        let currentUser = null;
+        let activeNewsId = null;
+        let pendingVerifyCode = null;
+        let currentSongKey = '';
+        let pendingSong = null;
+        let songSyncTimeout = null;
+        let songLikes = 0;
+        let hasEarnedShareReward = false;
 
-        // STREAM STEUERUNG
-        function togglePlay() {
-            if (audio.paused) {
-                audio.play().then(() => {
-                    playBtn.classList.add('playing');
-                    playIcon.innerText = "⏸️";
-                    playText.innerText = "Pause";
-                }).catch(err => console.error("Play Fehler:", err));
+        let newsDataStore = [
+            {
+                id: 1,
+                title: "Willkommen auf Krachgarten V2!",
+                author: "DJ_Niklas",
+                date: "09. August 2026",
+                summary: "Das neue Dashboard ist online! Mit Minigames, Cover-Bildern und Admin-Panel.",
+                content: "Liebe Krachgarten-Community,\n\nwir freuen uns riesig, euch die brandneue Version von Krachgarten Radio zu präsentieren! Ab sofort könnt ihr eure eigenen Profile anlegen, Song-Cover betrachten und bei Spielen wertvolle Krachies sammeln.",
+                comments: []
+            }
+        ];
+
+        let songNominations = [];
+
+        function escapeHtml(str) {
+            return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        /* 1. USER & AUTH SYSTEM */
+
+        function initUserSystem() {
+            const savedUser = localStorage.getItem('krachgarten_user');
+            if (savedUser) {
+                try { currentUser = JSON.parse(savedUser); } catch(e){}
+            }
+            updateUserUI();
+        }
+
+        function updateUserUI() {
+            const headerBar = document.getElementById('user-header-status');
+            const loggedInView = document.getElementById('profile-logged-in-view');
+            const authView = document.getElementById('profile-auth-view');
+            const adminTab = document.getElementById('nav-admin');
+            const nameDisplay = document.getElementById('profile-username-display');
+            const verifyBanner = document.getElementById('email-verify-status-banner');
+
+            if (currentUser) {
+                const isAdmin = currentUser.isAdmin || currentUser.username.toLowerCase() === 'admin' || currentUser.username.toLowerCase() === 'niklas';
+                currentUser.isAdmin = isAdmin;
+
+                headerBar.innerHTML = `
+                    <span>Willkommen, <strong>${escapeHtml(currentUser.username)}</strong>!</span>
+                    <span class="krachies-badge">🪙 ${currentUser.krachies || 0} Krachies</span>
+                    <button onclick="switchTab('profil')" style="background:#10ac84; border:none; color:#fff; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">Profil 👤</button>
+                `;
+
+                if (loggedInView) loggedInView.style.display = 'block';
+                if (authView) authView.style.display = 'none';
+
+                // GOLDNAME FIX: Nur gold färben wenn gekauft!
+                if (nameDisplay) {
+                    nameDisplay.innerText = currentUser.username;
+                    if (currentUser.inventory && currentUser.inventory.hasGoldName === true) {
+                        nameDisplay.style.color = '#f1c40f';
+                        nameDisplay.style.textShadow = '0 0 8px rgba(241, 196, 15, 0.6)';
+                    } else {
+                        nameDisplay.style.color = '#2f3640';
+                        nameDisplay.style.textShadow = 'none';
+                    }
+                }
+
+                if (verifyBanner) {
+                    if (currentUser.isVerified) {
+                        verifyBanner.style.background = '#e8f8f5';
+                        verifyBanner.style.border = '1px solid #1dd1a1';
+                        verifyBanner.style.color = '#10ac84';
+                        verifyBanner.innerHTML = `<span>✅ E-Mail Adresse ist verifiziert!</span>`;
+                    } else {
+                        verifyBanner.style.background = '#fef9e7';
+                        verifyBanner.style.border = '1px solid #f39c12';
+                        verifyBanner.style.color = '#d35400';
+                        verifyBanner.innerHTML = `
+                            <span>⚠️ E-Mail Adresse unbestätigt (+50 Krachies Belohnung).</span>
+                            <button onclick="openVerifyModal()" style="background:#f39c12; border:none; color:#fff; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">Code eingeben ✉️</button>
+                        `;
+                    }
+                }
+
+                document.getElementById('profile-email-display').innerText = currentUser.email || 'user@krachgarten.de';
+                document.getElementById('profile-krachies-display').innerText = currentUser.krachies || 0;
+                document.getElementById('profile-avatar-display').innerText = currentUser.avatar || '🕺';
+                document.getElementById('profile-status-input').value = currentUser.status || '';
+
+                if (isAdmin) {
+                    if (adminTab) adminTab.style.display = 'inline-block';
+                    document.getElementById('admin-status-badge').style.display = 'inline-block';
+                } else {
+                    if (adminTab) adminTab.style.display = 'none';
+                    document.getElementById('admin-status-badge').style.display = 'none';
+                }
             } else {
-                audio.pause();
-                playBtn.classList.remove('playing');
-                playIcon.innerText = "▶️";
-                playText.innerText = "Einschalten";
+                headerBar.innerHTML = `
+                    <span>Gast-Modus</span>
+                    <button onclick="switchTab('profil')" style="background:#ff9f43; border:none; color:#fff; padding:4px 10px; border-radius:4px; font-weight:bold; cursor:pointer;">Anmelden / Registrieren</button>
+                `;
+
+                if (loggedInView) loggedInView.style.display = 'none';
+                if (authView) authView.style.display = 'grid';
+                if (adminTab) adminTab.style.display = 'none';
             }
         }
 
-        function setVolume(val) {
-            if (audio) audio.volume = parseFloat(val);
+        async function addKrachies(amount, reason) {
+            if (!currentUser) {
+                alert(`🎉 Du hast ${amount} Krachies verdient! Erstelle einen Account, um deine Krachies zu speichern.`);
+                return;
+            }
+
+            currentUser.krachies = (currentUser.krachies || 0) + amount;
+            localStorage.setItem('krachgarten_user', JSON.stringify(currentUser));
+
+            try {
+                await fetch('/api/auth/krachies', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentUser.username, amount })
+                });
+            } catch(e) {}
+
+            updateUserUI();
+            alert(`🪙 +${amount} Krachies gutgeschrieben! (${reason})`);
         }
 
-        // ITUNES COVER FINDER
-        async function fetchItunesCover(artist, title) {
-            if (!artist || !title || artist === '🔴 On Air') return null;
+        async function handleRegister(e) {
+            e.preventDefault();
+            const username = document.getElementById('reg-username').value.trim();
+            const email1 = document.getElementById('reg-email1').value.trim();
+            const email2 = document.getElementById('reg-email2').value.trim();
+            const pass1 = document.getElementById('reg-pass1').value;
+            const pass2 = document.getElementById('reg-pass2').value;
+
+            if (email1 !== email2) { alert('❌ Die E-Mail Adressen stimmen nicht überein!'); return; }
+            if (pass1 !== pass2) { alert('❌ Die Passwörter stimmen nicht überein!'); return; }
+
+            const isAdmin = username.toLowerCase() === 'admin' || username.toLowerCase() === 'niklas';
+            pendingVerifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+            currentUser = {
+                username: username,
+                email: email1,
+                krachies: 0,
+                avatar: isAdmin ? '👑' : '🕺',
+                isAdmin: isAdmin,
+                isVerified: false,
+                inventory: { hasGoldName: false }
+            };
+
             try {
-                const query = encodeURIComponent(`${artist} ${title}`);
-                const res = await fetch(`https://itunes.apple.com/search?term=${query}&entity=song&limit=1`);
+                await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email: email1, password: pass1, code: pendingVerifyCode })
+                });
+            } catch(err) {}
+
+            localStorage.setItem('krachgarten_user', JSON.stringify(currentUser));
+            updateUserUI();
+            openVerifyModal();
+        }
+
+        function openVerifyModal() {
+            if (!pendingVerifyCode) pendingVerifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+            const demoBox = document.getElementById('demo-code-box');
+            if (demoBox) demoBox.innerText = `[DEMO-MODUS] Bestätigungscode: ${pendingVerifyCode}`;
+            document.getElementById('verify-modal').classList.add('active');
+        }
+
+        function closeVerifyModal() { document.getElementById('verify-modal').classList.remove('active'); }
+
+        async function submitEmailVerification() {
+            const inputCode = document.getElementById('verify-code-input').value.trim();
+            if (inputCode !== pendingVerifyCode) {
+                alert('❌ Falscher Code!');
+                return;
+            }
+
+            if (currentUser) {
+                currentUser.isVerified = true;
+                currentUser.krachies = (currentUser.krachies || 0) + 50;
+                localStorage.setItem('krachgarten_user', JSON.stringify(currentUser));
+
+                try {
+                    await fetch('/api/auth/verify', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: currentUser.username, code: inputCode })
+                    });
+                } catch(e){}
+
+                updateUserUI();
+                closeVerifyModal();
+                alert('🎉 E-Mail verifiziert! +50 Krachies Startbonus wurden gutgeschrieben!');
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value.trim();
+            const pass = document.getElementById('login-password').value;
+            const isAdmin = username.toLowerCase() === 'admin' || username.toLowerCase() === 'niklas';
+
+            currentUser = { 
+                username, 
+                email: username + '@krachgarten.de', 
+                krachies: 100, 
+                avatar: isAdmin ? '👑' : '🎧', 
+                isAdmin,
+                isVerified: true,
+                inventory: { hasGoldName: false }
+            };
+
+            localStorage.setItem('krachgarten_user', JSON.stringify(currentUser));
+            updateUserUI();
+            alert('👋 Eingeloggt als ' + username);
+        }
+
+        function logoutUser() {
+            currentUser = null;
+            localStorage.removeItem('krachgarten_user');
+            updateUserUI();
+        }
+
+        function setAvatarEmoji(emoji) {
+            if (currentUser) {
+                currentUser.avatar = emoji;
+                document.getElementById('profile-avatar-display').innerText = emoji;
+            }
+        }
+
+        async function saveProfileSettings(e) {
+            e.preventDefault();
+            if (!currentUser) return;
+            currentUser.status = document.getElementById('profile-status-input').value;
+            localStorage.setItem('krachgarten_user', JSON.stringify(currentUser));
+            alert('✅ Profil gespeichert!');
+        }
+
+        /* 2. TABS & SWITCHING */
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+
+            const targetTab = document.getElementById('tab-' + tabName);
+            const targetBtn = document.getElementById('nav-' + tabName);
+
+            if (targetTab) targetTab.classList.add('active');
+            if (targetBtn) targetBtn.classList.add('active');
+
+            if (tabName === 'sendeplan') loadSchedule();
+            if (tabName === 'team') loadTeam();
+            if (tabName === 'radio') loadRadioHistory();
+            if (tabName === 'songwoche') loadSongOfWeek();
+            if (tabName === 'community') { initMemory(); initQuiz(); initJnR(); }
+            if (tabName === 'anubis') initAnubis();
+            if (tabName === 'admin') { loadAdminPanel(); loadAdminOrders(); }
+            if (tabName === 'startseite') loadNews();
+        }
+
+        /* 3. PLAYER & METADATA */
+
+        async function fetchiTunesCover(artist, title) {
+            try {
+                var query = encodeURIComponent(artist + ' ' + title);
+                var res = await fetch('https://itunes.apple.com/search?term=' + query + '&entity=song&limit=1');
                 if (res.ok) {
-                    const data = await res.json();
-                    if (data.results && data.results.length > 0 && data.results[0].artworkUrl100) {
-                        return data.results[0].artworkUrl100.replace('100x100bb', '300x300bb');
+                    var data = await res.json();
+                    if (data.results && data.results.length > 0) {
+                        var img = data.results[0].artworkUrl100;
+                        return img ? img.replace('100x100bb', '300x300bb') : '';
+                    }
+                }
+            } catch(e) {}
+            return '';
+        }
+
+        async function loadStreamMetadata() {
+            try {
+                var res = await fetch('/api/lautfm/current?t=' + Date.now(), { cache: 'no-store' });
+                if (!res.ok) return;
+                var song = await res.json();
+                
+                if (song && (song.title || song.artist)) {
+                    var titleText = song.title || '';
+                    var artistText = typeof song.artist === 'string' ? song.artist : (song.artist?.name || '');
+                    var coverUrl = song.cover_url || song.cover || song.image || song.artist?.image_url || '';
+
+                    if (coverUrl && coverUrl.startsWith('http://')) coverUrl = coverUrl.replace('http://', 'https://');
+                    if (!coverUrl && artistText && titleText) coverUrl = await fetchiTunesCover(artistText, titleText);
+
+                    var newKey = (artistText + ' - ' + titleText).toLowerCase();
+                    if (!currentSongKey) {
+                        applySongToUI(artistText, titleText, coverUrl, newKey);
+                        return;
+                    }
+
+                    if (newKey !== currentSongKey && (!pendingSong || pendingSong.key !== newKey)) {
+                        pendingSong = { artist: artistText, title: titleText, cover: coverUrl, key: newKey };
+                        if (songSyncTimeout) clearTimeout(songSyncTimeout);
+                        songSyncTimeout = setTimeout(function() {
+                            applySongToUI(pendingSong.artist, pendingSong.title, pendingSong.cover, pendingSong.key);
+                            pendingSong = null;
+                        }, STREAM_DELAY_SECONDS * 1000);
                     }
                 }
             } catch (e) {}
-            return null;
         }
 
-        // ECHTZEIT-METADATEN MIT EXAKTER ARTIST/TITLE AUFTEILUNG
-        async function fetchSongInfo() {
-            if (coverImg) {
-                coverImg.onerror = function() {
-                    this.onerror = null;
-                    this.src = DEFAULT_SVG_COVER;
-                };
-            }
+        function applySongToUI(artistText, titleText, coverUrl, newKey) {
+            currentSongKey = newKey;
+            songLikes = localStorage.getItem('like_' + currentSongKey) || 0;
+            
+            var likeCountEl = document.getElementById('like-count');
+            if (likeCountEl) likeCountEl.innerText = songLikes;
 
-            const cb = '?r=' + Math.random().toString(36).substring(7) + '&_t=' + Date.now();
+            if (artistEl) artistEl.childNodes[0].nodeValue = (artistText || '🔴 On Air') + ' ';
+            if (titleEl) titleEl.innerText = titleText || 'Krachgarten Stream';
+
+            var imgEl = document.getElementById('v2-cover-img');
+            var fallbackEl = document.getElementById('v2-cover-fallback');
+
+            if (imgEl) {
+                if (coverUrl && (coverUrl.startsWith('http://') || coverUrl.startsWith('https://'))) {
+                    imgEl.src = coverUrl;
+                    imgEl.style.display = 'block';
+                    if (fallbackEl) fallbackEl.style.display = 'none';
+                } else {
+                    imgEl.style.display = 'none';
+                    if (fallbackEl) fallbackEl.style.display = 'block';
+                }
+            }
+        }
+
+        function togglePlay() {
+            if (audio.paused) {
+                audio.play().then(() => {
+                    playBtn.innerText = "⏸️ Pausieren";
+                    playBtn.classList.add('playing');
+                    if (playerConsoleBox) playerConsoleBox.classList.add('playing');
+                }).catch(e => console.error(e));
+            } else {
+                audio.pause();
+                playBtn.innerText = "▶️ Einschalten";
+                playBtn.classList.remove('playing');
+                if (playerConsoleBox) playerConsoleBox.classList.remove('playing');
+            }
+        }
+
+        function setVolume(val) { if (audio) audio.volume = parseFloat(val); }
+
+        async function likeCurrentSong() {
+            if (!currentSongKey) return;
+            songLikes++;
+            localStorage.setItem('like_' + currentSongKey, songLikes);
+            document.getElementById('like-count').innerText = songLikes;
 
             try {
-                // 1. Sendungstitel auslesen
-                fetch('https://api.laut.fm/station/xoticradio' + cb, { cache: 'no-store' })
-                    .then(r => r.ok ? r.json() : null)
-                    .then(station => {
-                        if (station) {
-                            if (station.current_playlist && station.current_playlist.name) {
-                                showEl.innerText = station.current_playlist.name;
-                            } else if (station.display_name) {
-                                showEl.innerText = station.display_name;
-                            } else if (station.name) {
-                                showEl.innerText = station.name;
-                            }
-                        }
-                    }).catch(() => {});
-
-                // 2. Aktuellen Song holen
-                let song = null;
-                const res = await fetch('https://api.laut.fm/station/xoticradio/current_song' + cb, { 
-                    cache: 'no-store',
-                    headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
+                await fetch('/api/reactions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ emoji: '💖' })
                 });
-
-                if (res.ok) {
-                    song = await res.json();
-                }
-
-                // 3. Prüfen, ob der gelieferte Song abgelaufen ist
-                let isExpired = false;
-                if (song && song.ends_at) {
-                    const endsAtDate = new Date(song.ends_at.replace(' ', 'T'));
-                    if (!isNaN(endsAtDate.getTime()) && Date.now() > endsAtDate.getTime()) {
-                        isExpired = true;
-                    }
-                }
-
-                // 4. Falls abgelaufen oder leer -> Historie
-                if (!song || !song.title || isExpired) {
-                    const lastRes = await fetch('https://api.laut.fm/station/xoticradio/last_songs' + cb, { cache: 'no-store' });
-                    if (lastRes.ok) {
-                        const history = await lastRes.json();
-                        if (Array.isArray(history) && history.length > 0) {
-                            song = history[0];
-                        }
-                    }
-                }
-
-                // 5. Song & Künstler parsen und sauber auftrennen
-                if (song && (song.title || song.artist)) {
-                    let rawTitle = song.title || '';
-                    let rawArtist = '';
-
-                    if (song.artist) {
-                        if (typeof song.artist === 'string') {
-                            rawArtist = song.artist;
-                        } else if (typeof song.artist === 'object' && song.artist !== null) {
-                            rawArtist = song.artist.name || '';
-                        }
-                    }
-
-                    // Falls der Künstler fehlt, aber im Titel "Künstler - Song" steht
-                    if (!rawArtist && rawTitle.includes(' - ')) {
-                        const parts = rawTitle.split(' - ');
-                        rawArtist = parts[0].trim();
-                        rawTitle = parts.slice(1).join(' - ').trim();
-                    }
-
-                    titleEl.innerText = rawTitle || 'Live Stream';
-                    artistEl.innerText = rawArtist || '🔴 On Air';
-
-                    const currentSongKey = `${rawArtist} - ${rawTitle}`;
-
-                    // Cover nur bei Songwechsel neu laden
-                    if (currentSongKey !== lastSongKey) {
-                        lastSongKey = currentSongKey;
-
-                        let imgUrl = "";
-                        if (song.images) {
-                            if (song.images.cover_200) imgUrl = song.images.cover_200;
-                            else if (song.images.cover) imgUrl = song.images.cover;
-                        }
-
-                        if (imgUrl && !imgUrl.includes('default_cover')) {
-                            if (imgUrl.startsWith('http://')) imgUrl = imgUrl.replace('http://', 'https://');
-                            coverImg.src = imgUrl;
-                        } else if (rawArtist && rawTitle) {
-                            const itunesCover = await fetchItunesCover(rawArtist, rawTitle);
-                            coverImg.src = itunesCover ? itunesCover : DEFAULT_SVG_COVER;
-                        } else {
-                            coverImg.src = DEFAULT_SVG_COVER;
-                        }
-                    }
-                    return;
-                }
-            } catch (e) {
-                console.log("Metadaten Hinweis:", e);
-            }
-
-            // Fallback bei Fehler
-            if (titleEl.innerText === 'Lade Titel...') titleEl.innerText = 'krachgarten Stream';
-            if (artistEl.innerText === 'Lade Künstler...') artistEl.innerText = '🔴 On Air';
-            if (showEl.innerText === 'Lade Sendung...') showEl.innerText = 'krachgarten Radio';
-            if (!coverImg.src || coverImg.src === window.location.href) coverImg.src = DEFAULT_SVG_COVER;
+            } catch(e) {}
         }
 
-        // START & INTERVALL (alle 3 Sekunden)
-        fetchSongInfo();
-        setInterval(fetchSongInfo, 3000);
+        function openShareModal() {
+            hasEarnedShareReward = false;
+            const nativeBtn = document.getElementById('native-share-btn');
+            if (nativeBtn && navigator.share) nativeBtn.style.display = 'flex';
+            document.getElementById('share-modal').classList.add('active');
+        }
+
+        function closeShareModal() { document.getElementById('share-modal').classList.remove('active'); }
+
+        function executeShare(platform) {
+            const shareUrl = window.location.origin || window.location.href;
+            const text = "Ich höre gerade Krachgarten Radio! 📻🎶 Hör auch mit rein:";
+            const fullMessage = `${text} ${shareUrl}`;
+
+            if (platform === 'whatsapp') window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(fullMessage)}`, '_blank');
+            else if (platform === 'twitter') window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`, '_blank');
+            else if (platform === 'facebook') window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, '_blank');
+            else if (platform === 'native' && navigator.share) navigator.share({ title: 'Krachgarten Radio', text: text, url: shareUrl }).catch(() => {});
+            else if (platform === 'copy') {
+                navigator.clipboard.writeText(shareUrl);
+                alert('🔗 Link in Zwischenablage kopiert!');
+            }
+
+            if (!hasEarnedShareReward) {
+                hasEarnedShareReward = true;
+                addKrachies(15, "Radio auf Social Media geteilt");
+            }
+            closeShareModal();
+        }
+
+        /* 4. SENDEPLAN & TEAM & HISTORIE */
+
+        async function loadSchedule() {
+            try {
+                const res = await fetch('/api/schedule?t=' + Date.now());
+                if (!res.ok) return;
+                const plan = await res.json();
+                const container = document.getElementById('sendeplan-container');
+                if (!plan || plan.length === 0) {
+                    container.innerHTML = '<p style="color:#7f8c8d; font-style:italic;">Derzeit stehen keine Sendungen im Plan.</p>';
+                    return;
+                }
+                container.innerHTML = plan.map(item => `
+                    <div style="background:#f5f6fa; border-left:4px solid #ff6b35; padding:12px; margin-bottom:10px; border-radius:4px; display:flex; justify-content:space-between;">
+                        <div><strong>${escapeHtml(item.title || item.show || 'Show')}</strong> (${escapeHtml(item.dj || item.name || 'DJ')})</div>
+                        <div>${escapeHtml(item.day || '')} ${escapeHtml(item.time || '')}</div>
+                    </div>
+                `).join('');
+            } catch (e) {}
+        }
+
+        async function loadTeam() {
+            try {
+                const res = await fetch('/api/team?t=' + Date.now());
+                if (!res.ok) return;
+                const team = await res.json();
+                const container = document.getElementById('team-container');
+                if (!team || team.length === 0) return;
+                container.innerHTML = team.map(item => `
+                    <div style="background:#f5f6fa; border:1px solid #dcdde1; padding:12px; border-radius:6px; display:flex; align-items:center; gap:10px;">
+                        <div style="width:40px; height:40px; background:#0b4975; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold;">${escapeHtml((item.name || 'T')[0])}</div>
+                        <div>
+                            <strong>${escapeHtml(item.name)}</strong>
+                            <div style="font-size:0.75rem; color:#ff6b35;">${escapeHtml(item.role || 'Moderator')}</div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {}
+        }
+
+        async function loadRadioHistory() {
+            try {
+                const res = await fetch('/api/lautfm/history?t=' + Date.now(), { cache: 'no-store' });
+                if (!res.ok) return;
+                const history = await res.json();
+                const container = document.getElementById('history-container');
+                if (!history || history.length === 0) return;
+
+                container.innerHTML = history.map((item, idx) => {
+                    let timeBadge = '';
+                    const rawTime = item.started_at || item.ends_at || item.created_at;
+                    if (rawTime) {
+                        try {
+                            const dateObj = new Date(rawTime);
+                            if (!isNaN(dateObj)) {
+                                const timeFormatted = dateObj.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                                timeBadge = `<span style="background: linear-gradient(180deg, #ff9f43 0%, #ee5253 100%); color: #fff; font-size: 0.72rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-right: 8px;">${timeFormatted} Uhr</span>`;
+                            }
+                        } catch (err) {}
+                    }
+
+                    const coverUrl = item.cover_url || item.cover || item.image || item.artist?.image_url || '';
+                    const imgTag = coverUrl ? `<img src="${escapeHtml(coverUrl)}" style="width:35px; height:35px; border-radius:4px; object-fit:cover; border:1px solid #ccc; margin-right:8px;">` : `<div style="width:35px; height:35px; background:#0b4975; color:#fff; border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; margin-right:8px;">📻</div>`;
+
+                    return `
+                        <div style="padding:8px 0; border-bottom:1px dashed #dcdde1; display:flex; justify-content:space-between; align-items:center;">
+                            <div style="font-size:0.9rem; display:flex; align-items:center;">
+                                ${imgTag}
+                                <div>
+                                    ${timeBadge}
+                                    <strong>${escapeHtml(item.artist?.name || item.artist || 'Unbekannt')}</strong> - ${escapeHtml(item.title || '')}
+                                </div>
+                            </div>
+                            <div style="font-size:0.75rem; color:#7f8c8d; font-weight:bold;">#${idx + 1}</div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {}
+        }
+
+        async function sendWish(e) {
+            e.preventDefault();
+            const name = document.getElementById('wish-name').value.trim();
+            const song = document.getElementById('wish-song').value.trim();
+            const message = document.getElementById('wish-msg').value.trim();
+
+            try {
+                await fetch('/api/wishes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, song, message })
+                });
+            } catch(err) {}
+
+            alert('🎉 Wunsch erfolgreich ans Studio übermittelt!');
+            document.getElementById('wish-song').value = '';
+            document.getElementById('wish-msg').value = '';
+            addKrachies(5, "Wunschbox genutzt");
+        }
+
+        /* 5. SONG DER WOCHE VOTING */
+
+        async function loadSongOfWeek() {
+            try {
+                var res = await fetch('/api/songs?t=' + Date.now());
+                if (res.ok) songNominations = await res.json();
+            } catch(e) {}
+
+            var today = new Date();
+            var dayOfWeek = today.getDay();
+            var badge = document.getElementById('vote-status-badge');
+            var box = document.getElementById('song-voting-box');
+
+            var isVotingActive = (dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0);
+
+            if (dayOfWeek === 0 && badge) { badge.innerText = '🏆 SONNTAGS-AUSWERTUNG'; badge.style.background = '#10ac84'; }
+            else if (isVotingActive && badge) { badge.innerText = '🟢 VOTING AKTIV (FR-SO)'; badge.style.background = '#ff9f43'; }
+            else if (badge) { badge.innerText = '🔴 VOTING GESCHLOSSEN (MO-DO)'; badge.style.background = '#e74c3c'; }
+
+            var votedSongs = JSON.parse(localStorage.getItem('krachgarten_voted_songs') || '[]');
+
+            if (box) {
+                var htmlContent = '';
+                for (var i = 0; i < songNominations.length; i++) {
+                    var song = songNominations[i];
+                    var votesText = song.votes !== undefined ? `<div style="font-size:0.8rem; color:#7f8c8d;">Stimmen: <strong style="color:#e84118;">${song.votes}</strong></div>` : '';
+                    var coverImg = song.cover || 'https://via.placeholder.com/50';
+                    var hasVoted = votedSongs.includes(song.id);
+
+                    var btnStyle = 'width:auto; padding:6px 16px;';
+                    var btnText = '🔥 Für Song Stimmen';
+                    var disabledAttr = `style="${btnStyle}"`;
+
+                    if (!isVotingActive) {
+                        btnText = '🔒 Voting geschlossen';
+                        disabledAttr = `disabled style="${btnStyle} opacity:0.6; cursor:not-allowed; background:#7f8c8d;"`;
+                    } else if (hasVoted) {
+                        btnText = '✅ Abstimmung erfolgt';
+                        disabledAttr = `disabled style="${btnStyle} opacity:0.8; cursor:not-allowed; background:#10ac84;"`;
+                    }
+
+                    htmlContent += `
+                        <div style="background:#fff; border:1px solid #dcdde1; padding:12px; border-radius:6px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                            <div style="display:flex; align-items:center; gap:12px;">
+                                <img src="${coverImg}" style="width:50px; height:50px; border-radius:6px; object-fit:cover; border:1px solid #ccc;">
+                                <div>
+                                    <div style="font-weight:bold; color:#2f3640; font-size:0.95rem;">${escapeHtml(song.artist)} - ${escapeHtml(song.title)}</div>
+                                    ${votesText}
+                                </div>
+                            </div>
+                            <button onclick="voteSong(${song.id})" class="btn-submit" ${disabledAttr}>${btnText}</button>
+                        </div>
+                    `;
+                }
+                if (!htmlContent) htmlContent = '<p style="color:#7f8c8d; font-style:italic;">Derzeit keine Songs nominiert.</p>';
+                box.innerHTML = htmlContent;
+            }
+        }
+
+        async function voteSong(id) {
+            var votedSongs = JSON.parse(localStorage.getItem('krachgarten_voted_songs') || '[]');
+            if (votedSongs.includes(id)) { alert('⚠️ Du hast für diesen Song bereits abgestimmt!'); return; }
+
+            var voteWeight = 1;
+            if (currentUser && currentUser.inventory && currentUser.inventory.hasDoubleVote) {
+                voteWeight = 2;
+                currentUser.inventory.hasDoubleVote = false;
+                localStorage.setItem('krachgarten_user', JSON.stringify(currentUser));
+                alert("🔥 Dein Double-Vote Booster wurde angewendet (+2 Stimmen)!");
+            }
+
+            try {
+                var res = await fetch('/api/songs/vote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id, weight: voteWeight })
+                });
+                if (res.ok) {
+                    votedSongs.push(id);
+                    localStorage.setItem('krachgarten_voted_songs', JSON.stringify(votedSongs));
+                    addKrachies(20, "Für Song der Woche gestimmt");
+                }
+            } catch(e) {}
+            loadSongOfWeek();
+        }
+
+        /* 6. MINIGAMES (MEMORY, QUIZ, CANVAS JUMP 'N' RUN) */
+
+        // MEMORY
+        const memoryIcons = ['📻', '🎧', '🎸', '🎤', '🎵', '🍺'];
+        let memoryCards = [], flippedCards = [], matchedPairs = 0, memoryAttempts = 0, canFlip = true;
+
+        function initMemory() {
+            const board = document.getElementById('memory-board');
+            if (!board) return;
+            memoryCards = [...memoryIcons, ...memoryIcons].sort(() => Math.random() - 0.5);
+            flippedCards = []; matchedPairs = 0; memoryAttempts = 0; canFlip = true;
+            document.getElementById('memory-stats').innerText = `Versuche: 0 | Paare: 0/${memoryIcons.length}`;
+            board.innerHTML = memoryCards.map((icon, idx) => `
+                <div onclick="flipMemoryCard(${idx})" id="m-card-${idx}" style="height: 65px; background: #0b4975; color: #fff; border: 2px solid #083b60; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; cursor: pointer;">❓</div>
+            `).join('');
+        }
+
+        function flipMemoryCard(idx) {
+            if (!canFlip) return;
+            const cardEl = document.getElementById(`m-card-${idx}`);
+            if (flippedCards.includes(idx) || cardEl.innerText !== '❓') return;
+
+            cardEl.innerText = memoryCards[idx]; cardEl.style.background = '#ffffff'; cardEl.style.color = '#000';
+            flippedCards.push(idx);
+
+            if (flippedCards.length === 2) {
+                memoryAttempts++; canFlip = false;
+                const [first, second] = flippedCards;
+                if (memoryCards[first] === memoryCards[second]) {
+                    matchedPairs++; flippedCards = []; canFlip = true;
+                    if (matchedPairs === memoryIcons.length) setTimeout(() => addKrachies(25, "Memory gewonnen"), 200);
+                } else {
+                    setTimeout(() => {
+                        const c1 = document.getElementById(`m-card-${first}`);
+                        const c2 = document.getElementById(`m-card-${second}`);
+                        if (c1) { c1.innerText = '❓'; c1.style.background = '#0b4975'; }
+                        if (c2) { c2.innerText = '❓'; c2.style.background = '#0b4975'; }
+                        flippedCards = []; canFlip = true;
+                    }, 900);
+                }
+                document.getElementById('memory-stats').innerText = `Versuche: ${memoryAttempts} | Paare: ${matchedPairs}/${memoryIcons.length}`;
+            }
+        }
+
+        // QUIZ
+        const quizQuestions = [
+            { q: "Wofür steht 'DJ'?", answers: ["Disc Jockey", "Digital Jukebox", "Direct Jammer"], correct: 0 },
+            { q: "Auf welcher Plattform streamt Krachgarten Radio?", answers: ["Spotify", "Laut.fm", "Twitch"], correct: 1 }
+        ];
+        let currentQuizIdx = 0, quizScore = 0;
+
+        function initQuiz() { currentQuizIdx = 0; quizScore = 0; showQuizQuestion(); }
+        function showQuizQuestion() {
+            const scoreEl = document.getElementById('quiz-score');
+            const questionEl = document.getElementById('quiz-question');
+            const optionsEl = document.getElementById('quiz-options');
+            if (!questionEl || !optionsEl) return;
+            if (scoreEl) scoreEl.innerText = `Punkte: ${quizScore}`;
+            if (currentQuizIdx >= quizQuestions.length) {
+                questionEl.innerHTML = `🎉 Quiz beendet! <strong>${quizScore} von ${quizQuestions.length}</strong> Punkte!`;
+                optionsEl.innerHTML = `<button onclick="initQuiz()" class="btn-submit">Erneut spielen 🔄</button>`;
+                addKrachies(15, "Quiz abgeschlossen");
+                return;
+            }
+            const q = quizQuestions[currentQuizIdx];
+            questionEl.innerText = `${currentQuizIdx + 1}. ${q.q}`;
+            optionsEl.innerHTML = q.answers.map((ans, idx) => `
+                <button onclick="checkAnswer(${idx})" class="form-control" style="text-align: left; cursor: pointer; font-weight: bold; padding: 10px;">
+                    ${String.fromCharCode(65 + idx)}) ${escapeHtml(ans)}
+                </button>
+            `).join('');
+        }
+        function checkAnswer(chosenIdx) {
+            if (chosenIdx === quizQuestions[currentQuizIdx].correct) quizScore++;
+            currentQuizIdx++; showQuizQuestion();
+        }
+
+        // JUMP 'N' RUN CANVAS
+        let jnrCanvas, jnrCtx, jnrAnimationId = null, jnrScore = 0, jnrHighscore = 0, jnrRunning = false, jnrFrame = 0, nextSpawnFrame = 40;
+        let jnrPlayer = { x: 50, y: 95, vy: 0, gravity: 0.82, jumpForce: -12.0, grounded: false };
+        let jnrObstacles = [];
+
+        function initJnR() {
+            jnrCanvas = document.getElementById('jnr-canvas');
+            if (!jnrCanvas) return;
+            jnrCtx = jnrCanvas.getContext('2d');
+            jnrCanvas.onclick = jnrJump;
+            window.onkeydown = function(e) { if (e.code === 'Space' && jnrRunning) { e.preventDefault(); jnrJump(); } };
+            drawJnRIdle();
+        }
+
+        function drawJnRIdle() {
+            if (!jnrCtx) return;
+            jnrCtx.clearRect(0, 0, jnrCanvas.width, jnrCanvas.height);
+            jnrCtx.fillStyle = '#2d3436'; jnrCtx.fillRect(0, 120, jnrCanvas.width, 30);
+            jnrCtx.fillStyle = '#10ac84'; jnrCtx.fillRect(0, 120, jnrCanvas.width, 4);
+            jnrCtx.font = '26px sans-serif'; jnrCtx.fillText('🕺', 50, 118);
+            jnrCtx.fillStyle = '#ffffff'; jnrCtx.font = 'bold 16px Verdana'; jnrCtx.textAlign = 'center';
+            jnrCtx.fillText('Klicke "Spiel Starten" zum Loslegen!', jnrCanvas.width / 2, 65);
+        }
+
+        function startJnRGame() {
+            if (jnrAnimationId) cancelAnimationFrame(jnrAnimationId);
+            jnrScore = 0; jnrFrame = 0; nextSpawnFrame = 40; jnrObstacles = []; jnrPlayer.y = 95; jnrPlayer.vy = 0; jnrPlayer.grounded = true; jnrRunning = true;
+            jnrLoop();
+        }
+
+        function jnrJump() { if (jnrRunning && jnrPlayer.grounded) { jnrPlayer.vy = jnrPlayer.jumpForce; jnrPlayer.grounded = false; } }
+
+        function jnrLoop() {
+            if (!jnrRunning) return;
+            jnrFrame++; jnrScore = Math.floor(jnrFrame / 4);
+            if (jnrScore > jnrHighscore) jnrHighscore = jnrScore;
+            document.getElementById('jnr-stats').innerText = `Score: ${jnrScore} | Highscore: ${jnrHighscore}`;
+
+            jnrPlayer.vy += jnrPlayer.gravity; jnrPlayer.y += jnrPlayer.vy;
+            if (jnrPlayer.y >= 95) { jnrPlayer.y = 95; jnrPlayer.vy = 0; jnrPlayer.grounded = true; }
+
+            if (jnrFrame >= nextSpawnFrame) {
+                const types = [{ emoji: '🧱', isFlying: false }, { emoji: '📦', isFlying: false }, { emoji: '🦅', isFlying: true }];
+                const chosen = types[Math.floor(Math.random() * types.length)];
+                jnrObstacles.push({ x: jnrCanvas.width, y: chosen.isFlying ? 68 : 95, emoji: chosen.emoji, speed: 6.0 });
+                nextSpawnFrame = jnrFrame + 50;
+            }
+
+            jnrCtx.clearRect(0, 0, jnrCanvas.width, jnrCanvas.height);
+            jnrCtx.fillStyle = '#2d3436'; jnrCtx.fillRect(0, 120, jnrCanvas.width, 30);
+            jnrCtx.fillStyle = '#10ac84'; jnrCtx.fillRect(0, 120, jnrCanvas.width, 4);
+            jnrCtx.font = '26px sans-serif'; jnrCtx.textAlign = 'left'; jnrCtx.fillText('🕺', jnrPlayer.x, jnrPlayer.y + 23);
+
+            for (let i = jnrObstacles.length - 1; i >= 0; i--) {
+                let obs = jnrObstacles[i]; obs.x -= obs.speed;
+                jnrCtx.font = '22px sans-serif'; jnrCtx.fillText(obs.emoji, obs.x, obs.y + 20);
+
+                if (jnrPlayer.x + 18 > obs.x && jnrPlayer.x < obs.x + 20 && jnrPlayer.y + 20 > obs.y && jnrPlayer.y < obs.y + 22) {
+                    if (currentUser && currentUser.inventory && currentUser.inventory.jnrShields > 0) {
+                        currentUser.inventory.jnrShields--;
+                        localStorage.setItem('krachgarten_user', JSON.stringify(currentUser));
+                        jnrObstacles.splice(i, 1);
+                        alert("🛡️ Dein Schild hat dich gerettet!");
+                        continue;
+                    }
+                    jnrRunning = false;
+                    jnrCtx.fillStyle = '#ee5253'; jnrCtx.font = 'bold 22px Verdana'; jnrCtx.textAlign = 'center';
+                    jnrCtx.fillText('GAME OVER! 💥', jnrCanvas.width / 2, 55);
+                    if (jnrScore > 50) addKrachies(20, "Guter Highscore im Jump n Run");
+                    return;
+                }
+                if (obs.x < -30) jnrObstacles.splice(i, 1);
+            }
+            jnrAnimationId = requestAnimationFrame(jnrLoop);
+        }
+
+        /* 7. ANUBIS QUESTS */
+
+        let anubisQuests = { q1: false, q2: false, q3: false };
+        function initAnubis() {
+            const saved = localStorage.getItem('anubis_quests');
+            if (saved) { try { anubisQuests = JSON.parse(saved); } catch(e){} }
+            updateAnubisUI();
+        }
+        function saveAnubisState() { localStorage.setItem('anubis_quests', JSON.stringify(anubisQuests)); updateAnubisUI(); }
+        function updateAnubisUI() {
+            const count = (anubisQuests.q1 ? 1 : 0) + (anubisQuests.q2 ? 1 : 0) + (anubisQuests.q3 ? 1 : 0);
+            document.getElementById('anubis-progress').innerText = `Gelöste Quests: ${count} / 3`;
+            if (anubisQuests.q1) { document.getElementById('q1-status').innerText = '✅ Gelöst'; document.getElementById('q1-msg').innerText = '✨ SIBUNA!'; document.getElementById('q1-msg').style.color = '#10ac84'; }
+            if (anubisQuests.q2) { document.getElementById('q2-status').innerText = '✅ Gelöst'; document.getElementById('q2-msg').innerText = '✨ Richtig (28)!'; document.getElementById('q2-msg').style.color = '#10ac84'; }
+            if (anubisQuests.q3) { document.getElementById('q3-status').innerText = '✅ Gelöst'; document.getElementById('q3-msg').innerText = '✨ Schrank im Dachboden!'; document.getElementById('q3-msg').style.color = '#10ac84'; }
+            if (count === 3) document.getElementById('anubis-reward').style.display = 'block';
+        }
+        function checkQuest1() {
+            if (anubisQuests.q1) return;
+            if (document.getElementById('q1-input').value.trim().toUpperCase() === 'SIBUNA') { anubisQuests.q1 = true; saveAnubisState(); addKrachies(15, "Anubis Quest 1 gelöst"); }
+            else { document.getElementById('q1-msg').innerText = '❌ Falsch!'; document.getElementById('q1-msg').style.color = '#ee5253'; }
+        }
+        function checkQuest2() {
+            if (anubisQuests.q2) return;
+            if (parseInt(document.getElementById('q2-input').value, 10) === 28) { anubisQuests.q2 = true; saveAnubisState(); addKrachies(15, "Anubis Quest 2 gelöst"); }
+            else { document.getElementById('q2-msg').innerText = '❌ Falsch!'; document.getElementById('q2-msg').style.color = '#ee5253'; }
+        }
+        function checkQuest3(choice) {
+            if (anubisQuests.q3) return;
+            if (choice === 2) { anubisQuests.q3 = true; saveAnubisState(); addKrachies(20, "Anubis Geheimnis vollständig gelüftet"); }
+            else { document.getElementById('q3-msg').innerText = '❌ Falsch!'; document.getElementById('q3-msg').style.color = '#ee5253'; }
+        }
+
+        /* 8. NEWS MODAL & COMMENTS */
+
+        async function loadNews() {
+            const container = document.getElementById('news-container');
+            if (!container) return;
+
+            try {
+                const res = await fetch('/api/data');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.news && Array.isArray(data.news) && data.news.length > 0) newsDataStore = data.news;
+                }
+            } catch(e) {}
+
+            container.innerHTML = newsDataStore.map(item => `
+                <div style="padding: 12px 0; border-bottom: 1px dashed #dcdde1;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-weight:bold; color:#e84118; font-size:1rem;">${escapeHtml(item.title)}</span>
+                        <span style="font-size:0.78rem; color:#7f8c8d;">${escapeHtml(item.date)}</span>
+                    </div>
+                    <div style="font-size:0.75rem; color:#0b4975; font-weight:bold; margin-top:2px;">Von: ${escapeHtml(item.author)}</div>
+                    <div style="font-size:0.88rem; color:#2c3e50; margin-top:6px;">${escapeHtml(item.summary)}</div>
+                    <button onclick="openNewsModal(${item.id})" style="margin-top:8px; background:#ff9f43; border:none; color:#fff; font-size:0.78rem; font-weight:bold; padding:4px 10px; border-radius:4px; cursor:pointer;">
+                        Vollständige News lesen & Kommentieren 📖
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function openNewsModal(newsId) {
+            const news = newsDataStore.find(n => n.id === newsId);
+            if (!news) return;
+
+            activeNewsId = newsId;
+            document.getElementById('modal-news-title').innerText = news.title;
+            document.getElementById('modal-news-author').innerText = 'Von: ' + news.author;
+            document.getElementById('modal-news-date').innerText = news.date;
+            document.getElementById('modal-news-content').innerText = news.content;
+
+            renderNewsComments(news);
+            document.getElementById('news-modal').classList.add('active');
+        }
+
+        function closeNewsModal() { document.getElementById('news-modal').classList.remove('active'); }
+
+        function renderNewsComments(news) {
+            const list = document.getElementById('modal-comments-list');
+            document.getElementById('modal-comments-count').innerText = news.comments ? news.comments.length : 0;
+
+            if (!news.comments || news.comments.length === 0) {
+                list.innerHTML = '<p style="color:#7f8c8d; font-style:italic; font-size:0.82rem;">Noch keine Kommentare vorhanden.</p>';
+                return;
+            }
+
+            list.innerHTML = news.comments.map(c => `
+                <div style="background:#fff; border:1px solid #ddd; padding:6px 10px; border-radius:4px; margin-bottom:6px; font-size:0.82rem;">
+                    <strong>${escapeHtml(c.author)}:</strong> ${escapeHtml(c.text)}
+                </div>
+            `).join('');
+        }
+
+        async function submitNewsComment(e) {
+            e.preventDefault();
+            const textInput = document.getElementById('comment-text-input');
+            const text = textInput.value.trim();
+            if (!text) return;
+
+            const news = newsDataStore.find(n => n.id === activeNewsId);
+            if (news) {
+                const authorName = currentUser ? currentUser.username : 'Gast';
+                if (!news.comments) news.comments = [];
+                news.comments.push({ author: authorName, text: text });
+                
+                try {
+                    await fetch(`/api/news/${activeNewsId}/comment`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ author: authorName, text })
+                    });
+                } catch(err) {}
+
+                localStorage.setItem('krachgarten_news', JSON.stringify(newsDataStore));
+                renderNewsComments(news);
+                textInput.value = '';
+                addKrachies(10, "News-Kommentar geschrieben");
+            }
+        }
+
+        /* 9. SHOP & ADMIN PANEL */
+
+        async function buyReward(rewardKey, cost, itemName) {
+            if (!currentUser) { alert('❌ Bitte erst anmelden!'); return; }
+            var userKrachies = currentUser.krachies || 0;
+            if (userKrachies < cost) { alert(`❌ Nicht genug Krachies! Benötigt: ${cost} 🪙 | Guthaben: ${userKrachies} 🪙`); return; }
+
+            if (!confirm(`Möchtest du "${itemName}" für ${cost} Krachies einlösen?`)) return;
+
+            currentUser.krachies -= cost;
+            currentUser.inventory = currentUser.inventory || {};
+
+            if (rewardKey === 'jnr_shield') currentUser.inventory.jnrShields = (currentUser.inventory.jnrShields || 0) + 1;
+            else if (rewardKey === 'gold_name') currentUser.inventory.hasGoldName = true;
+            else if (rewardKey === 'vip_avatars') currentUser.inventory.hasVipAvatars = true;
+            else if (rewardKey === 'double_vote') currentUser.inventory.hasDoubleVote = true;
+
+            localStorage.setItem('krachgarten_user', JSON.stringify(currentUser));
+            updateUserUI();
+
+            try {
+                await fetch('/api/shop/buy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: currentUser.username, rewardKey, cost, itemName })
+                });
+            } catch(e) {}
+
+            alert(`🎉 Erfolgreich eingelöst: "${itemName}"!`);
+        }
+
+        async function loadAdminPanel() {
+            var list = document.getElementById('admin-nominations-list');
+            if (!list) return;
+
+            try {
+                var res = await fetch('/api/admin/songs?t=' + Date.now());
+                if (res.ok) songNominations = await res.json();
+            } catch(e) {}
+
+            var htmlContent = '';
+            for (var i = 0; i < songNominations.length; i++) {
+                var song = songNominations[i];
+                htmlContent += `
+                    <div style="background:#f8f9fa; border:1px solid #ddd; padding:8px 12px; border-radius:4px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <strong>${escapeHtml(song.artist)} - ${escapeHtml(song.title)}</strong> 
+                            <span style="color:#7f8c8d; font-size:0.8rem;">(${song.votes || 0} Stimmen)</span>
+                        </div>
+                        <div style="display:flex; gap:6px;">
+                            <button onclick="adminResetVotes(${song.id})" style="background:#f39c12; border:none; color:#fff; padding:3px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer;">Reset 🔄</button>
+                            <button onclick="adminDeleteSong(${song.id})" style="background:#e74c3c; border:none; color:#fff; padding:3px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer;">Löschen ✖</button>
+                        </div>
+                    </div>
+                `;
+            }
+            list.innerHTML = htmlContent || '<p style="color:#7f8c8d; font-style:italic;">Keine Songs vorhanden.</p>';
+        }
+
+        async function addSongNomination(e) {
+            e.preventDefault();
+            var title = document.getElementById('admin-song-title').value.trim();
+            var artist = document.getElementById('admin-song-artist').value.trim();
+            var cover = document.getElementById('admin-song-cover').value.trim() || 'https://via.placeholder.com/50/ff9f43/ffffff?text=Song';
+
+            try {
+                var res = await fetch('/api/songs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, artist, cover })
+                });
+                if (res.ok) {
+                    var data = await res.json();
+                    if (data.nominations) songNominations = data.nominations;
+                }
+            } catch(err) {}
+
+            document.getElementById('admin-song-title').value = '';
+            document.getElementById('admin-song-artist').value = '';
+            document.getElementById('admin-song-cover').value = '';
+            loadAdminPanel();
+        }
+
+        async function adminDeleteSong(id) {
+            if (!confirm("Song wirklich löschen?")) return;
+            try {
+                var res = await fetch('/api/songs/' + id, { method: 'DELETE' });
+                if (res.ok) {
+                    var data = await res.json();
+                    if (data.nominations) songNominations = data.nominations;
+                }
+            } catch(e) {}
+            loadAdminPanel();
+        }
+
+        async function adminResetVotes(id) {
+            try {
+                var res = await fetch('/api/songs/' + id + '/reset', { method: 'POST' });
+                if (res.ok) {
+                    var data = await res.json();
+                    if (data.nominations) songNominations = data.nominations;
+                }
+            } catch(e) {}
+            loadAdminPanel();
+        }
+
+        async function loadAdminOrders() {
+            var list = document.getElementById('admin-orders-list');
+            if (!list) return;
+
+            try {
+                var res = await fetch('/api/admin/orders?t=' + Date.now());
+                if (res.ok) {
+                    var orders = await res.json();
+                    if (!orders || orders.length === 0) {
+                        list.innerHTML = '<p style="color:#7f8c8d; font-style:italic;">Keine offenen Bestellungen.</p>';
+                        return;
+                    }
+
+                    list.innerHTML = orders.map(o => `
+                        <div style="background:#fff; border:1px solid #f39c12; padding:10px; border-radius:6px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                            <div>
+                                <strong style="color:#e67e22;">${escapeHtml(o.itemName)}</strong> von <strong>${escapeHtml(o.username)}</strong>
+                                <div style="font-size:0.8rem; color:#7f8c8d;">Datum: ${escapeHtml(o.date)}</div>
+                            </div>
+                            <button onclick="completeOrder(${o.id})" style="background:#27ae60; border:none; color:#fff; padding:4px 10px; border-radius:4px; font-size:0.75rem; cursor:pointer;">Erledigt ✅</button>
+                        </div>
+                    `).join('');
+                }
+            } catch(e) {}
+        }
+
+        async function completeOrder(id) {
+            try {
+                await fetch('/api/admin/orders/done', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: id })
+                });
+                loadAdminOrders();
+            } catch(e) {}
+        }
+
+        function adminGiveSelfKrachies() {
+            var amount = parseInt(document.getElementById('admin-give-amount').value, 10);
+            if (!isNaN(amount) && amount > 0) addKrachies(amount, "Admin Guthaben-Aufladung");
+        }
+
+        /* INITIALISIERUNG */
+        window.addEventListener('DOMContentLoaded', () => {
+            initUserSystem();
+            loadStreamMetadata();
+            setInterval(loadStreamMetadata, 2000);
+            loadNews();
+        });
     </script>
 </body>
 </html>

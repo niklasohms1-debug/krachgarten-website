@@ -931,14 +931,7 @@
                                 <div class="form-group">
                                     <label for="reg-username">Benutzername:</label>
                                     <input type="text" id="reg-username" class="form-control" placeholder="Wähle deinen Namen" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="reg-email1">E-Mail Adresse:</label>
-                                    <input type="email" id="reg-email1" class="form-control" placeholder="Deine E-Mail" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="reg-email2">E-Mail Wiederholen:</label>
-                                    <input type="email" id="reg-email2" class="form-control" placeholder="E-Mail Bestätigen" required>
+    
                                 </div>
                                 <div class="form-group">
                                     <label for="reg-pass1">Passwort:</label>
@@ -948,7 +941,7 @@
                                     <label for="reg-pass2">Passwort Wiederholen:</label>
                                     <input type="password" id="reg-pass2" class="form-control" placeholder="Passwort Bestätigen" required>
                                 </div>
-                                <button type="submit" class="btn-submit" style="background: linear-gradient(180deg, #10ac84 0%, #1dd1a1 100%);">Account Erstellen ✨ (+50 Krachies nach Verifizierung)</button>
+                               <button type="submit" class="btn-submit" style="background: linear-gradient(180deg, #10ac84 0%, #1dd1a1 100%);">Account Erstellen ✨</button>
                             </form>
                         </div>
                     </div>
@@ -1059,31 +1052,7 @@
         </div>
     </div>
 
-    <!-- MODAL: EMAIL VERIFIZIERUNG -->
-    <div id="verify-modal" class="modal-overlay">
-        <div class="modal-box" style="max-width: 420px;">
-            <div class="card-header" style="border-radius: 5px 5px 0 0; background: linear-gradient(180deg, #10ac84 0%, #1dd1a1 100%);">
-                <span>✉️ E-Mail Adresse Bestätigen</span>
-                <button onclick="closeVerifyModal()" style="background:transparent; border:none; color:#fff; font-size:1.2rem; cursor:pointer;">✖</button>
-            </div>
-            <div class="card-body" style="text-align: center;">
-                <p style="margin-bottom: 12px; font-size: 0.9rem; color: #2c3e50;">
-                    Wir haben einen 6-stelligen Bestätigungscode an deine E-Mail gesendet!
-                </p>
-                <div id="demo-code-box" style="background:#fff8e7; border:1px solid #f39c12; color:#d35400; padding:8px; border-radius:6px; font-size:0.8rem; font-weight:bold; margin-bottom:15px;"></div>
-
-                <div class="form-group" style="text-align: left;">
-                    <label for="verify-code-input">6-stelliger Code:</label>
-                    <input type="text" id="verify-code-input" class="form-control" placeholder="Z. B. 123456" style="text-align: center; font-size: 1.2rem; letter-spacing: 4px; font-weight: bold;" maxlength="6" required>
-                </div>
-
-                <button onclick="submitEmailVerification()" class="btn-submit" style="background: linear-gradient(180deg, #10ac84 0%, #1dd1a1 100%); font-size: 1rem;">
-                    Code Bestätigen & Account Freischalten 🎉
-                </button>
-            </div>
-        </div>
-    </div>
-
+    
     <!-- MODAL: TEILEN -->
     <div id="share-modal" class="modal-overlay">
         <div class="modal-box" style="max-width: 450px;">
@@ -1129,7 +1098,6 @@
 
         let currentUser = null;
         let activeNewsId = null;
-        let pendingVerifyCode = null;
         let currentSongKey = '';
         let pendingSong = null;
         let songSyncTimeout = null;
@@ -1170,7 +1138,7 @@
             const authView = document.getElementById('profile-auth-view');
             const adminTab = document.getElementById('nav-admin');
             const nameDisplay = document.getElementById('profile-username-display');
-            const verifyBanner = document.getElementById('email-verify-status-banner');
+          
 
             if (currentUser) {
                 const isAdmin = currentUser.isAdmin || currentUser.username.toLowerCase() === 'admin' || currentUser.username.toLowerCase() === 'niklas';
@@ -1196,13 +1164,7 @@
                         nameDisplay.style.textShadow = 'none';
                     }
                 }
-
-                if (verifyBanner) {
-                    if (currentUser.isVerified) {
-                        verifyBanner.style.background = '#e8f8f5';
-                        verifyBanner.style.border = '1px solid #1dd1a1';
-                        verifyBanner.style.color = '#10ac84';
-                        verifyBanner.innerHTML = `<span>✅ E-Mail Adresse ist verifiziert!</span>`;
+                       
                     } else {
                         verifyBanner.style.background = '#fef9e7';
                         verifyBanner.style.border = '1px solid #f39c12';
@@ -1214,7 +1176,7 @@
                     }
                 }
 
-                document.getElementById('profile-email-display').innerText = currentUser.email || 'user@krachgarten.de';
+              
                 document.getElementById('profile-krachies-display').innerText = currentUser.krachies || 0;
                 document.getElementById('profile-avatar-display').innerText = currentUser.avatar || '🕺';
                 document.getElementById('profile-status-input').value = currentUser.status || '';
@@ -1259,58 +1221,40 @@
             alert(`🪙 +${amount} Krachies gutgeschrieben! (${reason})`);
         }
 
-        async function handleRegister(e) {
-            e.preventDefault();
-            const username = document.getElementById('reg-username').value.trim();
-            const email1 = document.getElementById('reg-email1').value.trim();
-            const email2 = document.getElementById('reg-email2').value.trim();
-            const pass1 = document.getElementById('reg-pass1').value;
-            const pass2 = document.getElementById('reg-pass2').value;
+       async function handleRegister(e) {
+    e.preventDefault();
+    const username = document.getElementById('reg-username').value.trim();
+    const pass1 = document.getElementById('reg-pass1').value;
+    const pass2 = document.getElementById('reg-pass2').value;
 
-            if (email1 !== email2) { alert('❌ Die E-Mail Adressen stimmen nicht überein!'); return; }
-            if (pass1 !== pass2) { alert('❌ Die Passwörter stimmen nicht überein!'); return; }
+    if (pass1 !== pass2) { alert('❌ Die Passwörter stimmen nicht überein!'); return; }
 
-            const isAdmin = username.toLowerCase() === 'admin' || username.toLowerCase() === 'niklas';
-            pendingVerifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const isAdmin = username.toLowerCase() === 'admin' || username.toLowerCase() === 'niklas';
 
-            currentUser = {
-                username: username,
-                email: email1,
-                krachies: 0,
-                avatar: isAdmin ? '👑' : '🕺',
-                isAdmin: isAdmin,
-                isVerified: false,
-                inventory: { hasGoldName: false }
-            };
+    currentUser = {
+        username: username,
+        email: '',
+        krachies: 50, // Gibt direkt die 50 Start-Krachies
+        avatar: isAdmin ? '👑' : '🕺',
+        isAdmin: isAdmin,
+        isVerified: true,
+        inventory: { hasGoldName: false }
+    };
 
-            try {
-                await fetch('/api/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, email: email1, password: pass1, code: pendingVerifyCode })
-                });
-            } catch(err) {}
+    try {
+        await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password: pass1 })
+        });
+    } catch(err) {}
 
-            localStorage.setItem('krachgarten_user', JSON.stringify(currentUser));
-            updateUserUI();
-            openVerifyModal();
-        }
+    localStorage.setItem('krachgarten_user', JSON.stringify(currentUser));
+    updateUserUI();
+    alert('🎉 Account erfolgreich erstellt!');
+}
+        
 
-        function openVerifyModal() {
-            if (!pendingVerifyCode) pendingVerifyCode = Math.floor(100000 + Math.random() * 900000).toString();
-            const demoBox = document.getElementById('demo-code-box');
-            if (demoBox) demoBox.innerText = `[DEMO-MODUS] Bestätigungscode: ${pendingVerifyCode}`;
-            document.getElementById('verify-modal').classList.add('active');
-        }
-
-        function closeVerifyModal() { document.getElementById('verify-modal').classList.remove('active'); }
-
-        async function submitEmailVerification() {
-            const inputCode = document.getElementById('verify-code-input').value.trim();
-            if (inputCode !== pendingVerifyCode) {
-                alert('❌ Falscher Code!');
-                return;
-            }
 
             if (currentUser) {
                 currentUser.isVerified = true;
@@ -1326,8 +1270,7 @@
                 } catch(e){}
 
                 updateUserUI();
-                closeVerifyModal();
-                alert('🎉 E-Mail verifiziert! +50 Krachies Startbonus wurden gutgeschrieben!');
+               
             }
         }
 

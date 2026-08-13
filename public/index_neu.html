@@ -819,82 +819,132 @@
                             </div>
                         </div>
 
-                        <!-- SHOP -->
-                        <div class="habbo-card" style="border-color: #f1c40f; margin-top: 20px;">
-                            <div class="card-header" style="background: linear-gradient(180deg, #f39c12 0%, #d35400 100%);">
-                                <span>🛒 Krachie-Shop & Belohnungen</span>
-                                <span>TAUSCHE DEINE KRACHIES EIN</span>
-                            </div>
-                            <div class="card-body">
-                                <p style="margin-bottom: 15px; font-size: 0.85rem; color: #57606f;">
-                                    Sammle durch Aktivität, Spiele und Voting deine <strong>Krachies 🪙</strong> und löse sie hier gegen exklusive Stream-Vorteile und Profil-Upgrades ein!
-                                </p>
+                       <!-- SHOP -->
+<div class="habbo-card" style="border-color: #f1c40f; margin-top: 20px;">
+    <div class="card-header" style="background: linear-gradient(180deg, #f39c12 0%, #d35400 100%);">
+        <span>🛒 Krachie-Shop & Belohnungen</span>
+        <span>TAUSCHE DEINE KRACHIES EIN</span>
+    </div>
+    <div class="card-body">
+        <p style="margin-bottom: 15px; font-size: 0.85rem; color: #57606f;">
+            Sammle durch Aktivität, Spiele und Voting deine <strong>Krachies 🪙</strong> und löse sie hier gegen exklusive Stream-Vorteile und Profil-Upgrades ein!
+        </p>
 
-                                <div style="overflow-x: auto;">
-                                    <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; background: #fff; border: 1px solid #dcdde1; border-radius: 6px; overflow: hidden;">
-                                        <thead>
-                                            <tr style="background: #2f3640; color: #fff; font-size: 0.8rem; text-transform: uppercase;">
-                                                <th style="padding: 10px 12px;">Belohnung</th>
-                                                <th style="padding: 10px 12px;">Kosten</th>
-                                                <th style="padding: 10px 12px;">Kategorie</th>
-                                                <th style="padding: 10px 12px;">Dauer / Typ</th>
-                                                <th style="padding: 10px 12px; text-align: center;">Aktion</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody style="color: #2c3e50;">
-                                            <tr style="border-bottom: 1px solid #f1f2f6;">
-                                                <td style="padding: 10px 12px; font-weight: bold;">🛡️ Jump 'n' Run Schild</td>
-                                                <td style="padding: 10px 12px;"><span class="krachies-badge">🪙 75</span></td>
-                                                <td style="padding: 10px 12px;">Minigames</td>
-                                                <td style="padding: 10px 12px; color: #7f8c8d;">Single-Use</td>
-                                                <td style="padding: 10px 12px; text-align: center;">
-                                                    <button onclick="buyReward('jnr_shield', 75, 'Jump n Run Schild')" class="btn-submit" style="width: auto; padding: 4px 12px; font-size: 0.75rem;">Einlösen</button>
-                                                </td>
-                                            </tr>
-                                            <tr style="border-bottom: 1px solid #f1f2f6; background: #f8f9fa;">
-                                                <td style="padding: 10px 12px; font-weight: bold;">⚡ Prio-Musikwunsch</td>
-                                                <td style="padding: 10px 12px;"><span class="krachies-badge">🪙 150</span></td>
-                                                <td style="padding: 10px 12px;">Radio</td>
-                                                <td style="padding: 10px 12px; color: #7f8c8d;">Einmalig</td>
-                                                <td style="padding: 10px 12px; text-align: center;">
-                                                    <button onclick="buyReward('prio_wish', 150, 'Prio-Musikwunsch')" class="btn-submit" style="width: auto; padding: 4px 12px; font-size: 0.75rem;">Einlösen</button>
-                                                </td>
-                                            </tr>
-                                            <tr style="border-bottom: 1px solid #f1f2f6;">
-                                                <td style="padding: 10px 12px; font-weight: bold;">🎨 Goldene Namensfarbe</td>
-                                                <td style="padding: 10px 12px;"><span class="krachies-badge">🪙 300</span></td>
-                                                <td style="padding: 10px 12px;">Profil</td>
-                                                <td style="padding: 10px 12px; color: #7f8c8d;">Dauerhaft</td>
-                                                <td style="padding: 10px 12px; text-align: center;">
-                                                    <button onclick="buyReward('gold_name', 300, 'Goldene Namensfarbe')" class="btn-submit" style="width: auto; padding: 4px 12px; font-size: 0.75rem;">Freischalten</button>
-                                                </td>
-                                            </tr>
-                                            <tr style="border-bottom: 1px solid #f1f2f6; background: #f8f9fa;">
-                                                <td style="padding: 10px 12px; font-weight: bold;">👑 VIP-Avatar Paket</td>
-                                                <td style="padding: 10px 12px;"><span class="krachies-badge">🪙 500</span></td>
-                                                <td style="padding: 10px 12px;">Profil</td>
-                                                <td style="padding: 10px 12px; color: #7f8c8d;">Dauerhaft</td>
-                                                <td style="padding: 10px 12px; text-align: center;">
-                                                    <button onclick="buyReward('vip_avatars', 500, 'VIP-Avatar Paket')" class="btn-submit" style="width: auto; padding: 4px 12px; font-size: 0.75rem;">Freischalten</button>
-                                                </td>
-                                            </tr>
-                                            <tr style="border-bottom: 1px solid #f1f2f6;">
-                                                <td style="padding: 10px 12px; font-weight: bold;">🔥 Double-Vote Booster</td>
-                                                <td style="padding: 10px 12px;"><span class="krachies-badge">🪙 600</span></td>
-                                                <td style="padding: 10px 12px;">Voting</td>
-                                                <td style="padding: 10px 12px; color: #7f8c8d;">1 Wochenende</td>
-                                                <td style="padding: 10px 12px; text-align: center;">
-                                                    <button onclick="buyReward('double_vote', 600, 'Double-Vote Booster')" class="btn-submit" style="width: auto; padding: 4px 12px; font-size: 0.75rem;">Aktivieren</button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: left; background: #fff; border: 1px solid #dcdde1; border-radius: 6px; overflow: hidden;">
+                <thead>
+                    <tr style="background: #2f3640; color: #fff; font-size: 0.8rem; text-transform: uppercase;">
+                        <th style="padding: 10px 12px;">Belohnung</th>
+                        <th style="padding: 10px 12px;">Kosten</th>
+                        <th style="padding: 10px 12px;">Kategorie</th>
+                        <th style="padding: 10px 12px;">Dauer / Typ</th>
+                        <th style="padding: 10px 12px; text-align: center;">Aktion</th>
+                    </tr>
+                </thead>
+                <tbody style="color: #2c3e50;">
+                    <!-- 1. JNR SCHILD -->
+                    <tr style="border-bottom: 1px solid #f1f2f6;">
+                        <td style="padding: 10px 12px; font-weight: bold;">🛡️ Jump 'n' Run Schild</td>
+                        <td style="padding: 10px 12px;"><span class="krachies-badge">🪙 75</span></td>
+                        <td style="padding: 10px 12px;">Minigames</td>
+                        <td style="padding: 10px 12px; color: #7f8c8d;">Single-Use</td>
+                        <td style="padding: 10px 12px; text-align: center;">
+                            <button onclick="buyReward('jnr_shield', 75, 'Jump n Run Schild')" class="btn-submit" style="width: auto; padding: 4px 12px; font-size: 0.75rem;">Einlösen</button>
+                        </td>
+                    </tr>
+
+                    <!-- 2. PRIO MUSIKWUNSCH -->
+                    <tr style="border-bottom: 1px solid #f1f2f6; background: #f8f9fa;">
+                        <td style="padding: 10px 12px; font-weight: bold;">⚡ Prio-Musikwunsch</td>
+                        <td style="padding: 10px 12px;"><span class="krachies-badge">🪙 150</span></td>
+                        <td style="padding: 10px 12px;">Radio</td>
+                        <td style="padding: 10px 12px; color: #7f8c8d;">Einmalig</td>
+                        <td style="padding: 10px 12px; text-align: center;">
+                            <button onclick="buyReward('prio_wish', 150, 'Prio-Musikwunsch')" class="btn-submit" style="width: auto; padding: 4px 12px; font-size: 0.75rem;">Einlösen</button>
+                        </td>
+                    </tr>
+
+                    <!-- 3. LIVE SHOUTOUT -->
+                    <tr style="border-bottom: 1px solid #f1f2f6;">
+                        <td style="padding: 10px 12px; font-weight: bold;">📢 Live-Shoutout im Stream</td>
+                        <td style="padding: 10px 12px;"><span class="krachies-badge">🪙 250</span></td>
+                        <td style="padding: 10px 12px;">Radio</td>
+                        <td style="padding: 10px 12px; color: #7f8c8d;">On-Air Grüße</td>
+                        <td style="padding: 10px 12px; text-align: center;">
+                            <button onclick="buyReward('live_shoutout', 250, 'Live-Shoutout im Stream')" class="btn-submit" style="width: auto; padding: 4px 12px; font-size: 0.75rem;">Einlösen</button>
+                        </td>
+                    </tr>
+
+                    <!-- 4. GOLDENE NAMENSFARBE -->
+                    <tr style="border-bottom: 1px solid #f1f2f6; background: #f8f9fa;">
+                        <td style="padding: 10px 12px; font-weight: bold;">🎨 Goldene Namensfarbe</td>
+                        <td style="padding: 10px 12px;"><span class="krachies-badge">🪙 300</span></td>
+                        <td style="padding: 10px 12px;">Profil</td>
+                        <td style="padding: 10px 12px; color: #7f8c8d;">Dauerhaft</td>
+                        <td style="padding: 10px 12px; text-align: center;">
+                            <button onclick="buyReward('gold_name', 300, 'Goldene Namensfarbe')" class="btn-submit" style="width: auto; padding: 4px 12px; font-size: 0.75rem;">Freischalten</button>
+                        </td>
+                    </tr>
+
+                    <!-- 5. PROFIL BADGE -->
+                    <tr style="border-bottom: 1px solid #f1f2f6;">
+                        <td style="padding: 10px 12px; font-weight: bold;">🏷️ Profil-Badge "Radio Legende"</td>
+                        <td style="padding: 10px 12px;"><span class="krachies-badge">🪙 400</span></td>
+                        <td style="padding: 10px 12px;">Profil</td>
+                        <td style="padding: 10px 12px; color: #7f8c8d;">Dauerhaft</td>
+                        <td style="padding: 10px 12px; text-align: center;">
+                            <button onclick="buyReward('legend_badge', 400, 'Radio Legende Badge')" class="btn-submit" style="width: auto; padding: 4px 12px; font-size: 0.75rem;">Freischalten</button>
+                        </td>
+                    </tr>
+
+                    <!-- 6. SONG NOMINATION -->
+                    <tr style="border-bottom: 1px solid #f1f2f6; background: #f8f9fa;">
+                        <td style="padding: 10px 12px; font-weight: bold;">🎵 Song der Woche Nomination</td>
+                        <td style="padding: 10px 12px;"><span class="krachies-badge">🪙 450</span></td>
+                        <td style="padding: 10px 12px;">Voting</td>
+                        <td style="padding: 10px 12px; color: #7f8c8d;">1 Song</td>
+                        <td style="padding: 10px 12px; text-align: center;">
+                            <button onclick="buyReward('song_nomination', 450, 'Song Nomination')" class="btn-submit" style="width: auto; padding: 4px 12px; font-size: 0.75rem;">Einlösen</button>
+                        </td>
+                    </tr>
+
+                    <!-- 7. VIP AVATAR PAKET -->
+                    <tr style="border-bottom: 1px solid #f1f2f6;">
+                        <td style="padding: 10px 12px; font-weight: bold;">👑 VIP-Avatar Paket</td>
+                        <td style="padding: 10px 12px;"><span class="krachies-badge">🪙 500</span></td>
+                        <td style="padding: 10px 12px;">Profil</td>
+                        <td style="padding: 10px 12px; color: #7f8c8d;">Dauerhaft</td>
+                        <td style="padding: 10px 12px; text-align: center;">
+                            <button onclick="buyReward('vip_avatars', 500, 'VIP-Avatar Paket')" class="btn-submit" style="width: auto; padding: 4px 12px; font-size: 0.75rem;">Freischalten</button>
+                        </td>
+                    </tr>
+
+                    <!-- 8. DOUBLE-VOTE BOOSTER -->
+                    <tr style="border-bottom: 1px solid #f1f2f6; background: #f8f9fa;">
+                        <td style="padding: 10px 12px; font-weight: bold;">🔥 Double-Vote Booster</td>
+                        <td style="padding: 10px 12px;"><span class="krachies-badge">🪙 600</span></td>
+                        <td style="padding: 10px 12px;">Voting</td>
+                        <td style="padding: 10px 12px; color: #7f8c8d;">1 Wochenende</td>
+                        <td style="padding: 10px 12px; text-align: center;">
+                            <button onclick="buyReward('double_vote', 600, 'Double-Vote Booster')" class="btn-submit" style="width: auto; padding: 4px 12px; font-size: 0.75rem;">Aktivieren</button>
+                        </td>
+                    </tr>
+
+                    <!-- 9. CO-MODERATOR SLOT -->
+                    <tr style="border-bottom: 1px solid #f1f2f6;">
+                        <td style="padding: 10px 12px; font-weight: bold;">🎧 Co-Moderator Slot (1 Show)</td>
+                        <td style="padding: 10px 12px;"><span class="krachies-badge">🪙 1200</span></td>
+                        <td style="padding: 10px 12px;">Radio Special</td>
+                        <td style="padding: 10px 12px; color: #7f8c8d;">Live-Gast</td>
+                        <td style="padding: 10px 12px; text-align: center;">
+                            <button onclick="buyReward('co_host_slot', 1200, 'Co-Moderator Slot')" class="btn-submit" style="width: auto; padding: 4px 12px; font-size: 0.75rem;">Einlösen</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
             <div id="profile-auth-view" class="content-grid">
                 <div>

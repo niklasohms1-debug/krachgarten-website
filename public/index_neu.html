@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wartungsarbeiten | krachgarten</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+            background-color: #121214;
+            color: #e1e1e6;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: #202024;
+            border: 1px solid #29292e;
+            border-radius: 16px;
+            padding: 40px 30px;
+            max-width: 550px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .icon-box {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+            animation: bounce 2s infinite ease-in-out;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        h1 {
+            color: #ffffff;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .sub-heading {
+            color: #ff4757;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        p.description {
+            color: #a8a8b3;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-bottom: 30px;
+        }
+
+        /* RADIOPLAYER CARD */
+        .player-card {
+            background: #121214;
+            border: 1px solid #29292e;
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .badge-live {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(255, 71, 87, 0.15);
+            color: #ff4757;
+            border: 1px solid #ff4757;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background-color: #ff4757;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #ff4757;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+
+        .show-name {
+            color: #70a1ff;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .player-main-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            text-align: left;
+            background: #1a1a1e;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid #29292e;
+        }
+
+        .cover-box {
+            width: 70px;
+            height: 70px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+            flex-shrink: 0;
+            border: 1px solid #29292e;
+        }
+
+        .cover-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .track-info {
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        .track-title {
+            color: #ffffff;
+            font-size: 1rem;
+            font-weight: bold;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .track-artist {
+            color: #a8a8b3;
+            font-size: 0.85rem;
+            margin-top: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            width: 100%;
+            margin-top: 5px;
+            flex-wrap: wrap;
+        }
+
+        .play-btn {
+            background: #ff4757;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .play-btn:hover {
+            background: #e03e4d;
+            transform: scale(1.03);
+        }
+
+        .play-btn.playing {
+            background: #04d361;
+            color: #000000;
+        }
+
+        .volume-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #a8a8b3;
+            font-size: 0.9rem;
+        }
+
+        .volume-slider {
+            width: 90px;
+            accent-color: #ff4757;
+            cursor: pointer;
+        }
+
+        footer {
+            margin-top: 25px;
+            color: #737380;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="icon-box">🛠️</div>
+        <h1>Wir bauen für euch um!</h1>
+        <div class="sub-heading">Wartungsarbeiten aktiv</div>
+        
+        <p class="description">
+            Unsere Webseite wird aktuell überarbeitet. Der Radio-Stream läuft natürlich ohne Unterbrechung weiter – schalt einfach ein:
+        </p>
+
+        <!-- RADIOPLAYER CARD -->
+        <div class="player-card">
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+                <div class="badge-live">
+                    <span class="dot"></span> LIVE ON AIR
+                </div>
+                <div id="show-title" class="show-name">Lade Sendung...</div>
+            </div>
+
+            <div class="player-main-info">
+                <div class="cover-box">
+                    <img id="cover-img" src="" alt="Cover">
+                </div>
+                <div class="track-info">
+                    <div id="song-title" class="track-title">Lade Titel...</div>
+                    <div id="song-artist" class="track-artist">Lade Künstler...</div>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button id="play-btn" class="play-btn" onclick="togglePlay()">
+                    <span id="play-icon">▶️</span> <span id="play-text">Einschalten</span>
+                </button>
+
+                <div class="volume-box">
+                    <span>🔊</span>
+                    <input type="range" id="volume" class="volume-slider" min="0" max="1" step="0.01" value="0.8" oninput="setVolume(this.value)">
+                </div>
+            </div>
+
+            <!-- AUDIO STREAM ELEMENT -->
+            <audio id="radio-audio" src="https://stream.laut.fm/xoticradio" preload="none"></audio>
+        </div>
+
+        <footer>
+            &copy; krachgarten – Musik rund um die Uhr
+        </footer>
+    </div>
+
+    <script>
+        const DEFAULT_SVG_COVER = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 24 24' fill='none' stroke='%23ff4757' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' style='background:%2318181b;'><circle cx='12' cy='12' r='10'/><circle cx='12' cy='12' r='3'/><path d='M12 2a10 10 0 0 1 10 10'/></svg>";
+
+        const audio = document.getElementById('radio-audio');
+        const playBtn = document.getElementById('play-btn');
+        const playIcon = document.getElementById('play-icon');
+        const playText = document.getElementById('play-text');
+        const titleEl = document.getElementById('song-title');
+        const artistEl = document.getElementById('song-artist');
+        const showEl = document.getElementById('show-title');
+        const coverImg = document.getElementById('cover-img');
+
+        let lastSongKey = "";
+
+        // STREAM STEUERUNG
+        function togglePlay() {
+            if (audio.paused) {
+                audio.play().then(() => {
+                    playBtn.classList.add('playing');
+                    playIcon.innerText = "⏸️";
+                    playText.innerText = "Pause";
+                }).catch(err => console.error("Play Fehler:", err));
+            } else {
+                audio.pause();
+                playBtn.classList.remove('playing');
+                playIcon.innerText = "▶️";
+                playText.innerText = "Einschalten";
+            }
+        }
+
+        function setVolume(val) {
+            if (audio) audio.volume = parseFloat(val);
+        }
+
+        // ITUNES COVER FINDER
+        async function fetchItunesCover(artist, title) {
+            if (!artist || !title || artist === '🔴 On Air') return null;
+            try {
+                const query = encodeURIComponent(`${artist} ${title}`);
+                const res = await fetch(`https://itunes.apple.com/search?term=${query}&entity=song&limit=1`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.results && data.results.length > 0 && data.results[0].artworkUrl100) {
+                        return data.results[0].artworkUrl100.replace('100x100bb', '300x300bb');
+                    }
+                }
+            } catch (e) {}
+            return null;
+        }
+
+        // ECHTZEIT-METADATEN MIT EXAKTER ARTIST/TITLE AUFTEILUNG
+        async function fetchSongInfo() {
+            if (coverImg) {
+                coverImg.onerror = function() {
+                    this.onerror = null;
+                    this.src = DEFAULT_SVG_COVER;
+                };
+            }
+
+            const cb = '?r=' + Math.random().toString(36).substring(7) + '&_t=' + Date.now();
+
+            try {
+                // 1. Sendungstitel auslesen
+                fetch('https://api.laut.fm/station/xoticradio' + cb, { cache: 'no-store' })
+                    .then(r => r.ok ? r.json() : null)
+                    .then(station => {
+                        if (station) {
+                            if (station.current_playlist && station.current_playlist.name) {
+                                showEl.innerText = station.current_playlist.name;
+                            } else if (station.display_name) {
+                                showEl.innerText = station.display_name;
+                            } else if (station.name) {
+                                showEl.innerText = station.name;
+                            }
+                        }
+                    }).catch(() => {});
+
+                // 2. Aktuellen Song holen
+                let song = null;
+                const res = await fetch('https://api.laut.fm/station/xoticradio/current_song' + cb, { 
+                    cache: 'no-store',
+                    headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate', 'Pragma': 'no-cache' }
+                });
+
+                if (res.ok) {
+                    song = await res.json();
+                }
+
+                // 3. Prüfen, ob der gelieferte Song abgelaufen ist
+                let isExpired = false;
+                if (song && song.ends_at) {
+                    const endsAtDate = new Date(song.ends_at.replace(' ', 'T'));
+                    if (!isNaN(endsAtDate.getTime()) && Date.now() > endsAtDate.getTime()) {
+                        isExpired = true;
+                    }
+                }
+
+                // 4. Falls abgelaufen oder leer -> Historie
+                if (!song || !song.title || isExpired) {
+                    const lastRes = await fetch('https://api.laut.fm/station/xoticradio/last_songs' + cb, { cache: 'no-store' });
+                    if (lastRes.ok) {
+                        const history = await lastRes.json();
+                        if (Array.isArray(history) && history.length > 0) {
+                            song = history[0];
+                        }
+                    }
+                }
+
+                // 5. Song & Künstler parsen und sauber auftrennen
+                if (song && (song.title || song.artist)) {
+                    let rawTitle = song.title || '';
+                    let rawArtist = '';
+
+                    if (song.artist) {
+                        if (typeof song.artist === 'string') {
+                            rawArtist = song.artist;
+                        } else if (typeof song.artist === 'object' && song.artist !== null) {
+                            rawArtist = song.artist.name || '';
+                        }
+                    }
+
+                    // Falls der Künstler fehlt, aber im Titel "Künstler - Song" steht
+                    if (!rawArtist && rawTitle.includes(' - ')) {
+                        const parts = rawTitle.split(' - ');
+                        rawArtist = parts[0].trim();
+                        rawTitle = parts.slice(1).join(' - ').trim();
+                    }
+
+                    titleEl.innerText = rawTitle || 'Live Stream';
+                    artistEl.innerText = rawArtist || '🔴 On Air';
+
+                    const currentSongKey = `${rawArtist} - ${rawTitle}`;
+
+                    // Cover nur bei Songwechsel neu laden
+                    if (currentSongKey !== lastSongKey) {
+                        lastSongKey = currentSongKey;
+
+                        let imgUrl = "";
+                        if (song.images) {
+                            if (song.images.cover_200) imgUrl = song.images.cover_200;
+                            else if (song.images.cover) imgUrl = song.images.cover;
+                        }
+
+                        if (imgUrl && !imgUrl.includes('default_cover')) {
+                            if (imgUrl.startsWith('http://')) imgUrl = imgUrl.replace('http://', 'https://');
+                            coverImg.src = imgUrl;
+                        } else if (rawArtist && rawTitle) {
+                            const itunesCover = await fetchItunesCover(rawArtist, rawTitle);
+                            coverImg.src = itunesCover ? itunesCover : DEFAULT_SVG_COVER;
+                        } else {
+                            coverImg.src = DEFAULT_SVG_COVER;
+                        }
+                    }
+                    return;
+                }
+            } catch (e) {
+                console.log("Metadaten Hinweis:", e);
+            }
+
+            // Fallback bei Fehler
+            if (titleEl.innerText === 'Lade Titel...') titleEl.innerText = 'krachgarten Stream';
+            if (artistEl.innerText === 'Lade Künstler...') artistEl.innerText = '🔴 On Air';
+            if (showEl.innerText === 'Lade Sendung...') showEl.innerText = 'krachgarten Radio';
+            if (!coverImg.src || coverImg.src === window.location.href) coverImg.src = DEFAULT_SVG_COVER;
+        }
+
+        // START & INTERVALL (alle 3 Sekunden)
+        fetchSongInfo();
+        setInterval(fetchSongInfo, 3000);
+    </script>
+</body>
+</html>

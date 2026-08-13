@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #121214; 
+            color: #e1e1e6; 
+            padding: 20px; 
+            margin: 0;
+        }
+
+        /* LOGIN CONTAINER */
+        .login-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 70vh;
+        }
+
+        .login-card {
+            background: #202024;
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #29292e;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+
+        .login-card h2 {
+            margin-top: 0;
+            color: #ff4757;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 12px;
+            box-sizing: border-box;
+            background: #121214;
+            border: 1px solid #29292e;
+            color: #fff;
+            border-radius: 6px;
+            font-size: 0.95rem;
+        }
+
+        .btn-action {
+            padding: 10px 18px;
+            background: #ff4757;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: background 0.2s;
+        }
+
+        .btn-action:hover {
+            background: #e03e4d;
+        }
+
+        .btn-action:disabled {
+            background: #555 !important;
+            cursor: not-allowed;
+        }
+
+        .btn-delete {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+
+        /* DASHBOARD (ANFANGS VERSTECKT) */
+        #admin-content {
+            display: none;
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        .card { 
+            background: #202024; 
+            padding: 20px; 
+            border-radius: 8px; 
+            margin-bottom: 15px; 
+            border: 1px solid #29292e; 
+        }
+
+        .nav-header {
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            background: #202024; 
+            padding: 15px 25px; 
+            border-radius: 8px; 
+            border: 1px solid #29292e;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            color: #a8a8b3;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .nav-btn:hover, .nav-btn.active {
+            color: #ff4757;
+            background: #29292e;
+        }
+
+        .team-member-item, .wish-item {
+            background: #121214;
+            padding: 12px 15px;
+            border-radius: 6px;
+            border: 1px solid #29292e;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* TABS UNTERSCHEIDUNG */
+        .tab-page {
+            display: none;
+        }
+        .tab-page.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. LOGIN FENSTER -->
+    <div id="login-section" class="login-wrapper">
+        <div class="login-card">
+            <h2>👑 Admin Login</h2>
+            <p style="color: #a8a8b3; font-size: 0.9rem; margin-bottom: 20px;">Melde dich an, um das Radio zu verwalten.</p>
+            
+            <form onsubmit="handleLogin(event)">
+                <input type="text" id="admin-user" class="input-field" placeholder="Benutzername" required>
+                <input type="password" id="admin-pass" class="input-field" placeholder="Passwort" required>
+                <button type="submit" class="btn-action" style="width:100%;">Anmelden 🔓</button>
+            </form>
+            <p id="login-error" style="color: #ff4757; margin-top: 15px; display: none; font-size: 0.9rem;">Zugangsdaten falsch!</p>
+        </div>
+    </div>
+
+    <!-- 2. ADMIN DASHBOARD CONTENT -->
+    <div id="admin-content">
+        
+        <!-- NAVIGATION LEISTE -->
+        <div class="nav-header">
+            <h2 style="margin:0; color:#ff4757;">👑 Admin Dashboard</h2>
+            <div class="nav-links">
+                <button onclick="switchTab('dashboard')" id="btn-tab-dashboard" class="nav-btn active">📊 Übersicht</button>
+                <button onclick="switchTab('schedule')" id="btn-tab-schedule" class="nav-btn">📅 Sendeplan</button>
+                <button onclick="switchTab('news')" id="btn-tab-news" class="nav-btn">📰 Artikel schreiben</button>
+                <button onclick="switchTab('team')" id="btn-tab-team" class="nav-btn">👥 Team verwalten</button>
+                <button onclick="switchTab('private')" id="btn-tab-private" class="nav-btn">🔒 Privater Bereich</button>
+                <a href="/" style="color:#a8a8b3; text-decoration:none; font-weight: bold; font-size: 0.95rem; margin-left: 10px;">Zur Hauptseite</a>
+                <button onclick="logout()" style="background:none; border:1px solid #ff4757; color:#ff4757; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold; margin-left: 10px;">Abmelden</button>
+            </div>
+        </div>
+
+        <!-- SEITE 1: ÜBERSICHT -->
+        <div id="tab-dashboard" class="tab-page active">
+            <div class="card">
+                <h3>📻 Radio Settings & Studio Live-Status</h3>
+                
+                <label style="font-size:0.85rem; color:#a8a8b3;">Radio Name (z. B. KRACHGARTEN):</label>
+                <input type="text" id="new-stream-name" class="input-field" placeholder="Neuer Radioname">
+
+                <div style="display: flex; flex-direction: column; gap: 10px; margin: 10px 0 15px 0;">
+                    <label style="cursor: pointer; display: inline-flex; align-items: center; font-weight: bold; color: #ff4757;">
+                        <input type="checkbox" id="admin-is-live" style="transform: scale(1.3); margin-right: 10px; cursor: pointer;"> 
+                        🔴 Studio ist JETZT Live On Air
+                    </label>
+
+                    <label style="cursor: pointer; display: inline-flex; align-items: center; font-weight: bold; color: #70a1ff;">
+                        <input type="checkbox" id="admin-is-autodj" checked style="transform: scale(1.3); margin-right: 10px; cursor: pointer;"> 
+                        🤖 Auto-DJ aktiv (Automatische Playlist)
+                    </label>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <input type="text" id="admin-dj-name" class="input-field" style="margin:0;" placeholder="DJ Name (z. B. DJ Niklas)">
+                    <input type="text" id="new-title" class="input-field" style="margin:0;" placeholder="Aktueller Song / Live DJ Show">
+                </div>
+                
+                <button onclick="updateRadioInfo()" class="btn-action">Speichern & Senden 🚀</button>
+            </div>
+
+            <div class="card">
+                <h3>💌 Eingegangene Wünsche & Grüße</h3>
+                <div id="wishes-list">
+                    <p style="color:#666;">Lade Musikwünsche...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEITE 2: SENDEPLAN VERWALTEN -->
+        <div id="tab-schedule" class="tab-page">
+            <div class="card">
+                <h3>📅 Sendung eintragen</h3>
+                <div style="margin-bottom: 15px;">
+                    <input type="text" id="sched-day" class="input-field" placeholder="Tag / Datum (z. B. Heute, Montag)">
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="sched-time" class="input-field" placeholder="Startzeit (z. B. 18:00)">
+                        <input type="text" id="sched-endtime" class="input-field" placeholder="Endzeit (z. B. 19:00)">
+                    </div>
+                    <input type="text" id="sched-dj" class="input-field" placeholder="DJ / Moderator Name">
+                    <input type="text" id="sched-title" class="input-field" placeholder="Sendungs-Titel / Show-Name">
+                    <button onclick="addScheduleEntry()" class="btn-action">Sendung eintragen ➕</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4 style="color:#a8a8b3; margin-bottom:10px;">Aktueller Sendeplan (Einträge verwalten & löschen):</h4>
+                <div id="schedule-list">
+                    <p style="color:#666;">Lade Sendeplan...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEITE 3: ARTIKEL SCHREIBEN -->
+        <div id="tab-news" class="tab-page">
+            <div class="card">
+                <h3>📰 News-Artikel verfassen</h3>
+                <p style="color: #a8a8b3; font-size: 0.9rem; margin-bottom: 15px;">Veröffentliche Ankündigungen und News direkt auf der Hauptseite.</p>
+                
+                <label style="font-size:0.85rem; color:#a8a8b3;">Titel des Artikels:</label>
+                <input type="text" id="news-title" class="input-field" placeholder="z. B. Neues Studio-Equipement ist da!">
+                
+                <label style="font-size:0.85rem; color:#a8a8b3;">Inhalt / Text:</label>
+                <textarea id="news-text" class="input-field" rows="5" placeholder="Schreibe hier deinen Newsbeitrag..." style="resize: vertical;"></textarea>
+                
+                <button onclick="publishNews()" class="btn-action">Artikel veröffentlichen 📢</button>
+            </div>
+
+            <div class="card">
+                <h4 style="color:#a8a8b3; margin-bottom:10px;">Veröffentlichte Artikel:</h4>
+                <div id="news-list">
+                    <p style="color:#666;">Lade Artikel...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEITE 4: TEAM VERWALTEN -->
+        <div id="tab-team" class="tab-page">
+            <div class="card">
+                <h3>👥 Team verwalten</h3>
+                
+                <div style="margin-bottom: 20px;">
+                    <input type="text" id="team-name" class="input-field" placeholder="Name des Team-Mitglieds">
+                    <input type="text" id="team-role" class="input-field" placeholder="Rolle (z. B. Moderator, Inhaber, DJ)">
+                    <input type="text" id="team-dept" class="input-field" placeholder="Bereich/Abteilung (optional)">
+                    <button onclick="addTeamMember()" class="btn-action">Mitglied Hinzufügen ➕</button>
+                </div>
+
+                <h4 style="color:#a8a8b3; margin-bottom:10px;">Aktuelles Team:</h4>
+                <div id="team-list">
+                    <p style="color:#666;">Lade Teammitglieder...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEITE 5: PRIVATER BEREICH -->
+        <div id="tab-private" class="tab-page">
+            <div class="card">
+                <h3>🔒 Privater Admin-Bereich (Fotos & Videos)</h3>
+                <p style="color: #a8a8b3; font-size: 0.9rem; margin-bottom: 15px;">
+                    Exklusiv für Admins! Lade Videos und Fotos hoch, die nur hier im Admin Panel sichtbar sind.
+                </p>
+                
+                <div style="margin-bottom: 10px;">
+                    <label style="font-size:0.85rem; color:#a8a8b3;">Datei auswählen (Foto oder Video):</label>
+                    <input type="file" id="private-file-input" class="input-field" accept="image/*,video/*" style="padding: 8px;">
+                    
+                    <label style="font-size:0.85rem; color:#a8a8b3;">Titel / Beschreibung (optional):</label>
+                    <input type="text" id="private-file-title" class="input-field" placeholder="z. B. Backstage Party 2026">
+                    
+                    <button id="private-upload-btn" onclick="uploadPrivateMedia()" class="btn-action">Datei hochladen 📤</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h4 style="color:#a8a8b3; margin-bottom:15px;">Hochgeladene Fotos & Videos:</h4>
+                <div id="private-media-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+                    <p style="color:#666;">Lade Medien...</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JAVASCRIPT LOGIK -->
+    <script>
+        // GLOBALE VARIABLE GEGEN DAS DAUERHAFTE RE-RENDER-PROBLEM BEI VIDEOS
+        let lastPrivateMediaJSON = "";
+
+        window.onload = function() {
+            if (localStorage.getItem('adminLoggedIn') === 'true') {
+                showAdminContent();
+            }
+        };
+
+        // TAB-WECHSEL LOGIK
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-page').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+
+            if (tabName === 'dashboard') {
+                document.getElementById('tab-dashboard').classList.add('active');
+                document.getElementById('btn-tab-dashboard').classList.add('active');
+            } else if (tabName === 'schedule') {
+                document.getElementById('tab-schedule').classList.add('active');
+                document.getElementById('btn-tab-schedule').classList.add('active');
+            } else if (tabName === 'news') {
+                document.getElementById('tab-news').classList.add('active');
+                document.getElementById('btn-tab-news').classList.add('active');
+            } else if (tabName === 'team') {
+                document.getElementById('tab-team').classList.add('active');
+                document.getElementById('btn-tab-team').classList.add('active');
+            } else if (tabName === 'private') {
+                document.getElementById('tab-private').classList.add('active');
+                document.getElementById('btn-tab-private').classList.add('active');
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('admin-user').value;
+            const password = document.getElementById('admin-pass').value;
+
+            try {
+                const res = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (res.ok) {
+                    localStorage.setItem('adminLoggedIn', 'true');
+                    showAdminContent();
+                } else {
+                    document.getElementById('login-error').style.display = 'block';
+                }
+            } catch (err) {
+                if (username === "admin" && password === "katzi123") {
+                    localStorage.setItem('adminLoggedIn', 'true');
+                    showAdminContent();
+                } else {
+                    document.getElementById('login-error').style.display = 'block';
+                }
+            }
+        }
+
+        function showAdminContent() {
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('admin-content').style.display = 'block';
+            loadAdminData();
+            setInterval(loadAdminData, 5000);
+        }
+
+        function logout() {
+            localStorage.removeItem('adminLoggedIn');
+            location.reload();
+        }
+
+        async function loadAdminData() {
+            try {
+                const res = await fetch('/api/data');
+                const data = await res.json();
+
+                if (data.streamName && document.activeElement.id !== 'new-stream-name') {
+                    document.getElementById('new-stream-name').value = data.streamName;
+                }
+                if (data.currentTitle && document.activeElement.id !== 'new-title') {
+                    document.getElementById('new-title').value = data.currentTitle;
+                }
+                if (document.activeElement.id !== 'admin-is-live') {
+                    document.getElementById('admin-is-live').checked = !!data.isLive;
+                }
+                if (document.activeElement.id !== 'admin-is-autodj') {
+                    document.getElementById('admin-is-autodj').checked = data.isAutoDj !== false;
+                }
+                if (data.djName && document.activeElement.id !== 'admin-dj-name') {
+                    document.getElementById('admin-dj-name').value = data.djName;
+                }
+
+                renderScheduleList(data.schedule || []);
+                renderTeamList(data.team || []);
+                renderWishesList(data.wishes || []);
+                renderNewsList(data.news || []);
+                renderPrivateMedia(data.privateMedia || []);
+            } catch (err) {
+                console.error("Fehler beim Laden:", err);
+            }
+        }
+
+        async function updateRadioInfo() {
+            const streamName = document.getElementById('new-stream-name').value;
+            const currentTitle = document.getElementById('new-title').value;
+            const isLive = document.getElementById('admin-is-live').checked;
+            const isAutoDj = document.getElementById('admin-is-autodj').checked;
+            const djName = document.getElementById('admin-dj-name').value;
+
+            const res = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ streamName, currentTitle, isLive, isAutoDj, djName })
+            });
+
+            if (res.ok) {
+                alert("Radio-Informationen & Studio-Status erfolgreich aktualisiert! 📻");
+            } else {
+                alert("Fehler beim Aktualisieren.");
+            }
+        }
+
+        // PRIVATER BEREICH: SAUBERER STREAM-UPLOAD MIT FORMDATA
+        async function uploadPrivateMedia() {
+            const fileInput = document.getElementById('private-file-input');
+            const titleInput = document.getElementById('private-file-title');
+            const uploadBtn = document.getElementById('private-upload-btn');
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                return alert("Bitte wähle ein Foto oder Video aus!");
+            }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('title', titleInput.value);
+
+            if (uploadBtn) {
+                uploadBtn.disabled = true;
+                uploadBtn.innerText = "⏳ Upload läuft... bitte warten!";
+            }
+
+            try {
+                const res = await fetch('/api/admin/private/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (res.ok) {
+                    alert("Datei erfolgreich in den privaten Bereich hochgeladen! 🔒");
+                    fileInput.value = '';
+                    titleInput.value = '';
+                    loadAdminData();
+                } else {
+                    const errData = await res.json().catch(() => ({}));
+                    alert("Fehler beim Hochladen: " + (errData.error || "Unbekannter Fehler."));
+                }
+            } catch (err) {
+                console.error("Upload-Fehler:", err);
+                alert("Netzwerkfehler beim Hochladen der Datei.");
+            } finally {
+                if (uploadBtn) {
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerText = "Datei hochladen 📤";
+                }
+            }
+        }
+
+        async function deletePrivateMedia(id) {
+            if (!confirm("Datei wirklich löschen?")) return;
+
+            const res = await fetch(`/api/admin/private/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                loadAdminData();
+            } else {
+                alert("Fehler beim Löschen.");
+            }
+        }
+
+        function renderPrivateMedia(mediaList) {
+            const gridUI = document.getElementById('private-media-grid');
+            if (!gridUI) return;
+
+            // CHECK: Haben sich die Daten seit dem letzten Aufruf geändert?
+            const currentJSON = JSON.stringify(mediaList || []);
+            if (currentJSON === lastPrivateMediaJSON) {
+                return; // Keine Änderung -> HTML und laufende Videos NICHT antasten!
+            }
+            lastPrivateMediaJSON = currentJSON;
+
+            if (!mediaList || mediaList.length === 0) {
+                gridUI.innerHTML = '<p style="color:#a8a8b3; grid-column: 1/-1;">Noch keine privaten Medien vorhanden.</p>';
+                return;
+            }
+
+            gridUI.innerHTML = mediaList.map(item => {
+                const isVideo = item.type === 'video' || (item.url && item.url.match(/\.(mp4|webm|ogg|mov|m4v)$/i));
+
+                return `
+                    <div style="background: #121214; border: 1px solid #29292e; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column;">
+                        <div style="width: 100%; height: 200px; background: #000; display: flex; align-items: center; justify-content: center;">
+                            ${isVideo ? `
+                                <video src="${item.url}" controls playsinline preload="metadata" style="width: 100%; height: 100%; object-fit: contain;">
+                                    Dein Browser unterstützt dieses Video nicht.
+                                </video>
+                            ` : `
+                                <img src="${item.url}" alt="${item.title || 'Foto'}" style="width: 100%; height: 100%; object-fit: cover; cursor: pointer;" onclick="window.open('${item.url}', '_blank')">
+                            `}
+                        </div>
+                        <div style="padding: 12px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between;">
+                            <div>
+                                <strong style="color: #fff; font-size: 0.95rem;">${item.title || (isVideo ? '🎥 Video' : '🖼️ Foto')}</strong>
+                                <br><small style="color: #a8a8b3;">${item.date || ''}</small>
+                            </div>
+                            <button class="btn-delete" style="margin-top: 10px; width: 100%;" onclick="deletePrivateMedia('${item.id}')">🗑️ Löschen</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // SENDEPLAN EINTRAGEN & LÖSCHEN
+        async function addScheduleEntry() {
+            const day = document.getElementById('sched-day').value;
+            const time = document.getElementById('sched-time').value;
+            const endTime = document.getElementById('sched-endtime').value;
+            const dj = document.getElementById('sched-dj').value;
+            const title = document.getElementById('sched-title').value;
+
+            if (!time || !dj) return alert("Bitte mindestens Startzeit und DJ eintragen!");
+
+            const res = await fetch('/api/admin/schedule', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ day, time, endTime, dj, name: dj, title, show: title })
+            });
+
+            if (res.ok) {
+                alert("Sendung eingetragen!");
+                document.getElementById('sched-day').value = '';
+                document.getElementById('sched-time').value = '';
+                document.getElementById('sched-endtime').value = '';
+                document.getElementById('sched-dj').value = '';
+                document.getElementById('sched-title').value = '';
+                loadAdminData();
+            } else {
+                alert("Fehler beim Hinzufügen der Sendung.");
+            }
+        }
+
+        async function deleteScheduleEntry(id) {
+            if (!confirm("Sendung wirklich aus dem Sendeplan löschen?")) return;
+
+            const res = await fetch(`/api/admin/schedule/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                loadAdminData();
+            } else {
+                alert("Fehler beim Löschen der Sendung.");
+            }
+        }
+
+        function renderScheduleList(schedule) {
+            const scheduleUI = document.getElementById('schedule-list');
+            if (!scheduleUI) return;
+
+            if (!schedule || schedule.length === 0) {
+                scheduleUI.innerHTML = '<p style="color:#a8a8b3;">Der Sendeplan ist aktuell leer.</p>';
+                return;
+            }
+
+            scheduleUI.innerHTML = schedule.map(entry => `
+                <div class="team-member-item" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <strong style="color: #ff4757;">${entry.day ? entry.day + ' | ' : ''}${entry.time || ''}${entry.endTime ? ' bis ' + entry.endTime : ''} Uhr</strong><br>
+                        <span>🎙️ <strong>${entry.dj || entry.name || 'DJ'}</strong></span> 
+                        <span style="color: #a8a8b3;">- ${entry.title || entry.show || 'Show'}</span>
+                    </div>
+                    <button class="btn-delete" onclick="deleteScheduleEntry(${entry.id})">🗑️ Löschen</button>
+                </div>
+            `).join('');
+        }
+
+        // ARTIKEL VERÖFFENTLICHEN (NEWS)
+        async function publishNews() {
+            const title = document.getElementById('news-title').value;
+            const text = document.getElementById('news-text').value;
+
+            if (!title || !text) return alert("Bitte fülle Titel und Text aus!");
+
+            const res = await fetch('/api/news', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title, text })
+            });
+
+            if (res.ok) {
+                alert("Artikel erfolgreich veröffentlicht! 📢");
+                document.getElementById('news-title').value = '';
+                document.getElementById('news-text').value = '';
+                loadAdminData();
+            } else {
+                alert("Fehler beim Veröffentlichen des Artikels.");
+            }
+        }
+
+        async function deleteNews(id) {
+            if (!confirm("Artikel wirklich löschen?")) return;
+
+            const res = await fetch(`/api/admin/news/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                loadAdminData();
+            } else {
+                alert("Fehler beim Löschen des Artikels.");
+            }
+        }
+
+        function renderNewsList(news) {
+            const newsUI = document.getElementById('news-list');
+            if (!newsUI) return;
+            
+            if (!news || news.length === 0) {
+                newsUI.innerHTML = '<p style="color:#a8a8b3;">Noch keine Artikel verfasst.</p>';
+                return;
+            }
+
+            newsUI.innerHTML = news.map(item => `
+                <div class="team-member-item" style="flex-direction: column; align-items: flex-start; gap: 5px;">
+                    <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                        <strong style="color: #ff4757;">${item.title}</strong>
+                        <button class="btn-delete" onclick="deleteNews(${item.id})">🗑️ Löschen</button>
+                    </div>
+                    <small style="color: #a8a8b3;">${item.date || ''}</small>
+                    <div style="color: #ccc; font-size: 0.9rem;">${item.text}</div>
+                </div>
+            `).join('');
+        }
+
+        async function addTeamMember() {
+            const name = document.getElementById('team-name').value;
+            const role = document.getElementById('team-role').value;
+            const department = document.getElementById('team-dept').value;
+
+            if (!name || !role) return alert("Bitte Name und Rolle ausfüllen!");
+
+            const res = await fetch('/api/admin/team', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, role, department })
+            });
+
+            if (res.ok) {
+                alert("Mitglied hinzugefügt!");
+                document.getElementById('team-name').value = '';
+                document.getElementById('team-role').value = '';
+                document.getElementById('team-dept').value = '';
+                loadAdminData();
+            } else {
+                alert("Fehler beim Hinzufügen des Mitglieds.");
+            }
+        }
+
+        async function deleteTeamMember(id) {
+            if (!confirm("Mitglied wirklich löschen?")) return;
+
+            const res = await fetch(`/api/admin/team/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                loadAdminData();
+            } else {
+                alert("Fehler beim Löschen.");
+            }
+        }
+
+        function renderTeamList(team) {
+            const listUI = document.getElementById('team-list');
+            if (!team || team.length === 0) {
+                listUI.innerHTML = '<p style="color:#a8a8b3;">Noch keine Teammitglieder eingetragen.</p>';
+                return;
+            }
+
+            listUI.innerHTML = team.map(member => `
+                <div class="team-member-item">
+                    <div>
+                        <strong>${member.name}</strong> 
+                        <span style="color:#a8a8b3; font-size:0.85rem;">(${member.role}${member.department ? ' - ' + member.department : ''})</span>
+                    </div>
+                    <button class="btn-delete" onclick="deleteTeamMember(${member.id})">🗑️ Löschen</button>
+                </div>
+            `).join('');
+        }
+
+        async function deleteWish(id) {
+            if (!confirm("Wunsch/Gruß wirklich löschen?")) return;
+
+            const res = await fetch(`/api/wish/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                loadAdminData();
+            } else {
+                alert("Fehler beim Löschen des Wunsches.");
+            }
+        }
+
+        function renderWishesList(wishes) {
+            const wishesUI = document.getElementById('wishes-list');
+            if (!wishes || wishes.length === 0) {
+                wishesUI.innerHTML = '<p style="color:#a8a8b3;">Keine neuen Wünsche oder Grüße vorhanden.</p>';
+                return;
+            }
+
+            wishesUI.innerHTML = wishes.map(w => `
+                <div class="wish-item">
+                    <div style="flex-grow: 1;">
+                        <div style="display: flex; justify-content: space-between; width: 100%; margin-bottom: 4px;">
+                            <strong style="color: #ff4757;">${w.type} von ${w.name}</strong>
+                            <small style="color: #a8a8b3;">${w.time || ''}</small>
+                        </div>
+                        ${w.song && w.song !== '-' ? `<div>🎵 <strong>Song:</strong> ${w.song}</div>` : ''}
+                        ${w.message ? `<div style="color: #ccc;">💬 "${w.message}"</div>` : ''}
+                    </div>
+                    <button class="btn-delete" style="margin-left: 15px;" onclick="deleteWish(${w.id})">🗑️ Löschen</button>
+                </div>
+            `).join('');
+        }
+    </script>
+</body>
+</html>

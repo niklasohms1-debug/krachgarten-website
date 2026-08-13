@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Unser Team - Radio</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #121214; color: #e1e1e6; padding: 20px; margin: 0; }
+        
+        /* Navigation */
+        .navbar { display: flex; justify-content: space-between; align-items: center; max-width: 1000px; margin: 0 auto 30px auto; background: #202024; padding: 15px 25px; border-radius: 8px; border: 1px solid #29292e; }
+        .nav-links a { color: #a8a8b3; text-decoration: none; margin-left: 20px; font-weight: bold; transition: color 0.2s; }
+        .nav-links a:hover, .nav-links a.active { color: #ff4757; }
+
+        .container { max-width: 1000px; margin: auto; }
+        .dept-title { border-bottom: 2px solid #ff4757; padding-bottom: 5px; margin-top: 30px; margin-bottom: 15px; font-size: 1.4rem; }
+
+        /* Member Grid & Badge-Buttons */
+        .team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 15px; }
+        .member-card {
+            background: #202024;
+            border: 1px solid #29292e;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .member-card:hover { transform: translateY(-3px); border-color: #ff4757; }
+        .member-name { font-size: 1.1rem; font-weight: bold; color: #fff; margin-bottom: 5px; }
+        
+        /* Das Highlight-Button für die Funktion */
+        .role-badge {
+            display: inline-block;
+            background: #ff4757;
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- MENÜLEISTE OBEN -->
+    <div class="navbar">
+        <h2 style="margin:0; color:#ff4757;">📻 Radio Dashboard</h2>
+        <div class="nav-links">
+            <a href="/">Startseite</a>
+            <a href="/team.html" class="active">Unser Team</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>👥 Unser Team</h1>
+        
+        <h2 class="dept-title">🛡️ Administration</h2>
+        <div id="admins-grid" class="team-grid"></div>
+
+        <h2 class="dept-title">🎧 DJs & Moderatoren</h2>
+        <div id="djs-grid" class="team-grid"></div>
+
+        <h2 class="dept-title">✍️ Redakteure</h2>
+        <div id="redakteure-grid" class="team-grid"></div>
+    </div>
+
+    <script>
+        async function loadTeam() {
+            const res = await fetch('/api/data');
+            const data = await res.json();
+            const team = data.team || [];
+
+            const renderDept = (deptName, elementId) => {
+                const members = team.filter(m => m.department === deptName);
+                const container = document.getElementById(elementId);
+                
+                if (members.length === 0) {
+                    container.innerHTML = '<p style="color:#a8a8b3;">Keine Mitglieder eingetragen.</p>';
+                    return;
+                }
+
+                container.innerHTML = members.map(m => `
+                    <div class="member-card">
+                        <div class="member-name">${m.name}</div>
+                        <div class="role-badge">${m.role}</div>
+                    </div>
+                `).join('');
+            };
+
+            renderDept('Admins', 'admins-grid');
+            renderDept('DJs', 'djs-grid');
+            renderDept('Redakteure', 'redakteure-grid');
+        }
+
+        loadTeam();
+    </script>
+</body>
+</html>

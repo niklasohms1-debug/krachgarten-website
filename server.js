@@ -38,7 +38,6 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-
 // ==========================================
 // MULTER SPEICHER-KONFIGURATION
 // ==========================================
@@ -304,12 +303,11 @@ app.post('/api/auth/register', async (req, res) => {
         const userPass = password || pass1;
         const verifyCode = code || Math.floor(100000 + Math.random() * 900000).toString();
 
-       if (!username || !userPass) {
+        if (!username || !userPass) {
             return res.status(400).json({ error: "Bitte alle Felder ausfüllen." });
         }
-const existingUser = await User.findOne({ username: new RegExp('^' + username.trim() + '$', 'i') });
-            ]
-        });
+
+        const existingUser = await User.findOne({ username: new RegExp('^' + username.trim() + '$', 'i') });
 
         if (existingUser) {
             return res.status(400).json({ error: "Benutzername oder E-Mail existiert bereits." });
@@ -330,7 +328,7 @@ const existingUser = await User.findOne({ username: new RegExp('^' + username.tr
             inventory: { hasGoldName: false }
         });
 
-        if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+        if (process.env.SMTP_USER && process.env.SMTP_PASS && userMail) {
             const mailOptions = {
                 from: `"Krachgarten Radio" <${process.env.SMTP_USER}>`,
                 to: userMail,

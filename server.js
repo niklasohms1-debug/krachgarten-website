@@ -38,68 +38,6 @@ if (!fs.existsSync(uploadsDir)) {
     fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// 1. AUTOMATISCH index_neu.html ERSTELLEN (FALLS FEHLT)
-const indexNeuPath = path.join(publicDir, 'index_neu.html');
-if (!fs.existsSync(indexNeuPath)) {
-    fs.writeFileSync(indexNeuPath, `<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Krachgarten Radio | Dashboard V2</title>
-</head>
-<body>
-    <h1>Krachgarten Radio V2</h1>
-    <p>Die Seite wird geladen...</p>
-</body>
-</html>`);
-    console.log("🛠️ index_neu.html wurde automatisch in /public erstellt.");
-}
-
-// 2. AUTOMATISCH login.html ERSTELLEN (FALLS FEHLT)
-const loginHtmlPath = path.join(publicDir, 'login.html');
-if (!fs.existsSync(loginHtmlPath)) {
-    fs.writeFileSync(loginHtmlPath, `<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login | krachgarten</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #121214; color: #fff; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .card { background: #202024; padding: 30px; border-radius: 12px; border: 1px solid #29292e; text-align: center; max-width: 350px; width: 100%; }
-        input { width: 100%; padding: 10px; margin: 15px 0; background: #121214; border: 1px solid #29292e; color: #fff; border-radius: 6px; box-sizing: border-box; }
-        button { width: 100%; padding: 10px; background: #ff4757; border: none; color: #fff; font-weight: bold; border-radius: 6px; cursor: pointer; }
-        button:hover { background: #e03e4d; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h2>🔒 Admin Login</h2>
-        <p style="color: #a8a8b3; font-size: 0.85rem; margin-top: 5px;">Zugang zu index_neu.html</p>
-        <input type="password" id="password" placeholder="Admin-Passwort">
-        <button onclick="login()">Einloggen 🚀</button>
-        <p id="err" style="color:#ff4757; display:none; margin-top:10px; font-size:0.85rem;">Passwort falsch!</p>
-    </div>
-    <script>
-        async function login(){
-            const password = document.getElementById('password').value;
-            const res = await fetch('/api/dev-login', { 
-                method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, 
-                body: JSON.stringify({ password }) 
-            });
-            if(res.ok) { 
-                window.location.href = '/index_neu.html'; 
-            } else { 
-                document.getElementById('err').style.display = 'block'; 
-            }
-        }
-    </script>
-</body>
-</html>`);
-    console.log("🛠️ login.html wurde automatisch in /public erstellt.");
-}
 
 // ==========================================
 // MULTER SPEICHER-KONFIGURATION
